@@ -38,7 +38,6 @@ from sklearn.model_selection import RandomizedSearchCV
 base_dir = dirfuncs.guess_data_dir()
 #input_dir = base_dir + "in\\"
 concessions = ['app_riau', 'app_jambi']
-clas_file = base_dir + 'app_kalbar_remap.tif'
 
 referencefile=''
 outvrt = '/vsimem/stacked.vrt' #/vsimem is special in-memory virtual "directory"
