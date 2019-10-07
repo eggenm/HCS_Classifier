@@ -15,24 +15,30 @@ l8_band_dict =  {'B1': 'ublue',
 #             ,'nd': 'ndvi_l8'
               }
 
-s2_band_dict = {'B1': 'S2_ublue',
-              'B2': 'S2_blue',
-              'B3': 'S2_green',
-              'B4': 'S2_red',
-              'B5': 'rededge1',
-              'B6': 'rededge2',
-              'B7': 'rededge3',
-              'B8': 'S2_nir',
-              'B8A': 'S2_nir2',
-              'B9': 'S2_vape',
-              'B10': 'S2_swir1',
-              'B11': 'S2_swir2',
-              'B12': 'S2_swir3',
+s2_band_dict = {
+    # 'B1': 'S2_ublue',
+    #           'B2': 'S2_blue',
+    #           'B3': 'S2_green',
+    #           'B4': 'S2_red',
+    #         'B5': 'rededge1'#,
+    #         'B6': 'rededge2',
+    #         'B7': 'rededge3'
+    # ,
+    #            'B8': 'S2_nir',
+    #            'B8A': 'S2_nir2',
+    #            'B9': 'S2_vape'
+    #,
+               'B10': 'S2_swir1',
+             'B11': 'S2_swir2',
+             'B12': 'S2_swir3',
               'nd': 'ndvi_s2'
 }
 
 s1_band_dict = {'VH': 'VH',
-              'VV': 'VV'}
+              'VV': 'VV'#,
+           #   'VH-VV':'diff_VH_VV',
+        #      'VH/VV': 'ratio_VH_VV'
+      }
 
 def maskCloudsLandsat8(image):
     # Bits 3 and 5 are cloud shadow and cloud, respectively.
@@ -82,7 +88,9 @@ def prep_ls8(img):
 def prep_sar(image_collection):
     composite = ee.Image.cat([
         image_collection.select('VH').mean(),
-        image_collection.select('VV').mean()
+        image_collection.select('VV').mean()#,
+        #(image_collection.select('VH').subtract(image_collection.select('VV'))).mean(),
+     #   (image_collection.select('VH').divide(image_collection.select('VV'))).mean()
         #  sentinel1.select('VH').reduce(ee.Reducer.stdDev()).rename('VH_vari'), There are string artifacts with this operation
         # sentinel1.select('VV').reduce(ee.Reducer.stdDev()).rename('VV_vari')
     ]).focal_median();
