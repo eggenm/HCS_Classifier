@@ -38,7 +38,7 @@ from sklearn.model_selection import RandomizedSearchCV
 base_dir = dirfuncs.guess_data_dir()
 #input_dir = base_dir + "in\\"
 concessions = ['app_riau', 'app_jambi']
-
+clas_file=''
 referencefile=''
 outvrt = '/vsimem/stacked.vrt' #/vsimem is special in-memory virtual "directory"
 
@@ -290,7 +290,7 @@ clas_img.show()
 
 classified = classified[np.newaxis, :, :].astype(rio.int16)
 outclas_file = base_dir + classConcession + '/sklearn_test/classified.tif'
-referencefile = base_dir + concession + '/' + concession + '*remap*.tif'
+referencefile = base_dir + classConcession + '/' + classConcession + '*remap*.tif'
 file_list = sorted(glob.glob(referencefile))
 with rio.open(file_list[0]) as src:
     height = src.height
