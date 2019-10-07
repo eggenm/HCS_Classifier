@@ -35,10 +35,9 @@ from sklearn.model_selection import RandomizedSearchCV
 # =============================================================================
 # Identify files
 # =============================================================================
-dropbox_dir = dirfuncs.guess_data_dir()
-base_dir = dropbox_dir + "concession/"
+base_dir = dirfuncs.guess_data_dir()
 #input_dir = base_dir + "in\\"
-concessions = ['app_kalbar', 'app_kaltim']
+concessions = ['app_riau', 'app_jambi']
 clas_file = base_dir + 'app_kalbar_remap.tif'
 
 referencefile=''
@@ -110,6 +109,7 @@ def gen_windows(array, n):
 
 def stackImageData(concession):
     input_dir = base_dir + concession + "/in/"
+    print(input_dir)
     outtif = base_dir + concession + '/out/input_' + concession + '.tif'
     file_list = sorted(glob.glob(input_dir+"/*.tif"))
     with rasterio.open(file_list[0]) as src0:
@@ -129,18 +129,20 @@ def stackImageData(concession):
 #getData('app_kalbar_cntk')
 
 def extractData(imagepath, concession):
-    X_scaled = np.empty((0, 13), 'float64')
+    X_scaled = np.empty((0, 27), 'float64')
     y = np.empty((0), 'int')
     with rio.open(outtif) as img_src:
         img = img_src.read()
 
     shape = img.shape
     windows = gen_windows(img, 1)
-    clas_file = base_dir + concession + '/' + concession + '_remap.tif'
+    clas_file = base_dir + concession + '/' + concession + '*remap*.tif'
+    print(clas_file)
+    file_list = sorted(glob.glob(clas_file))
     ## Read classification labels
-    with rio.open(clas_file) as clas_src:
+    with rio.open(file_list[0]) as clas_src:
         clas = clas_src.read()
-    with rio.open(base_dir + concession + "/in/" + concession +"_input.VH.tif") as radar1:
+    with rio.open(base_dir + concession + "/in/" + concession +"radar.VH.tif") as radar1:
         radar = radar1.read()
 
     watermask = np.empty(radar.shape, dtype=rasterio.uint8)
@@ -167,7 +169,7 @@ def extractData(imagepath, concession):
     y = np.append(y, temp, axis=0)
     return X_scaled, y, data_df, full_index, shape
 
-myX = np.empty((0,13), 'float64')
+myX = np.empty((0,27), 'float64')
 myY = np.empty((0), 'int')
 for concession in concessions:
     outtif = stackImageData(concession)
@@ -178,7 +180,7 @@ for concession in concessions:
 #encoder.fit(y)
 #n_classes = encoder.classes_.shape[0]
 #y_encoded = encoder.transform(y)
-X_train, X_test, y_train, y_test = train_test_split(myX, myY, train_size=0.35, test_size=0.15,
+X_train, X_test, y_train, y_test = train_test_split(myX, myY, train_size=0.06, test_size=0.02,
                                                     random_state=123)
 
 # # =============================================================================
@@ -276,7 +278,7 @@ print(sklearn.metrics.confusion_matrix(y_train, y_hat))
 # =============================================================================
 # Create predicted map
 # =============================================================================
-classConcession = 'gar_pgm'
+classConcession = 'app_oki'
 outtif = stackImageData(classConcession)
 myX, myY, data_df, full_index, shape = extractData(outtif, classConcession)
 data_df['predicted'] = randomforest_fitted_clf.predict(myX)
@@ -289,8 +291,9 @@ clas_img.show()
 
 classified = classified[np.newaxis, :, :].astype(rio.int16)
 outclas_file = base_dir + classConcession + '/sklearn_test/classified.tif'
-referencefile = base_dir + classConcession + '/' + classConcession + '_remap.tif'
-with rio.open(referencefile) as src:
+referencefile = base_dir + concession + '/' + concession + '*remap*.tif'
+file_list = sorted(glob.glob(referencefile))
+with rio.open(file_list[0]) as src:
     height = src.height
     width = src.width
     crs = src.crs

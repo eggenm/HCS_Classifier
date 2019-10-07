@@ -31,8 +31,8 @@ def guess_data_dir():
     """
     Looks for the folder where dropbox data lives.
     """
-    possibilities = ['D:\\cloud\\Dropbox\\collaborations\\',  # Robert's dropbox
-                     'C:\\Users\\ME\\Dropbox\\', # Michael Dropbox
+    possibilities = ['D:\\cloud\\Dropbox\\collaborations\\HCSProject\\data\\PoC\\',  # Robert's dropbox
+                     'C:\\Users\\ME\\Dropbox\\HCSProject\\data\\PoC\\', # Michael Dropbox
                      '/home/eggen/data/'] # NCEAS server
     return check_possibilities(possibilities)
 
