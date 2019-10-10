@@ -36,7 +36,7 @@ to_vals = list(key_df['code_simpl'].astype(float).values)
 #         'app_muba',
 #         'app_riau',
 #         'crgl_stal', 'gar_pgm', 'nbpol_ob', 'wlmr_calaro']
-sites = ['app_oki']
+sites = ['app_riau']
 
 feature_dict = {}
 for site in sites:
@@ -47,6 +47,32 @@ for site in sites:
 fc = ee.FeatureCollection(list(feature_dict.values()))
 all_study_area = fc.geometry().bounds()
 all_json_coords = all_study_area.getInfo()['coordinates']
+
+# =============================================================================
+# Get Sent2 Ndvi
+# =============================================================================
+def getYearlyNdvi():
+    yearly_ndvis = ee.Image()
+    #for year in range(2014, 2019):
+    year="ALL"
+    name = "s2_ndvi_" + str(year)
+    print("NAME:   ", name)
+    date_start = ee.Date.fromYMD(2016, 1, 1)
+    date_end = ee.Date.fromYMD(2019, 12, 31)
+    sentinel2 = ee.ImageCollection('COPERNICUS/S2')
+    sentinel2 = sentinel2.filterDate(date_start, date_end)
+    # Pre-filter to get less cloudy granules.
+    sentinel2 = sentinel2.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 25))
+    sentinel2 = sentinel2.filterBounds(all_study_area)
+    sentinel2 = sentinel2.map(sat_ops.maskS2clouds)
+    sentinel2 = sentinel2.map(sat_ops.addNDVI_s2)
+    ndviMean = sentinel2.select('NDVI').median()
+    ndviMean = ndviMean.rename(name+"_median")
+    ndviVar = sentinel2.select('NDVI').reduce(ee.Reducer.stdDev())
+    ndviVar = ndviVar.rename(name + "_var")
+    yearly_ndvis = yearly_ndvis.addBands(ndviMean).addBands(ndviVar)
+    return yearly_ndvis
+
 
 # =============================================================================
 # Prep landsat data
@@ -63,6 +89,7 @@ print(clean_l8_img.bandNames().getInfo())
 # Prep SAR data
 # =============================================================================
 # radarCollectionByYear = ee.ImageCollection(ee.List.sequence(2014,2018,1).map(prep_sar))
+
 sentinel1 = ee.ImageCollection('COPERNICUS/S1_GRD')
 sentinel1 = sentinel1.filterDate(date_start, date_end)
 sentinel1 = sentinel1.filter(ee.Filter.eq('instrumentMode', 'IW'))
@@ -80,6 +107,7 @@ sentinel2 = sentinel2.filterDate(date_start, date_end)
 # Pre-filter to get less cloudy granules.
 sentinel2 = sentinel2.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 35))
 sentinel2 = sentinel2.filterBounds(all_study_area)
+ndvis = getYearlyNdvi()
 sentinel2_masked = sentinel2.map(sat_ops.prep_s2)
 clean_s2_img=ee.Image(sentinel2_masked.median())
 #clean_s2_img = sentinel2_masked.qualityMosaic('ndvi_s2')
@@ -101,9 +129,11 @@ for site in sites:
     coords = geometry.coordinates()
     json_coords = coords.getInfo()
     strata_img = strata_img.int()
-    images = {'landsat': clean_l8_img,
-              '_s2': clean_s2_img,
-             'radar': radar_composite, 'class': strata_img
+    images = {
+      #  'landsat': clean_l8_img,
+      #        '_s2': clean_s2_img,
+              '_S2_ndvi': ndvis
+         #    'radar': radar_composite, 'class': strata_img
         }
     for key, value in images.items():
         prefix = site + key

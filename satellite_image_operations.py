@@ -110,6 +110,10 @@ def prep_s2(img):
 
     return img
 
+def addNDVI_s2(image):
+  ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
+  return image.addBands(ndvi);
+
 
 def add_ndvi(img, keys, values, platform):
     print(platform)

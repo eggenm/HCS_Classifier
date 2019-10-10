@@ -36,13 +36,8 @@ from sklearn.model_selection import RandomizedSearchCV
 # Identify files
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
-#input_dir = base_dir + "in\\"
-concessions = ['app_riau', 'app_jambi']
-clas_file=''
-referencefile=''
-outvrt = '/vsimem/stacked.vrt' #/vsimem is special in-memory virtual "directory"
+concessions = ['app_jambi','app_riau']
 
-tifs = []#, img_file4]
 classes = {2: "HCSA",
            1: "Not_HCSA",
            0: "NA"}
@@ -106,7 +101,7 @@ def gen_windows(array, n):
     return(windows)
 
 
-def stackImageData(concession):
+def stack_image_input_data(concession):
     input_dir = base_dir + concession + "/in/"
     print(input_dir)
     outtif = base_dir + concession + '/out/input_' + concession + '.tif'
@@ -125,15 +120,79 @@ def stackImageData(concession):
                 dst.write_band(i, src1.read(1).astype('float64'))
     dst.close()
     return outtif
-#getData('app_kalbar_cntk')
 
-def extractData(imagepath, concession):
-    X_scaled = np.empty((0, 27), 'float64')
-    y = np.empty((0), 'int')
-    with rio.open(outtif) as img_src:
+def get_landcover_class_image(concession):
+    clas_file = base_dir + concession + '/' + concession + '*remap*.tif'
+    print(clas_file)
+    file_list = sorted(glob.glob(clas_file))
+    ## Read classification labels
+    with rio.open(file_list[0]) as clas_src:
+        clas = clas_src.read()
+    return clas
+
+def get_classes(classImage):
+    clas_dict = {}
+    shape=classImage.shape
+    for i in range(classImage.shape[1]):
+        for j in range(classImage.shape[2]):
+            clas_dict[(i, j)] = classImage[0, i, j]
+    full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
+    classes = pd.DataFrame({'class': pd.Series(clas_dict)}, index=full_index)
+    return classes
+
+def combine_input_landcover(input, landcover):
+    data_df = landcover.merge(input, left_index=True, right_index=True, how='left')
+    data_df[data_df <= -999] = np.nan
+    data_df = data_df.dropna()
+    print('*****data_df shape:  ', data_df.shape)
+    return data_df
+
+def scale_data(x):
+    scaler = StandardScaler()
+    x_scaled = scaler.fit_transform(x.astype(np.float64))
+    return x_scaled
+
+def mask_water(x, concession):
+    with rio.open(base_dir + concession + "/in/" + concession + "radar.VH.tif") as radar1:
+        radar = radar1.read()
+    watermask = np.empty(radar.shape, dtype=rasterio.uint8)
+    watermask = np.where(radar > -17.85, 1, np.nan).reshape(radar.shape[1], radar.shape[2])
+    water_img = Image.fromarray(255 * watermask.astype('uint8'))
+    water_img.show()
+    masked = x * watermask
+    return masked
+
+def get_all_concession_data(concessions):
+    allInput = np.empty((0), 'float64')
+    landcover = np.empty((0), 'int')
+    data = pd.DataFrame()
+    for concession in concessions:
+        outtif = stack_image_input_data(concession)
+        with rio.open(outtif) as img_src:
+            img = img_src.read()
+            x = gen_windows(img, 3)
+            print('x.shape:  ', x.shape)
+          #  allInput = np.append(allInput, scale_data(x))
+          #  print('allInput.shape:  ',allInput.shape)
+        class_image = get_landcover_class_image(concession)
+        class_image = mask_water(class_image, concession)
+        y = get_classes(class_image)
+        print('y.shape:  ', y.shape)
+        if data.empty:
+            data=combine_input_landcover(x,y)
+        else:
+            print("*****************IN CONCAT********************")
+            data = pd.concat([data, combine_input_landcover(x,y)], ignore_index=True)
+            print("  data.shape:  ", data.shape)
+    return data
+
+def extractData(X_scaled, y, imagepath, concession):
+
+    with rio.open(imagepath) as img_src:
         img = img_src.read()
 
     shape = img.shape
+    print("shape:  ", shape)
     windows = gen_windows(img, 1)
     clas_file = base_dir + concession + '/' + concession + '*remap*.tif'
     print(clas_file)
@@ -141,14 +200,14 @@ def extractData(imagepath, concession):
     ## Read classification labels
     with rio.open(file_list[0]) as clas_src:
         clas = clas_src.read()
-    with rio.open(base_dir + concession + "/in/" + concession +"radar.VH.tif") as radar1:
-        radar = radar1.read()
-
-    watermask = np.empty(radar.shape, dtype=rasterio.uint8)
-    watermask = np.where(radar > -17.75, 1, np.nan).reshape(radar.shape[1], radar.shape[2])
-    water_img = Image.fromarray(255 * watermask.astype('uint8'))
-    water_img.show()
-    clas = clas * watermask
+    # with rio.open(base_dir + concession + "/in/" + concession +"radar.VH.tif") as radar1:
+    #     radar = radar1.read()
+    #
+    # watermask = np.empty(radar.shape, dtype=rasterio.uint8)
+    # watermask = np.where(radar > -17.75, 1, np.nan).reshape(radar.shape[1], radar.shape[2])
+    # water_img = Image.fromarray(255 * watermask.astype('uint8'))
+    # water_img.show()
+    # clas = clas * watermask
     clas_dict = {}
 
     for i in range(clas.shape[1]):
@@ -156,30 +215,39 @@ def extractData(imagepath, concession):
             clas_dict[(i, j)] = clas[0, i, j]
     full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
     classes = pd.DataFrame({'class': pd.Series(clas_dict)}, index=full_index)
+    print('*****classesshape:  ', classes.shape)
     ## Combine spectral and label data, extract training and test datasets
     data_df = classes.merge(windows, left_index=True, right_index=True, how='left')
+    print('*****data_df shape:  ', data_df.shape)
     data_df[data_df <= -999] = np.nan
     data_df = data_df.dropna()
     # data_df = data_df.loc[data_df['class']>0]  # Shouldn't need to limit to a single class
+    if(X_scaled.size==0):
+        X_scaled = np.empty((0, windows.shape[1]), 'float64')
+        y = np.empty((0), 'int')
     X = data_df[[col for col in data_df.columns if col != 'class']]
+    print('*****X shape:  ', X.shape)
     scaler = StandardScaler()
     X_scaled = np.append(X_scaled, scaler.fit_transform(X.astype(np.float64)), axis=0)
+    print('*****X_scaled shape:  ', X_scaled.shape)
     temp = data_df['class'].values
     y = np.append(y, temp, axis=0)
+    print('*****y shape:  ', y.shape)
     return X_scaled, y, data_df, full_index, shape
 
-myX = np.empty((0,27), 'float64')
-myY = np.empty((0), 'int')
-for concession in concessions:
-    outtif = stackImageData(concession)
-    myX, myY, data, index, shape = extractData(outtif, concession)
 
-    #print(pd.Series(y).value_counts(dropna=False))
+train_df = get_all_concession_data(concessions)
+
+#data_df = combine_input_landcover(allInput, landcover)
+X = train_df[[col for col in train_df.columns if col != 'class']]
+X_scaled = scale_data(X)
+landcover = train_df['class'].values
+#print(pd.Series(y).value_counts(dropna=False))
 #encoder = LabelEncoder() # Could be used if we're not always dealing with the same classes
 #encoder.fit(y)
 #n_classes = encoder.classes_.shape[0]
 #y_encoded = encoder.transform(y)
-X_train, X_test, y_train, y_test = train_test_split(myX, myY, train_size=0.06, test_size=0.02,
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.065, test_size=0.03,
                                                     random_state=123)
 
 # # =============================================================================
@@ -278,18 +346,30 @@ print(sklearn.metrics.confusion_matrix(y_train, y_hat))
 # Create predicted map
 # =============================================================================
 classConcession = 'app_oki'
-outtif = stackImageData(classConcession)
-myX, myY, data_df, full_index, shape = extractData(outtif, classConcession)
-data_df['predicted'] = randomforest_fitted_clf.predict(myX)
+outtif = stack_image_input_data(classConcession)
+with rio.open(outtif) as img_src:
+    img = img_src.read()
+    shape=img.shape
+    x = gen_windows(img, 1)
+class_image = get_landcover_class_image(classConcession)
+class_image=mask_water(class_image, classConcession)
+y = get_classes(class_image)
+#data_df = combine_input_landcover(x,y)
+df = y.merge(x, left_index=True, right_index=True, how='left')
+X = df[[col for col in df.columns if col != 'class']]
+X_scaled = scale_data(X)
+df['predicted'] = randomforest_fitted_clf.predict(X_scaled)
+full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
 clas_df = pd.DataFrame(index = full_index)
-classified = clas_df.merge(data_df['predicted'], left_index = True, right_index = True, how = 'left').sort_index()
+classified = clas_df.merge(df['predicted'], left_index = True, right_index = True, how = 'left').sort_index()
 classified = classified['predicted'].values.reshape(shape[1], shape[2])
 clas_img = ((classified * 255)/2).astype('uint8')
+clas_img = mask_water(clas_img,classConcession)
 clas_img = Image.fromarray(clas_img)
 clas_img.show()
 
 classified = classified[np.newaxis, :, :].astype(rio.int16)
-outclas_file = base_dir + classConcession + '/sklearn_test/classified.tif'
+outclas_file = base_dir + classConcession + '/sklearn_test/classified_3x3.tif'
 referencefile = base_dir + classConcession + '/' + classConcession + '*remap*.tif'
 file_list = sorted(glob.glob(referencefile))
 with rio.open(file_list[0]) as src:
@@ -359,23 +439,23 @@ class classify_block:
 clas_file = base_dir + classConcession +  '/sklearn_test/class_file.tif'
 prob_file = base_dir + classConcession +  '/sklearn_test/prob_file.tif'
 
-with rio.open(outtif) as src:
-    clas_dst = rio.open(clas_file, 'w', driver = 'GTiff', 
-                   height = src.height, width = src.width, 
-                   crs = src.crs, dtype = rio.int16,
-                   count = 1, transform = src.transform)
-    prob_dst = rio.open(prob_file, 'w', driver = 'GTiff', 
-                   height = src.height, width = src.width, 
-                   crs = src.crs, dtype = rio.float32, 
-                   count = len(randomforest_fitted_clf.classes_), transform = src.transform)
-    for ji, window in src.block_windows(1):
-        block = src.read(window = window)
-        if sum(sum(sum(~np.isnan(block))))>0:
-            block_classifier = classify_block(block, randomforest_fitted_clf)
-            classified = block_classifier.classify()
-            probabilities = block_classifier.calc_probabilities()
-            clas_dst.write(classified, window = window)
-            prob_dst.write(probabilities, window = window)
-
-clas_dst.close()
-prob_dst.close()
+# with rio.open(outtif) as src:
+#     clas_dst = rio.open(clas_file, 'w', driver = 'GTiff',
+#                    height = src.height, width = src.width,
+#                    crs = src.crs, dtype = rio.int16,
+#                    count = 1, transform = src.transform)
+#     prob_dst = rio.open(prob_file, 'w', driver = 'GTiff',
+#                    height = src.height, width = src.width,
+#                    crs = src.crs, dtype = rio.float32,
+#                    count = len(randomforest_fitted_clf.classes_), transform = src.transform)
+#     for ji, window in src.block_windows(1):
+#         block = src.read(window = window)
+#         if sum(sum(sum(~np.isnan(block))))>0:
+#             block_classifier = classify_block(block, randomforest_fitted_clf)
+#             classified = block_classifier.classify()
+#             probabilities = block_classifier.calc_probabilities()
+#             clas_dst.write(classified, window = window)
+#             prob_dst.write(probabilities, window = window)
+#
+# clas_dst.close()
+# prob_dst.close()
