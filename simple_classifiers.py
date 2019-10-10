@@ -37,6 +37,7 @@ from sklearn.model_selection import RandomizedSearchCV
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
 concessions = ['app_jambi','app_riau']
+pixel_window_size = 3
 
 classes = {2: "HCSA",
            1: "Not_HCSA",
@@ -170,7 +171,7 @@ def get_all_concession_data(concessions):
         outtif = stack_image_input_data(concession)
         with rio.open(outtif) as img_src:
             img = img_src.read()
-            x = gen_windows(img, 3)
+            x = gen_windows(img, pixel_window_size)
             print('x.shape:  ', x.shape)
           #  allInput = np.append(allInput, scale_data(x))
           #  print('allInput.shape:  ',allInput.shape)
@@ -350,7 +351,7 @@ outtif = stack_image_input_data(classConcession)
 with rio.open(outtif) as img_src:
     img = img_src.read()
     shape=img.shape
-    x = gen_windows(img, 1)
+    x = gen_windows(img, pixel_window_size)
 class_image = get_landcover_class_image(classConcession)
 class_image=mask_water(class_image, classConcession)
 y = get_classes(class_image)
