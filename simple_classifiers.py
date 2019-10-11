@@ -37,7 +37,7 @@ from sklearn.model_selection import RandomizedSearchCV
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
 concessions = ['app_jambi','app_riau']
-pixel_window_size = 3
+pixel_window_size = 1
 
 classes = {2: "HCSA",
            1: "Not_HCSA",
@@ -248,105 +248,8 @@ landcover = train_df['class'].values
 #encoder.fit(y)
 #n_classes = encoder.classes_.shape[0]
 #y_encoded = encoder.transform(y)
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.065, test_size=0.03,
-                                                    random_state=123)
-
-# # =============================================================================
-# # Train and test random forest classifier
-# # =============================================================================
-clf = rfc(n_estimators=60, max_depth = 6, max_features = .3, max_leaf_nodes = 10,
-          random_state=123, oob_score = True, n_jobs = -1,
-        #  class_weight = {0:0.33, 1: 0.33, 2: 0.34})
-          class_weight ='balanced')
-#randomforest_fitted_clf = clf.fit(X_train, y_train)
-param_grid = [{'max_depth': [2, 10],
-               'max_leaf_nodes': [10, 20, 50],
-               'max_features': [.25, .5, .75]}]
-grid_search = GridSearchCV(clf, param_grid, cv = 5, #scoring = 'balanced_accuracy',
-                           return_train_score = True, refit = True)
-
-grid_search.fit(X_train, y_train)
-
-randomforest_fitted_clf = grid_search.best_estimator_
-y_hat = randomforest_fitted_clf.predict(X_test)
-print('*************  RANDOM FOREST  - X_TEST  **********************')
-print(sklearn.metrics.classification_report(y_test, y_hat))
-print(sklearn.metrics.confusion_matrix(y_test, y_hat))
-
-y_hat = randomforest_fitted_clf.predict(X_train)
-print('*************  RANDOM FOREST  - X_TRAIN  **********************')
-print(sklearn.metrics.classification_report(y_train, y_hat))
-print(sklearn.metrics.confusion_matrix(y_train, y_hat))
-
-# =============================================================================
-# Neural network
-# =============================================================================
-# nueral_model = keras.models.Sequential()
-# nueral_model.add(keras.layers.InputLayer(input_shape = (windows.shape[1],)))
-# nueral_model.add(keras.layers.Dense(30, activation="relu"))
-# nueral_model.add(keras.layers.Dense(30, activation="relu"))
-# nueral_model.add(keras.layers.Dense(30, activation="relu"))
-# nueral_model.add(keras.layers.Dense(30, activation="relu"))
-# nueral_model.add(keras.layers.Dense(3, activation="softmax"))
-#
-# nueral_model.compile(optimizer=keras.optimizers.Adadelta(),
-#             loss='sparse_categorical_crossentropy',
-#           #  metrics=['sparse_categorical_accuracy'])
-#            #   optimizer=keras.optimizers.SGD(lr=0.05),
-#               metrics=["accuracy"])
-# history = nueral_model.fit(X_train, y_train, epochs=1,
-#                     validation_split = 0.5,
-#                     callbacks=[keras.callbacks.EarlyStopping(patience=5)])
-#
-# nueral_model.evaluate(X_test, y_test)
-# y_proba = nueral_model.predict(X_test)
-# y_predict = nueral_model.predict_classes(X_test)
-# print('*************  NEURAL NET REPORT *********************')
-# print(sklearn.metrics.classification_report(y_test, y_predict))
-# print(sklearn.metrics.confusion_matrix(y_test, y_predict))
-
-
-# =============================================================================
-# Neural net with hyperparameter tuning
-# =============================================================================
-# def build_model(n_hidden = 1, n_neurons = 30, learning_rate = 0.03, n_bands = 13, n_classes = 3):
-#     model = keras.models.Sequential()
-#     model.add(keras.layers.InputLayer(input_shape = (n_bands,)))
-#     for layer in range(n_hidden):
-#         model.add(keras.layers.Dense(n_neurons, activation="relu"))
-#     model.add(keras.layers.Dense(n_classes, activation="softmax"))
-#     model.compile(loss="sparse_categorical_crossentropy",
-#                   optimizer=keras.optimizers.SGD(lr=learning_rate),
-#                   metrics=["accuracy"])
-#     return model
-#
-# keras_clf = keras.wrappers.scikit_learn.KerasClassifier(build_model)
-#
-# param_distribs = {"n_hidden": [1, 5, 10],
-#                   "n_neurons": np.arange(1, 100),
-#                   "learning_rate": reciprocal(3e-3, 7e-2)}
-# rnd_search_cv = RandomizedSearchCV(keras_clf, param_distribs, n_iter=10, cv=3)
-# rnd_search_cv.fit(X_train, y_train, epochs=100, validation_split = 0.8,
-#                   callbacks = [keras.callbacks.EarlyStopping(patience = 5)])
-#
-# keras_clf.fit(X_train, y_train, epochs=10, validation_split = 0.8,
-#               callbacks = [keras.callbacks.EarlyStopping(patience = 5)])
-#
-# nueral_model = rnd_search_cv.best_estimator_
-# y_pred = nueral_model.predict(X_train)
-# print('*************  TUNED NEURAL NET - WITHIN REPORT *********************')
-# print(sklearn.metrics.classification_report(y_train, y_pred))
-# print(sklearn.metrics.confusion_matrix(y_train, y_pred))
-#
-# y_pred = nueral_model.predict(X_test)
-# print('*************  TUNED NEURAL NET - OUT REPORT *********************')
-# print(sklearn.metrics.classification_report(y_test, y_pred))
-# print(sklearn.metrics.confusion_matrix(y_test, y_pred))
-
-# =============================================================================
-# Create predicted map
-# =============================================================================
 classConcession = 'app_oki'
+predictions = pd.DataFrame()
 outtif = stack_image_input_data(classConcession)
 with rio.open(outtif) as img_src:
     img = img_src.read()
@@ -356,21 +259,131 @@ class_image = get_landcover_class_image(classConcession)
 class_image=mask_water(class_image, classConcession)
 y = get_classes(class_image)
 #data_df = combine_input_landcover(x,y)
-df = y.merge(x, left_index=True, right_index=True, how='left')
-X = df[[col for col in df.columns if col != 'class']]
-X_scaled = scale_data(X)
-df['predicted'] = randomforest_fitted_clf.predict(X_scaled)
+df_class = y.merge(x, left_index=True, right_index=True, how='left')
+X_class = df_class[[col for col in df_class.columns if col != 'class']]
+X_scaled_class = scale_data(X_class)
+for seed in range(1,4):
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.004, test_size=0.04,
+                                                        random_state=13*seed)
+
+    # # =============================================================================
+    # # Train and test random forest classifier
+    # # =============================================================================
+    clf = rfc(n_estimators=60, max_depth = 6, max_features = .3, max_leaf_nodes = 10,
+              random_state=seed, oob_score = True, n_jobs = -1,
+            #  class_weight = {0:0.33, 1: 0.33, 2: 0.34})
+              class_weight ='balanced')
+    #randomforest_fitted_clf = clf.fit(X_train, y_train)
+    param_grid = [{'max_depth': [2, 10],
+                   'max_leaf_nodes': [10, 20, 50],
+                   'max_features': [.25, .5, .75]}]
+    grid_search = GridSearchCV(clf, param_grid, cv = 5, #scoring = 'balanced_accuracy',
+                               return_train_score = True, refit = True)
+
+    grid_search.fit(X_train, y_train)
+
+    randomforest_fitted_clf = grid_search.best_estimator_
+    y_hat = randomforest_fitted_clf.predict(X_test)
+    print('*************  RANDOM FOREST  - X_TEST  **********************')
+    print(sklearn.metrics.classification_report(y_test, y_hat))
+    print(sklearn.metrics.confusion_matrix(y_test, y_hat))
+
+    y_hat = randomforest_fitted_clf.predict(X_train)
+    print('*************  RANDOM FOREST  - X_TRAIN  **********************')
+    print(sklearn.metrics.classification_report(y_train, y_hat))
+    print(sklearn.metrics.confusion_matrix(y_train, y_hat))
+
+    # =============================================================================
+    # Neural network
+    # =============================================================================
+    # nueral_model = keras.models.Sequential()
+    # nueral_model.add(keras.layers.InputLayer(input_shape = (windows.shape[1],)))
+    # nueral_model.add(keras.layers.Dense(30, activation="relu"))
+    # nueral_model.add(keras.layers.Dense(30, activation="relu"))
+    # nueral_model.add(keras.layers.Dense(30, activation="relu"))
+    # nueral_model.add(keras.layers.Dense(30, activation="relu"))
+    # nueral_model.add(keras.layers.Dense(3, activation="softmax"))
+    #
+    # nueral_model.compile(optimizer=keras.optimizers.Adadelta(),
+    #             loss='sparse_categorical_crossentropy',
+    #           #  metrics=['sparse_categorical_accuracy'])
+    #            #   optimizer=keras.optimizers.SGD(lr=0.05),
+    #               metrics=["accuracy"])
+    # history = nueral_model.fit(X_train, y_train, epochs=1,
+    #                     validation_split = 0.5,
+    #                     callbacks=[keras.callbacks.EarlyStopping(patience=5)])
+    #
+    # nueral_model.evaluate(X_test, y_test)
+    # y_proba = nueral_model.predict(X_test)
+    # y_predict = nueral_model.predict_classes(X_test)
+    # print('*************  NEURAL NET REPORT *********************')
+    # print(sklearn.metrics.classification_report(y_test, y_predict))
+    # print(sklearn.metrics.confusion_matrix(y_test, y_predict))
+
+
+    # =============================================================================
+    # Neural net with hyperparameter tuning
+    # =============================================================================
+    # def build_model(n_hidden = 1, n_neurons = 30, learning_rate = 0.03, n_bands = 13, n_classes = 3):
+    #     model = keras.models.Sequential()
+    #     model.add(keras.layers.InputLayer(input_shape = (n_bands,)))
+    #     for layer in range(n_hidden):
+    #         model.add(keras.layers.Dense(n_neurons, activation="relu"))
+    #     model.add(keras.layers.Dense(n_classes, activation="softmax"))
+    #     model.compile(loss="sparse_categorical_crossentropy",
+    #                   optimizer=keras.optimizers.SGD(lr=learning_rate),
+    #                   metrics=["accuracy"])
+    #     return model
+    #
+    # keras_clf = keras.wrappers.scikit_learn.KerasClassifier(build_model)
+    #
+    # param_distribs = {"n_hidden": [1, 5, 10],
+    #                   "n_neurons": np.arange(1, 100),
+    #                   "learning_rate": reciprocal(3e-3, 7e-2)}
+    # rnd_search_cv = RandomizedSearchCV(keras_clf, param_distribs, n_iter=10, cv=3)
+    # rnd_search_cv.fit(X_train, y_train, epochs=100, validation_split = 0.8,
+    #                   callbacks = [keras.callbacks.EarlyStopping(patience = 5)])
+    #
+    # keras_clf.fit(X_train, y_train, epochs=10, validation_split = 0.8,
+    #               callbacks = [keras.callbacks.EarlyStopping(patience = 5)])
+    #
+    # nueral_model = rnd_search_cv.best_estimator_
+    # y_pred = nueral_model.predict(X_train)
+    # print('*************  TUNED NEURAL NET - WITHIN REPORT *********************')
+    # print(sklearn.metrics.classification_report(y_train, y_pred))
+    # print(sklearn.metrics.confusion_matrix(y_train, y_pred))
+    #
+    # y_pred = nueral_model.predict(X_test)
+    # print('*************  TUNED NEURAL NET - OUT REPORT *********************')
+    # print(sklearn.metrics.classification_report(y_test, y_pred))
+    # print(sklearn.metrics.confusion_matrix(y_test, y_pred))
+
+    # =============================================================================
+    # Create predicted map
+    # =============================================================================
+
+
+    predictions[seed] = randomforest_fitted_clf.predict(X_scaled_class)
+    #df['predicted'] = randomforest_fitted_clf.predict(X_scaled_class)
+temp=predictions.mode(axis=1)
+df_class['predicted']=temp[0]#this should give majority class for the
 full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
 clas_df = pd.DataFrame(index = full_index)
-classified = clas_df.merge(df['predicted'], left_index = True, right_index = True, how = 'left').sort_index()
+classified = clas_df.merge(df_class['predicted'], left_index = True, right_index = True, how = 'left').sort_index()
 classified = classified['predicted'].values.reshape(shape[1], shape[2])
 clas_img = ((classified * 255)/2).astype('uint8')
 clas_img = mask_water(clas_img,classConcession)
 clas_img = Image.fromarray(clas_img)
 clas_img.show()
-
+print('*************  RANDOM FOREST  - ACTUAL  **********************')
+print(df_class.shape)
+df_class[df_class <= -999] = np.nan
+df_class = df_class.dropna()
+print(df_class.shape)
+print(sklearn.metrics.classification_report(df_class['class'], df_class['predicted']))
+print(sklearn.metrics.confusion_matrix(df_class['class'], df_class['predicted']))
 classified = classified[np.newaxis, :, :].astype(rio.int16)
-outclas_file = base_dir + classConcession + '/sklearn_test/classified_3x3.tif'
+outclas_file = base_dir + classConcession + '/sklearn_test/classified3x3.tif'
 referencefile = base_dir + classConcession + '/' + classConcession + '*remap*.tif'
 file_list = sorted(glob.glob(referencefile))
 with rio.open(file_list[0]) as src:

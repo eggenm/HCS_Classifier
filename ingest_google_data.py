@@ -36,7 +36,11 @@ to_vals = list(key_df['code_simpl'].astype(float).values)
 #         'app_muba',
 #         'app_riau',
 #         'crgl_stal', 'gar_pgm', 'nbpol_ob', 'wlmr_calaro']
-sites = ['app_riau']
+sites = ['app_riau'
+    #,
+       #  'app_jambi'#,
+  #  'app_oki'
+    ]
 
 feature_dict = {}
 for site in sites:
@@ -53,24 +57,24 @@ all_json_coords = all_study_area.getInfo()['coordinates']
 # =============================================================================
 def getYearlyNdvi():
     yearly_ndvis = ee.Image()
-    #for year in range(2014, 2019):
-    year="ALL"
-    name = "s2_ndvi_" + str(year)
-    print("NAME:   ", name)
-    date_start = ee.Date.fromYMD(2016, 1, 1)
-    date_end = ee.Date.fromYMD(2019, 12, 31)
-    sentinel2 = ee.ImageCollection('COPERNICUS/S2')
-    sentinel2 = sentinel2.filterDate(date_start, date_end)
-    # Pre-filter to get less cloudy granules.
-    sentinel2 = sentinel2.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 25))
-    sentinel2 = sentinel2.filterBounds(all_study_area)
-    sentinel2 = sentinel2.map(sat_ops.maskS2clouds)
-    sentinel2 = sentinel2.map(sat_ops.addNDVI_s2)
-    ndviMean = sentinel2.select('NDVI').median()
-    ndviMean = ndviMean.rename(name+"_median")
-    ndviVar = sentinel2.select('NDVI').reduce(ee.Reducer.stdDev())
-    ndviVar = ndviVar.rename(name + "_var")
-    yearly_ndvis = yearly_ndvis.addBands(ndviMean).addBands(ndviVar)
+    for year in range(2016, 2019):
+        #year="ALL"
+        name = "s2_ndvi_" + str(year)
+        print("NAME:   ", name)
+        date_start = ee.Date.fromYMD(year, 1, 1)
+        date_end = ee.Date.fromYMD(year, 12, 31)
+        sentinel2 = ee.ImageCollection('COPERNICUS/S2')
+        sentinel2 = sentinel2.filterDate(date_start, date_end)
+        # Pre-filter to get less cloudy granules.
+        sentinel2 = sentinel2.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 45))
+        sentinel2 = sentinel2.filterBounds(all_study_area)
+        sentinel2 = sentinel2.map(sat_ops.maskS2clouds)
+        sentinel2 = sentinel2.map(sat_ops.addNDVI_s2)
+        ndviMean = sentinel2.select('NDVI').max()
+        ndviMean = ndviMean.rename(name+"_max")
+        ndviVar = sentinel2.select('NDVI').reduce(ee.Reducer.stdDev())
+        ndviVar = ndviVar.rename(name + "_var")
+        yearly_ndvis = yearly_ndvis.addBands(ndviMean)#.addBands(ndviVar)
     return yearly_ndvis
 
 
@@ -89,16 +93,22 @@ print(clean_l8_img.bandNames().getInfo())
 # Prep SAR data
 # =============================================================================
 # radarCollectionByYear = ee.ImageCollection(ee.List.sequence(2014,2018,1).map(prep_sar))
+radar_composite = ee.Image()
+for year in range(2014, 2019):
+    sentinel1 = ee.ImageCollection('COPERNICUS/S1_GRD')
+    date_start = ee.Date.fromYMD(year, 1, 1)
+    date_end = ee.Date.fromYMD(year, 12, 31)
+    print('RADAR YEAR:  ', year)
+    sentinel1 = sentinel1.filterDate(date_start, date_end)
+    sentinel1 = sentinel1.filter(ee.Filter.eq('instrumentMode', 'IW'))
+    sentinel1 = sentinel1.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
+    sentinel1 = sentinel1.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
+    sentinel1 = sentinel1.filterBounds(all_study_area)
+    sentinel1 = sentinel1.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'));
+    myRadar = ee.Image(sat_ops.prep_sar(sentinel1)).select(['VH','VV'], ['VH_'+str(year), 'VV_'+str(year)])
 
-sentinel1 = ee.ImageCollection('COPERNICUS/S1_GRD')
-sentinel1 = sentinel1.filterDate(date_start, date_end)
-sentinel1 = sentinel1.filter(ee.Filter.eq('instrumentMode', 'IW'))
-sentinel1 = sentinel1.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
-sentinel1 = sentinel1.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
-sentinel1 = sentinel1.filterBounds(all_study_area)
-sentinel1 = sentinel1.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'));
-
-radar_composite = ee.Image(sat_ops.prep_sar(sentinel1))
+    radar_composite = radar_composite.addBands(myRadar)
+#radar_composite = ee.Image(sat_ops.prep_sar(sentinel1))
 # =============================================================================
 # Prep Sentinel-2 data
 # =============================================================================
@@ -132,11 +142,12 @@ for site in sites:
     images = {
       #  'landsat': clean_l8_img,
       #        '_s2': clean_s2_img,
-              '_S2_ndvi': ndvis
-         #    'radar': radar_composite, 'class': strata_img
+          #   '_S2_ndvi': ndvis#S,
+           '_radar': radar_composite #, 'class': strata_img
         }
     for key, value in images.items():
         prefix = site + key
+        print('prefix:  ', prefix)
         url = value.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 60})
         filename = out_path + '\\' + site + '\\in\\' + prefix + '.zip'
         print(url)
