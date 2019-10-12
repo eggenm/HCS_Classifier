@@ -263,7 +263,7 @@ df_class = y.merge(x, left_index=True, right_index=True, how='left')
 X_class = df_class[[col for col in df_class.columns if col != 'class']]
 X_scaled_class = scale_data(X_class)
 for seed in range(1,4):
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.004, test_size=0.04,
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.003, test_size=0.02,
                                                         random_state=13*seed)
 
     # # =============================================================================
@@ -273,16 +273,16 @@ for seed in range(1,4):
               random_state=seed, oob_score = True, n_jobs = -1,
             #  class_weight = {0:0.33, 1: 0.33, 2: 0.34})
               class_weight ='balanced')
-    #randomforest_fitted_clf = clf.fit(X_train, y_train)
-    param_grid = [{'max_depth': [2, 10],
-                   'max_leaf_nodes': [10, 20, 50],
-                   'max_features': [.25, .5, .75]}]
-    grid_search = GridSearchCV(clf, param_grid, cv = 5, #scoring = 'balanced_accuracy',
-                               return_train_score = True, refit = True)
-
-    grid_search.fit(X_train, y_train)
-
-    randomforest_fitted_clf = grid_search.best_estimator_
+    randomforest_fitted_clf = clf.fit(X_train, y_train)
+    # param_grid = [{'max_depth': [2, 10],
+    #                'max_leaf_nodes': [10, 20, 50],
+    #                'max_features': [.25, .5, .75]}]
+    # grid_search = GridSearchCV(clf, param_grid, cv = 5, #scoring = 'balanced_accuracy',
+    #                            return_train_score = True, refit = True)
+    #
+    # grid_search.fit(X_train, y_train)
+    #
+    # randomforest_fitted_clf = grid_search.best_estimator_
     y_hat = randomforest_fitted_clf.predict(X_test)
     print('*************  RANDOM FOREST  - X_TEST  **********************')
     print(sklearn.metrics.classification_report(y_test, y_hat))
@@ -366,7 +366,14 @@ for seed in range(1,4):
     predictions[seed] = randomforest_fitted_clf.predict(X_scaled_class)
     #df['predicted'] = randomforest_fitted_clf.predict(X_scaled_class)
 temp=predictions.mode(axis=1)
+temp=temp.set_index(pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j']))
+print('temp.head()===',temp.head())
+print('temp.shape==',temp.shape)
+print(len(temp[temp.isna()]))
 df_class['predicted']=temp[0]#this should give majority class for the
+print('predicted.head()===',df_class['predicted'].head())
+print('predicted.shape==',df_class['predicted'].shape)
+print(len(df_class['predicted'][df_class['predicted'].isna()]))
 full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
 clas_df = pd.DataFrame(index = full_index)
 classified = clas_df.merge(df_class['predicted'], left_index = True, right_index = True, how = 'left').sort_index()
