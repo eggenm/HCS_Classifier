@@ -38,6 +38,10 @@ from sklearn.model_selection import RandomizedSearchCV
 base_dir = dirfuncs.guess_data_dir()
 concessions = ['app_jambi','app_riau']
 pixel_window_size = 1
+iterations = 40
+suffix = 'RF_x' + str(iterations) + '_at6_5__plusYearlyRadar.tif'
+stackData = False
+doGridSearch = True
 
 classes = {2: "HCSA",
            1: "Not_HCSA",
@@ -106,20 +110,21 @@ def stack_image_input_data(concession):
     input_dir = base_dir + concession + "/in/"
     print(input_dir)
     outtif = base_dir + concession + '/out/input_' + concession + '.tif'
-    file_list = sorted(glob.glob(input_dir+"/*.tif"))
-    with rasterio.open(file_list[0]) as src0:
-        meta = src0.meta
+    if stackData:
+        file_list = sorted(glob.glob(input_dir+"/*.tif"))
+        with rasterio.open(file_list[0]) as src0:
+            meta = src0.meta
 
-    # Update meta to reflect the number of layers
-    meta.update(count=len(file_list), dtype='float64')
+        # Update meta to reflect the number of layers
+        meta.update(count=len(file_list), dtype='float64')
 
-    # Read each layer and write it to stack
-    with rasterio.open(outtif, 'w', **meta) as dst:
-        for i, layer in enumerate(file_list, start=1):
-            print(i, '....', layer)
-            with rasterio.open(layer) as src1:
-                dst.write_band(i, src1.read(1).astype('float64'))
-    dst.close()
+        # Read each layer and write it to stack
+        with rasterio.open(outtif, 'w', **meta) as dst:
+            for i, layer in enumerate(file_list, start=1):
+                print(i, '....', layer)
+                with rasterio.open(layer) as src1:
+                    dst.write_band(i, src1.read(1).astype('float64'))
+        dst.close()
     return outtif
 
 def get_landcover_class_image(concession):
@@ -250,6 +255,10 @@ landcover = train_df['class'].values
 #y_encoded = encoder.transform(y)
 classConcession = 'app_oki'
 predictions = pd.DataFrame()
+clas_cols = ['prob_' + str(clas) for clas in classes.values()]
+probabilities_dict = {}
+
+
 outtif = stack_image_input_data(classConcession)
 with rio.open(outtif) as img_src:
     img = img_src.read()
@@ -262,8 +271,10 @@ y = get_classes(class_image)
 df_class = y.merge(x, left_index=True, right_index=True, how='left')
 X_class = df_class[[col for col in df_class.columns if col != 'class']]
 X_scaled_class = scale_data(X_class)
-for seed in range(1,32):
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0035, test_size=0.03,
+for key in classes.keys():
+    probabilities_dict[key]=pd.DataFrame()
+for seed in range(1,iterations):
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0065, test_size=0.03,
                                                         random_state=13*seed)
 
     # # =============================================================================
@@ -273,16 +284,18 @@ for seed in range(1,32):
               random_state=seed, oob_score = True, n_jobs = -1,
             #  class_weight = {0:0.33, 1: 0.33, 2: 0.34})
               class_weight ='balanced')
-    #randomforest_fitted_clf = clf.fit(X_train, y_train)
-    param_grid = [{'max_depth': [2, 10],
-                   'max_leaf_nodes': [10, 20, 50],
-                   'max_features': [.25, .5, .75]}]
-    grid_search = GridSearchCV(clf, param_grid, cv = 5, #scoring = 'balanced_accuracy',
-                               return_train_score = True, refit = True)
+    if doGridSearch:
+        param_grid = [{'max_depth': [2, 10],
+                       'max_leaf_nodes': [10, 20, 50],
+                       'max_features': [.25, .5, .75]}]
+        grid_search = GridSearchCV(clf, param_grid, cv = 5, #scoring = 'balanced_accuracy',
+                                   return_train_score = True, refit = True)
 
-    grid_search.fit(X_train, y_train)
+        grid_search.fit(X_train, y_train)
 
-    randomforest_fitted_clf = grid_search.best_estimator_
+        randomforest_fitted_clf = grid_search.best_estimator_
+    else:
+        randomforest_fitted_clf = clf.fit(X_train, y_train)
     y_hat = randomforest_fitted_clf.predict(X_test)
     print('*************  RANDOM FOREST  - X_TEST  **********************')
     print(sklearn.metrics.classification_report(y_test, y_hat))
@@ -364,17 +377,20 @@ for seed in range(1,32):
 
 
     predictions[seed] = randomforest_fitted_clf.predict(X_scaled_class)
-    #df['predicted'] = randomforest_fitted_clf.predict(X_scaled_class)
-temp=predictions.mode(axis=1)
-temp=temp.set_index(pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j']))
-print('temp.head()===',temp.head())
-print('temp.shape==',temp.shape)
-print(len(temp[temp.isna()]))
-df_class['predicted']=temp[0]#this should give majority class for the
-print('predicted.head()===',df_class['predicted'].head())
-print('predicted.shape==',df_class['predicted'].shape)
-print(len(df_class['predicted'][df_class['predicted'].isna()]))
+    #mytemp=randomforest_fitted_clf.predict_proba(X_scaled_class)[:,0]
+    for key in classes.keys():
+        probabilities_dict[key][seed] = randomforest_fitted_clf.predict_proba(X_scaled_class)[:,key]
+
+
+temp = predictions.mode(axis=1)
 full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
+temp = temp.set_index(full_index)
+for key in classes.keys():
+    probabilities_dict[key] = pd.DataFrame(probabilities_dict[key].mean(axis=1)).set_index(full_index)
+    probabilities_dict[key] = probabilities_dict[key].values.reshape(shape[1], shape[2])
+
+df_class['predicted']=temp[0]#this should give majority class for the
+
 clas_df = pd.DataFrame(index = full_index)
 classified = clas_df.merge(df_class['predicted'], left_index = True, right_index = True, how = 'left').sort_index()
 classified = classified['predicted'].values.reshape(shape[1], shape[2])
@@ -390,8 +406,10 @@ print(df_class.shape)
 print(sklearn.metrics.classification_report(df_class['class'], df_class['predicted']))
 print(sklearn.metrics.confusion_matrix(df_class['class'], df_class['predicted']))
 classified = classified[np.newaxis, :, :].astype(rio.int16)
-outclas_file = base_dir + classConcession + '/sklearn_test/classifiedRF_x31_at3_5__plusYearlyRadar.tif'
+outclas_file = base_dir + classConcession + '/sklearn_test/classified' + suffix
 referencefile = base_dir + classConcession + '/' + classConcession + '*remap*.tif'
+prob_file = base_dir + classConcession +  '/sklearn_test/prob_file' + suffix
+
 file_list = sorted(glob.glob(referencefile))
 with rio.open(file_list[0]) as src:
     height = src.height
@@ -405,7 +423,16 @@ with rio.open(file_list[0]) as src:
                   crs = crs, dtype = dtype, 
                   count = count, transform = transform) as clas_dst:
         clas_dst.write(classified)
-
+    with rio.open(prob_file, 'w', driver = 'GTiff',
+                  height = height, width = width,
+                  crs = crs, dtype = rio.float32,
+                  count = len(randomforest_fitted_clf.classes_), transform = transform) as prob_dst:
+        for key, value in probabilities_dict.items():
+            print(key, '....')
+            prob_dst.write_band(key+1, value.astype(rio.float32))
+prob_dst.close()
+clas_dst.close()
+src.close()
 # =============================================================================
 # Blockwise predicted map (could be useful for larger maps)
 # Probably would need to be modified to work with windowed values rather than multiband image
@@ -457,8 +484,8 @@ class classify_block:
         probabilities = probabilities.astype(rio.float32)
         return probabilities
 
-clas_file = base_dir + classConcession +  '/sklearn_test/class_file.tif'
-prob_file = base_dir + classConcession +  '/sklearn_test/prob_file.tif'
+#clas_file = base_dir + classConcession +  '/sklearn_test/class_file.tif'
+prob_file = base_dir + classConcession +  '/sklearn_test/prob_file' + suffix
 
 # with rio.open(outtif) as src:
 #     clas_dst = rio.open(clas_file, 'w', driver = 'GTiff',
