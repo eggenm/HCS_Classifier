@@ -7,8 +7,11 @@ Created on Wed Sep 11 15:12:56 2019
 # =============================================================================
 # Imports
 # =============================================================================
+import ee
+ee.Initialize()
 import keras
 import dirfuncs
+import hcs_database as hcs_db
 import glob
 import pandas as pd
 from pathlib import Path
@@ -17,6 +20,7 @@ import numpy as np
 from osgeo import gdal,gdalconst
 import rasterio as rio
 import rasterio.warp
+from rasterio.mask import mask
 import rasterio.crs
 from rasterio.warp import calculate_default_transform, reproject, Resampling
 from sklearn.ensemble import RandomForestClassifier as rfc
@@ -28,6 +32,11 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 import keras.wrappers.scikit_learn
 from scipy.stats import reciprocal
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.metrics import r2_score
+from rfpimp import permutation_importances
+import matplotlib.pyplot as plt
+
+
 
 
 
@@ -36,15 +45,15 @@ from sklearn.model_selection import RandomizedSearchCV
 # Identify files
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
-concessions = ['app_jambi','app_riau']
+concessions = [ 'app_oki']
+classConcession = 'app_riau'
 pixel_window_size = 1
-iterations = 40
-suffix = 'RF_x' + str(iterations) + '_at6_5__plusYearlyRadar.tif'
-stackData = False
+iterations = 1
+suffix = 'RF_x' + str(iterations) + '_at_200_44BandInput_plus_FeatImp.tif'
+stackData = True
 doGridSearch = True
 
-classes = {2: "HCSA",
-           1: "Not_HCSA",
+classes = {1: "HCSA",
            0: "NA"}
 
 # =============================================================================
@@ -123,12 +132,15 @@ def stack_image_input_data(concession):
             for i, layer in enumerate(file_list, start=1):
                 print(i, '....', layer)
                 with rasterio.open(layer) as src1:
-                    dst.write_band(i, src1.read(1).astype('float64'))
+                    band = src1.read(1).astype('float64')
+                   # print('Max:  ', band.max())
+                   # print('Min:  ', band.min())
+                    dst.write_band(i, band)
         dst.close()
     return outtif
 
 def get_landcover_class_image(concession):
-    clas_file = base_dir + concession + '/' + concession + '*remap*.tif'
+    clas_file = base_dir + concession + '/' + concession + '_remap_2class.remapped.tif'
     print(clas_file)
     file_list = sorted(glob.glob(clas_file))
     ## Read classification labels
@@ -154,19 +166,27 @@ def combine_input_landcover(input, landcover):
     return data_df
 
 def scale_data(x):
+    print('x min:  ', x.min())
+    print('xmax:  ', x.max())
     scaler = StandardScaler()
     x_scaled = scaler.fit_transform(x.astype(np.float64))
+    print('x_scaled min:  ',x_scaled.min())
+    print('x_scaled max:  ', x_scaled.max())
     return x_scaled
 
-def mask_water(x, concession):
-    with rio.open(base_dir + concession + "/in/" + concession + "radar.VH.tif") as radar1:
+def mask_water(an_img, concession):
+    with rio.open(base_dir + concession + "/in/" + concession + "_radar.VH_2015.tif") as radar1:
         radar = radar1.read()
     watermask = np.empty(radar.shape, dtype=rasterio.uint8)
-    watermask = np.where(radar > -17.85, 1, np.nan).reshape(radar.shape[1], radar.shape[2])
+    watermask = np.where(radar > -17.85, 1, -999999).reshape(radar.shape[1], radar.shape[2])
     water_img = Image.fromarray(255 * watermask.astype('uint8'))
     water_img.show()
-    masked = x * watermask
-    return masked
+    print(an_img.max())
+    print(an_img.min())
+    an_img = an_img*watermask
+    print(an_img.max())
+    print(an_img.min())
+    return an_img
 
 def get_all_concession_data(concessions):
     allInput = np.empty((0), 'float64')
@@ -187,10 +207,33 @@ def get_all_concession_data(concessions):
         if data.empty:
             data=combine_input_landcover(x,y)
         else:
-            print("*****************IN CONCAT********************")
             data = pd.concat([data, combine_input_landcover(x,y)], ignore_index=True)
             print("  data.shape:  ", data.shape)
     return data
+
+def r2(rf, X_train, y_train):
+    return r2_score(y_train, rf.predict(X_train))
+
+def forest_importance_ranking(forest):
+    importances = forest.feature_importances_
+    std = np.std([tree.feature_importances_ for tree in forest.estimators_],
+                 axis=0)
+    indices = np.argsort(importances)[::-1]
+
+    # Print the feature ranking
+    print("Feature ranking:")
+
+    for f in range(X.shape[1]):
+        print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
+
+    # Plot the feature importances of the forest
+    plt.figure()
+    plt.title("Feature importances")
+    plt.bar(range(X.shape[1]), importances[indices],
+            color="r", yerr=std[indices], align="center")
+    plt.xticks(range(X.shape[1]), indices)
+    plt.xlim([-1, X.shape[1]])
+    plt.show()
 
 def extractData(X_scaled, y, imagepath, concession):
 
@@ -200,7 +243,7 @@ def extractData(X_scaled, y, imagepath, concession):
     shape = img.shape
     print("shape:  ", shape)
     windows = gen_windows(img, 1)
-    clas_file = base_dir + concession + '/' + concession + '*remap*.tif'
+    clas_file = base_dir + concession + '/' + concession + '_remap_2class.remapped.tif'
     print(clas_file)
     file_list = sorted(glob.glob(clas_file))
     ## Read classification labels
@@ -241,7 +284,6 @@ def extractData(X_scaled, y, imagepath, concession):
     print('*****y shape:  ', y.shape)
     return X_scaled, y, data_df, full_index, shape
 
-
 train_df = get_all_concession_data(concessions)
 
 #data_df = combine_input_landcover(allInput, landcover)
@@ -253,7 +295,7 @@ landcover = train_df['class'].values
 #encoder.fit(y)
 #n_classes = encoder.classes_.shape[0]
 #y_encoded = encoder.transform(y)
-classConcession = 'app_oki'
+
 predictions = pd.DataFrame()
 clas_cols = ['prob_' + str(clas) for clas in classes.values()]
 probabilities_dict = {}
@@ -266,21 +308,22 @@ with rio.open(outtif) as img_src:
     x = gen_windows(img, pixel_window_size)
 class_image = get_landcover_class_image(classConcession)
 class_image=mask_water(class_image, classConcession)
+
 y = get_classes(class_image)
-#data_df = combine_input_landcover(x,y)
+#df_class = combine_input_landcover(x,y)
 df_class = y.merge(x, left_index=True, right_index=True, how='left')
 X_class = df_class[[col for col in df_class.columns if col != 'class']]
 X_scaled_class = scale_data(X_class)
 for key in classes.keys():
     probabilities_dict[key]=pd.DataFrame()
-for seed in range(1,iterations):
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0065, test_size=0.03,
+for seed in range(1,iterations+1):
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0200, test_size=0.1,
                                                         random_state=13*seed)
 
     # # =============================================================================
     # # Train and test random forest classifier
     # # =============================================================================
-    clf = rfc(n_estimators=60, max_depth = 6, max_features = .3, max_leaf_nodes = 10,
+    clf = rfc(n_estimators=500, max_depth = 6, max_features = .3, max_leaf_nodes = 10,
               random_state=seed, oob_score = True, n_jobs = -1,
             #  class_weight = {0:0.33, 1: 0.33, 2: 0.34})
               class_weight ='balanced')
@@ -306,6 +349,9 @@ for seed in range(1,iterations):
     print(sklearn.metrics.classification_report(y_train, y_hat))
     print(sklearn.metrics.confusion_matrix(y_train, y_hat))
 
+    #perm_imp_rfpimp = permutation_importances(randomforest_fitted_clf, X_train, y_train, r2)
+    #print(perm_imp_rfpimp)
+    forest_importance_ranking(randomforest_fitted_clf)
     # =============================================================================
     # Neural network
     # =============================================================================
@@ -382,22 +428,31 @@ for seed in range(1,iterations):
         probabilities_dict[key][seed] = randomforest_fitted_clf.predict_proba(X_scaled_class)[:,key]
 
 
-temp = predictions.mode(axis=1)
+if iterations>1:
+    temp = predictions.mode(axis=1)
+else:
+    temp=predictions
 full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
 temp = temp.set_index(full_index)
 for key in classes.keys():
-    probabilities_dict[key] = pd.DataFrame(probabilities_dict[key].mean(axis=1)).set_index(full_index)
+    if iterations > 1:
+        tempMean = probabilities_dict[key].mean(axis=1)
+    else:
+        tempMean = probabilities_dict[key]
+    probabilities_dict[key] = pd.DataFrame(tempMean).set_index(full_index)
     probabilities_dict[key] = probabilities_dict[key].values.reshape(shape[1], shape[2])
 
-df_class['predicted']=temp[0]#this should give majority class for the
-
+if(iterations>1):
+    df_class['predicted']=temp[0]#this should give majority class for the
+else:
+    df_class['predicted'] = temp
 clas_df = pd.DataFrame(index = full_index)
 classified = clas_df.merge(df_class['predicted'], left_index = True, right_index = True, how = 'left').sort_index()
 classified = classified['predicted'].values.reshape(shape[1], shape[2])
 clas_img = ((classified * 255)/2).astype('uint8')
 clas_img = mask_water(clas_img,classConcession)
 clas_img = Image.fromarray(clas_img)
-clas_img.show()
+#clas_img.show()
 print('*************  RANDOM FOREST  - ACTUAL  **********************')
 print(df_class.shape)
 df_class[df_class <= -999] = np.nan
@@ -407,7 +462,7 @@ print(sklearn.metrics.classification_report(df_class['class'], df_class['predict
 print(sklearn.metrics.confusion_matrix(df_class['class'], df_class['predicted']))
 classified = classified[np.newaxis, :, :].astype(rio.int16)
 outclas_file = base_dir + classConcession + '/sklearn_test/classified' + suffix
-referencefile = base_dir + classConcession + '/' + classConcession + '*remap*.tif'
+referencefile = base_dir + classConcession + '/' + classConcession + '_remap_2class.remapped.tif'
 prob_file = base_dir + classConcession +  '/sklearn_test/prob_file' + suffix
 
 file_list = sorted(glob.glob(referencefile))

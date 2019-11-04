@@ -17,20 +17,20 @@ l8_band_dict =  {'B1': 'ublue',
 
 s2_band_dict = {
     # 'B1': 'S2_ublue',
-    #           'B2': 'S2_blue',
-    #           'B3': 'S2_green',
-    #           'B4': 'S2_red',
-    #         'B5': 'rededge1'#,
-    #         'B6': 'rededge2',
-    #         'B7': 'rededge3'
+              'B2': 'S2_blue',
+               'B3': 'S2_green',
+             'B4': 'S2_red',
+             'B5': 'rededge1',
+            'B6': 'rededge2',
+           'B7': 'rededge3',
     # ,
-    #            'B8': 'S2_nir',
-    #            'B8A': 'S2_nir2',
-    #            'B9': 'S2_vape'
+               'B8': 'S2_nir',
+                'B8A': 'S2_nir2',
+              'B9': 'S2_vape',
     #,
-               'B10': 'S2_swir1',
-             'B11': 'S2_swir2',
-             'B12': 'S2_swir3',
+              'B10': 'S2_swir1',
+            'B11': 'S2_swir2',
+           'B12': 'S2_swir3',
               'nd': 'ndvi_s2'
 }
 
@@ -58,6 +58,17 @@ def maskS2clouds(image):
     # Both flags should be set to zero, indicating clear conditions.
     mask = qa.bitwiseAnd(cloudBitMask).eq(0).And(qa.bitwiseAnd(cirrusBitMask).eq(0));
     return image.updateMask(mask).divide(10000)
+
+def maskCloudsL5(image):
+  score = ee.Algorithms.Landsat.simpleCloudScore(image).select('cloud');
+  return image.updateMask(score.lte(30));
+
+
+def addNDVI_l5(image):
+  return image.addBands(image.normalizedDifference(['B4', 'B3']).rename('NDVI'));
+
+def addNDVI_l8(image):
+  return image.addBands(image.normalizedDifference(['B5', 'B4']).rename('NDVI'));
 
 
 def prep_ls8(img):

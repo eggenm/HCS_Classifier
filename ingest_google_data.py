@@ -22,7 +22,7 @@ out_path = 'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC'
 # =============================================================================
 year='ALL'
 date_start = ee.Date.fromYMD(2014, 1, 1)
-date_end = ee.Date.fromYMD(2018, 12, 31)
+date_end = ee.Date.fromYMD(2015, 12, 31)
 
 # =============================================================================
 # Load study data
@@ -36,10 +36,11 @@ to_vals = list(key_df['code_simpl'].astype(float).values)
 #         'app_muba',
 #         'app_riau',
 #         'crgl_stal', 'gar_pgm', 'nbpol_ob', 'wlmr_calaro']
-sites = ['app_riau'
+sites = ['gar_pgm',
+    # 'app_riau'
     #,
-       #  'app_jambi'#,
-  #  'app_oki'
+        'app_jambi',#,
+   'app_oki'
     ]
 
 feature_dict = {}
@@ -55,7 +56,7 @@ all_json_coords = all_study_area.getInfo()['coordinates']
 # =============================================================================
 # Get Sent2 Ndvi
 # =============================================================================
-def getYearlyNdvi():
+def getYearlyNdvi_s2():
     yearly_ndvis = ee.Image()
     for year in range(2016, 2019):
         #year="ALL"
@@ -65,9 +66,13 @@ def getYearlyNdvi():
         date_end = ee.Date.fromYMD(year, 12, 31)
         sentinel2 = ee.ImageCollection('COPERNICUS/S2')
         sentinel2 = sentinel2.filterDate(date_start, date_end)
+
         # Pre-filter to get less cloudy granules.
         sentinel2 = sentinel2.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 45))
         sentinel2 = sentinel2.filterBounds(all_study_area)
+        print('sentinel2 size:  ', sentinel2.size().getInfo())
+        if (sentinel2.size().lt( ee.Number(1)).getInfo() ):
+            continue
         sentinel2 = sentinel2.map(sat_ops.maskS2clouds)
         sentinel2 = sentinel2.map(sat_ops.addNDVI_s2)
         ndviMean = sentinel2.select('NDVI').max()
@@ -79,9 +84,76 @@ def getYearlyNdvi():
 
 
 # =============================================================================
+# Get Landsat5 NDVI
+# =============================================================================
+def getYearlyNdvi_L5():
+    yearly_ndvisL5 = ee.Image()
+    for year in range(1999, 2012):
+        #year="ALL"
+        name = "ls5_ndvi_" + str(year)
+        print("NAME:   ", name)
+        date_start = ee.Date.fromYMD(year, 1, 1)
+        date_end = ee.Date.fromYMD(year, 12, 31)
+        l5 = ee.ImageCollection('LANDSAT/LT05/C01/T1_SR')
+        l5 = l5.filterDate(date_start, date_end)
+
+        # Pre-filter to get less cloudy granules.
+        #sentinel2 = sentinel2.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 45))
+        l5 = l5.filterBounds(all_study_area)
+        print('L5 size:  ', l5.size().getInfo())
+        print('L5 boolean eval: ', l5.size().lt( ee.Number(1)).getInfo() )
+        if (l5.size().lt( ee.Number(1)).getInfo() ):
+            continue
+        #l5 = l5.map(sat_ops.maskCloudsL5)
+        l5 = l5.map(sat_ops.addNDVI_l5)
+        ndviMax = l5.select('NDVI').max()
+        ndviMax = ndviMax.rename(name+"_max")
+        ndviVar = l5.select('NDVI').reduce(ee.Reducer.stdDev())
+        ndviVar = ndviVar.rename(name + "_var")
+        yearly_ndvisL5 = yearly_ndvisL5.addBands(ndviMax)#.addBands(ndviVar)
+    yearly_ndvisL5 = yearly_ndvisL5.set('SENSOR_ID', 'TM');
+    return yearly_ndvisL5
+
+
+
+# =============================================================================
+# Get Landsat8 NDVI
+# =============================================================================
+def getYearlyNdvi_L8():
+    yearly_ndvisL8 = ee.Image()
+    for year in range(2011, 2019):
+        #year="ALL"
+        name = "ls8_ndvi_" + str(year)
+        print("NAME:   ", name)
+        date_start = ee.Date.fromYMD(year, 1, 1)
+        date_end = ee.Date.fromYMD(year, 12, 31)
+        l8 = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
+        l8 = l8.filterDate(date_start, date_end)
+        # Pre-filter to get less cloudy granules.
+        #sentinel2 = sentinel2.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 45))
+        l8 = l8.filterBounds(all_study_area)
+        print('L8 size:  ',l8.size().getInfo() )
+        if (l8.size().lt( ee.Number(1)).getInfo() ):
+            continue
+        l8 = l8.map(sat_ops.maskCloudsLandsat8)
+        l8 = l8.map(sat_ops.addNDVI_l8)
+        ndviMax = l8.select('NDVI').max()
+        ndviMax = ndviMax.rename(name+"_max")
+        ndviVar = l8.select('NDVI').reduce(ee.Reducer.stdDev())
+        ndviVar = ndviVar.rename(name + "_var")
+        yearly_ndvisL8 = yearly_ndvisL8.addBands(ndviMax)#.addBands(ndviVar)
+    return yearly_ndvisL8
+
+# =============================================================================
+# SRTM
+# =============================================================================
+def getDEM():
+    dem = ee.Image("USGS/SRTMGL1_003").clip(all_study_area)
+    return dem
+# =============================================================================
 # Prep landsat data
 # =============================================================================
-ic = ee.ImageCollection('LANDSAT/LC08/C01/T2_SR')
+ic = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
 ic = ic.filterDate(date_start, date_end)
 ic = ic.filterMetadata(name='WRS_ROW', operator='less_than', value=120)
 ic = ic.filterBounds(all_study_area)
@@ -94,7 +166,7 @@ print(clean_l8_img.bandNames().getInfo())
 # =============================================================================
 # radarCollectionByYear = ee.ImageCollection(ee.List.sequence(2014,2018,1).map(prep_sar))
 radar_composite = ee.Image()
-for year in range(2014, 2019):
+for year in range(2015, 2019):
     sentinel1 = ee.ImageCollection('COPERNICUS/S1_GRD')
     date_start = ee.Date.fromYMD(year, 1, 1)
     date_end = ee.Date.fromYMD(year, 12, 31)
@@ -117,10 +189,15 @@ sentinel2 = sentinel2.filterDate(date_start, date_end)
 # Pre-filter to get less cloudy granules.
 sentinel2 = sentinel2.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 35))
 sentinel2 = sentinel2.filterBounds(all_study_area)
-ndvis = getYearlyNdvi()
+ndvis_s2 = getYearlyNdvi_s2()
+ndvis_l8 = getYearlyNdvi_L8()
+ndvis_l5 = getYearlyNdvi_L5()
+elevation = getDEM().select('elevation');
+slope = ee.Terrain.slope(elevation);
+dem = ee.Image(elevation.addBands(slope));
 sentinel2_masked = sentinel2.map(sat_ops.prep_s2)
-clean_s2_img=ee.Image(sentinel2_masked.median())
-#clean_s2_img = sentinel2_masked.qualityMosaic('ndvi_s2')
+clean_s2_img_med=ee.Image(sentinel2_masked.median())
+#clean_s2_img_green = sentinel2_masked.qualityMosaic('ndvi_s2')
 
 # =============================================================================
 # Create site-level images for classification with reclassed strata and landsat data
@@ -132,6 +209,22 @@ bands.extend(list(sat_ops.s1_band_dict.values()))
 
 print(bands)
 img_dict = dict.fromkeys(sites, 0)
+
+def downloadRemappedFile(site):
+    prefix = site + '_remap_2class'
+    # fd.close()
+    filename2 = out_path + '/' + site + '/' + prefix + '.zip'
+    url = strata_img.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 60})
+    r = requests.get(url, stream=True)
+    with open(filename2, 'wb') as fd:
+         for chunk in r.iter_content(chunk_size=1024):
+             fd.write(chunk)
+    # # Extract the GeoTIFF for the zipped download
+    # print(filename1)
+    fd.close()
+    z = zipfile.ZipFile(filename2)
+    z.extractall(path=out_path + '/' + site)
+
 for site in sites:
     strata_img = ee.Image(hcs_db.rasters[site])
     strata_img = strata_img.remap(from_vals, to_vals, 4)
@@ -141,9 +234,12 @@ for site in sites:
     strata_img = strata_img.int()
     images = {
       #  'landsat': clean_l8_img,
-      #        '_s2': clean_s2_img,
-          #   '_S2_ndvi': ndvis#S,
-           '_radar': radar_composite #, 'class': strata_img
+              '_median_s2': clean_s2_img_med
+         #    '_S2_ndvi': ndvis,#S,
+    #    '_L8_ndvi':ndvis_l8,
+     #   '_l5_ndvi': ndvis_l5
+      #     '_radar': radar_composite #, 'class': strata_img
+   #     '_dem': dem
         }
     for key, value in images.items():
         prefix = site + key
@@ -179,19 +275,7 @@ for site in sites:
     #     for chunk in r.iter_content(chunk_size=1024):
     #         fd.write(chunk)
     #
-    # prefix = site + '_classRemap'
-    # fd.close()
-    # filename2 = out_path + '/' + site + '/' + prefix + '.zip'
-    # url = strata_img.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
-    # r = requests.get(url, stream=True)
-    # with open(filename2, 'wb') as fd:
-    #     for chunk in r.iter_content(chunk_size=1024):
-    #         fd.write(chunk)
-    # # Extract the GeoTIFF for the zipped download
-    # print(filename1)
-    # fd.close()
-    # z = zipfile.ZipFile(filename1)
-    # z.extractall(path=out_path + '/' + site)
+
     # # Extract the GeoTIFF for the zipped download
     # z = zipfile.ZipFile(filename2)
     # z.extractall(path=out_path + '/' + site)
