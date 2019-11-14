@@ -37,8 +37,8 @@ to_vals = list(key_df['code_simpl'].astype(float).values)
 #         'app_riau',
 #         'crgl_stal', 'gar_pgm', 'nbpol_ob', 'wlmr_calaro']
 sites = ['gar_pgm',
-    # 'app_riau'
-    #,
+     'app_riau'
+    ,
         'app_jambi',#,
    'app_oki'
     ]
@@ -210,11 +210,11 @@ bands.extend(list(sat_ops.s1_band_dict.values()))
 print(bands)
 img_dict = dict.fromkeys(sites, 0)
 
-def downloadRemappedFile(site):
+def downloadLandcoverFiles(site):
     prefix = site + '_remap_2class'
     # fd.close()
     filename2 = out_path + '/' + site + '/' + prefix + '.zip'
-    url = strata_img.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 60})
+    url = strata_remapped.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 60})
     r = requests.get(url, stream=True)
     with open(filename2, 'wb') as fd:
          for chunk in r.iter_content(chunk_size=1024):
@@ -225,22 +225,39 @@ def downloadRemappedFile(site):
     z = zipfile.ZipFile(filename2)
     z.extractall(path=out_path + '/' + site)
 
+    prefix = site + '_all_class'
+    # fd.close()
+    filename2 = out_path + '/' + site + '/' + prefix + '.zip'
+    url = strata_img.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 60})
+    r = requests.get(url, stream=True)
+    with open(filename2, 'wb') as fd:
+        for chunk in r.iter_content(chunk_size=1024):
+            fd.write(chunk)
+    # # Extract the GeoTIFF for the zipped download
+    # print(filename1)
+    fd.close()
+    z = zipfile.ZipFile(filename2)
+    z.extractall(path=out_path + '/' + site)
+
 for site in sites:
     strata_img = ee.Image(hcs_db.rasters[site])
-    strata_img = strata_img.remap(from_vals, to_vals, 4)
+    strata_remapped = strata_img.remap(from_vals, to_vals, 4)
+    strata_img = strata_img.remap(from_vals, from_vals)
     geometry = strata_img.geometry()
     coords = geometry.coordinates()
     json_coords = coords.getInfo()
+    strata_remapped = strata_remapped.int()
     strata_img = strata_img.int()
     images = {
       #  'landsat': clean_l8_img,
-              '_median_s2': clean_s2_img_med
+         #     '_median_s2': clean_s2_img_med
          #    '_S2_ndvi': ndvis,#S,
     #    '_L8_ndvi':ndvis_l8,
      #   '_l5_ndvi': ndvis_l5
       #     '_radar': radar_composite #, 'class': strata_img
    #     '_dem': dem
         }
+    downloadLandcoverFiles(site)
     for key, value in images.items():
         prefix = site + key
         print('prefix:  ', prefix)

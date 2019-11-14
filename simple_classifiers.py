@@ -11,6 +11,7 @@ import ee
 ee.Initialize()
 import keras
 import dirfuncs
+import data_helper as helper
 import hcs_database as hcs_db
 import glob
 import pandas as pd
@@ -45,171 +46,39 @@ import matplotlib.pyplot as plt
 # Identify files
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
-concessions = [ 'app_oki']
+concessions = [ 'app_riau']
 classConcession = 'app_riau'
 pixel_window_size = 1
 iterations = 1
 suffix = 'RF_x' + str(iterations) + '_at_200_44BandInput_plus_FeatImp.tif'
-stackData = True
-doGridSearch = True
+doGridSearch = False
 
-classes = {1: "HCSA",
-           0: "NA"}
+#classes = {1: "HCSA",
+     #      0: "NA"}
 
-# =============================================================================
-# FUNCTIONS:  Read and prep raster data
-# =============================================================================
-def return_window(img, i, j, n):
-    """
-    Parameters
-    ----------
-    array: np array
-        Array of image to pull from
-        
-    i: int
-        row location of center
-    
-    j: int
-        column location of center
-    
-    n: int
-        width of moving window
-    
-    Returns
-    -------
-    window: np array
-        nxn array of values centered around pixel i,j        
-    """
-    shift = (n-1)/2
-    window = img[:, int(i-shift):int(i+shift+1), int(j-shift):int(j+shift+1)]
-    return window
-
-def gen_windows(array, n):
-    """
-    Parameters
-    ----------
-    array: np array
-        Image from which to draw windows
-    
-    n: int
-        width of moving window
-    
-    Returns
-    -------
-    windows: pandas dataframe
-        df with ixj rows, with one column for every pixel values in nxn window
-        of pixel i,j
-    """
-    shape = array.shape
-    start = int((n-1)/2)
-    end_i = shape[1] - start
-    end_j = shape[2] - start
-    win_dict = {}
-    for i in range(start, end_i):
-        for j in range(start, end_j):
-            win_dict[(i,j)] = return_window(array, i, j, n)
-    windows = pd.Series(win_dict)
-    windows.index.names = ['i', 'j']
-    index = windows.index
-    windows = pd.DataFrame(windows.apply(lambda x: x.flatten()).values.tolist(), index = index)
-    return(windows)
-
-
-def stack_image_input_data(concession):
-    input_dir = base_dir + concession + "/in/"
-    print(input_dir)
-    outtif = base_dir + concession + '/out/input_' + concession + '.tif'
-    if stackData:
-        file_list = sorted(glob.glob(input_dir+"/*.tif"))
-        with rasterio.open(file_list[0]) as src0:
-            meta = src0.meta
-
-        # Update meta to reflect the number of layers
-        meta.update(count=len(file_list), dtype='float64')
-
-        # Read each layer and write it to stack
-        with rasterio.open(outtif, 'w', **meta) as dst:
-            for i, layer in enumerate(file_list, start=1):
-                print(i, '....', layer)
-                with rasterio.open(layer) as src1:
-                    band = src1.read(1).astype('float64')
-                   # print('Max:  ', band.max())
-                   # print('Min:  ', band.min())
-                    dst.write_band(i, band)
-        dst.close()
-    return outtif
-
-def get_landcover_class_image(concession):
-    clas_file = base_dir + concession + '/' + concession + '_remap_2class.remapped.tif'
-    print(clas_file)
-    file_list = sorted(glob.glob(clas_file))
-    ## Read classification labels
-    with rio.open(file_list[0]) as clas_src:
-        clas = clas_src.read()
-    return clas
-
-def get_classes(classImage):
-    clas_dict = {}
-    shape=classImage.shape
-    for i in range(classImage.shape[1]):
-        for j in range(classImage.shape[2]):
-            clas_dict[(i, j)] = classImage[0, i, j]
-    full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
-    classes = pd.DataFrame({'class': pd.Series(clas_dict)}, index=full_index)
-    return classes
-
-def combine_input_landcover(input, landcover):
-    data_df = landcover.merge(input, left_index=True, right_index=True, how='left')
-    data_df[data_df <= -999] = np.nan
-    data_df = data_df.dropna()
-    print('*****data_df shape:  ', data_df.shape)
-    return data_df
-
-def scale_data(x):
-    print('x min:  ', x.min())
-    print('xmax:  ', x.max())
-    scaler = StandardScaler()
-    x_scaled = scaler.fit_transform(x.astype(np.float64))
-    print('x_scaled min:  ',x_scaled.min())
-    print('x_scaled max:  ', x_scaled.max())
-    return x_scaled
-
-def mask_water(an_img, concession):
-    with rio.open(base_dir + concession + "/in/" + concession + "_radar.VH_2015.tif") as radar1:
-        radar = radar1.read()
-    watermask = np.empty(radar.shape, dtype=rasterio.uint8)
-    watermask = np.where(radar > -17.85, 1, -999999).reshape(radar.shape[1], radar.shape[2])
-    water_img = Image.fromarray(255 * watermask.astype('uint8'))
-    water_img.show()
-    print(an_img.max())
-    print(an_img.min())
-    an_img = an_img*watermask
-    print(an_img.max())
-    print(an_img.min())
-    return an_img
-
-def get_all_concession_data(concessions):
-    allInput = np.empty((0), 'float64')
-    landcover = np.empty((0), 'int')
-    data = pd.DataFrame()
-    for concession in concessions:
-        outtif = stack_image_input_data(concession)
-        with rio.open(outtif) as img_src:
-            img = img_src.read()
-            x = gen_windows(img, pixel_window_size)
-            print('x.shape:  ', x.shape)
-          #  allInput = np.append(allInput, scale_data(x))
-          #  print('allInput.shape:  ',allInput.shape)
-        class_image = get_landcover_class_image(concession)
-        class_image = mask_water(class_image, concession)
-        y = get_classes(class_image)
-        print('y.shape:  ', y.shape)
-        if data.empty:
-            data=combine_input_landcover(x,y)
-        else:
-            data = pd.concat([data, combine_input_landcover(x,y)], ignore_index=True)
-            print("  data.shape:  ", data.shape)
-    return data
+classes = {
+1:	'HDF',
+2:	'MDF',
+3:	'LDF',
+4:	'YRF',
+5:	'YS',
+6:	'OL',
+7:	'F',
+8:	'E',
+9:	'G',
+10:	'NP',
+11:	'OP',
+12:	'DF',
+13:	'C',
+14:	'R',
+15:	'RT',
+16:	'W',
+17:	'P',
+18:	'SH',
+19:	'AQ',
+20:	'AG',
+21:	'TP'
+}
 
 def r2(rf, X_train, y_train):
     return r2_score(y_train, rf.predict(X_train))
@@ -235,95 +104,48 @@ def forest_importance_ranking(forest):
     plt.xlim([-1, X.shape[1]])
     plt.show()
 
-def extractData(X_scaled, y, imagepath, concession):
 
-    with rio.open(imagepath) as img_src:
-        img = img_src.read()
-
-    shape = img.shape
-    print("shape:  ", shape)
-    windows = gen_windows(img, 1)
-    clas_file = base_dir + concession + '/' + concession + '_remap_2class.remapped.tif'
-    print(clas_file)
-    file_list = sorted(glob.glob(clas_file))
-    ## Read classification labels
-    with rio.open(file_list[0]) as clas_src:
-        clas = clas_src.read()
-    # with rio.open(base_dir + concession + "/in/" + concession +"radar.VH.tif") as radar1:
-    #     radar = radar1.read()
-    #
-    # watermask = np.empty(radar.shape, dtype=rasterio.uint8)
-    # watermask = np.where(radar > -17.75, 1, np.nan).reshape(radar.shape[1], radar.shape[2])
-    # water_img = Image.fromarray(255 * watermask.astype('uint8'))
-    # water_img.show()
-    # clas = clas * watermask
-    clas_dict = {}
-
-    for i in range(clas.shape[1]):
-        for j in range(clas.shape[2]):
-            clas_dict[(i, j)] = clas[0, i, j]
-    full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
-    classes = pd.DataFrame({'class': pd.Series(clas_dict)}, index=full_index)
-    print('*****classesshape:  ', classes.shape)
-    ## Combine spectral and label data, extract training and test datasets
-    data_df = classes.merge(windows, left_index=True, right_index=True, how='left')
-    print('*****data_df shape:  ', data_df.shape)
-    data_df[data_df <= -999] = np.nan
-    data_df = data_df.dropna()
-    # data_df = data_df.loc[data_df['class']>0]  # Shouldn't need to limit to a single class
-    if(X_scaled.size==0):
-        X_scaled = np.empty((0, windows.shape[1]), 'float64')
-        y = np.empty((0), 'int')
-    X = data_df[[col for col in data_df.columns if col != 'class']]
-    print('*****X shape:  ', X.shape)
-    scaler = StandardScaler()
-    X_scaled = np.append(X_scaled, scaler.fit_transform(X.astype(np.float64)), axis=0)
-    print('*****X_scaled shape:  ', X_scaled.shape)
-    temp = data_df['class'].values
-    y = np.append(y, temp, axis=0)
-    print('*****y shape:  ', y.shape)
-    return X_scaled, y, data_df, full_index, shape
-
-train_df = get_all_concession_data(concessions)
+train_df = helper.get_all_concession_data(concessions)
 
 #data_df = combine_input_landcover(allInput, landcover)
-X = train_df[[col for col in train_df.columns if col != 'class']]
-X_scaled = scale_data(X)
+X = train_df[[col for col in train_df.columns if ( (col != 'class')& (col != 'class_binary'))]]
+X_scaled = helper.scale_data(X)
 landcover = train_df['class'].values
-#print(pd.Series(y).value_counts(dropna=False))
+print('VALUE_COUNTS:  ',pd.Series(landcover).value_counts(dropna=False))
+predictableClasses = pd.Series(landcover).value_counts(dropna=False).index.tolist()
+print(predictableClasses)
 #encoder = LabelEncoder() # Could be used if we're not always dealing with the same classes
 #encoder.fit(y)
 #n_classes = encoder.classes_.shape[0]
 #y_encoded = encoder.transform(y)
 
 predictions = pd.DataFrame()
-clas_cols = ['prob_' + str(clas) for clas in classes.values()]
 probabilities_dict = {}
 
-
-outtif = stack_image_input_data(classConcession)
+outtif, tif_bands = helper.stack_image_input_data(classConcession)
 with rio.open(outtif) as img_src:
     img = img_src.read()
     shape=img.shape
-    x = gen_windows(img, pixel_window_size)
-class_image = get_landcover_class_image(classConcession)
-class_image=mask_water(class_image, classConcession)
+    x = helper.gen_windows(img, pixel_window_size)
+two_class_y, all_class_y  = helper.get_landcover_class_image(classConcession)
 
-y = get_classes(class_image)
+y = helper.get_classes(all_class_y, 'class')
 #df_class = combine_input_landcover(x,y)
 df_class = y.merge(x, left_index=True, right_index=True, how='left')
-X_class = df_class[[col for col in df_class.columns if col != 'class']]
-X_scaled_class = scale_data(X_class)
-for key in classes.keys():
+y2 = helper.get_classes(two_class_y, 'class_binary')
+df_class = y2.merge(df_class, left_index=True, right_index=True, how='left')
+X_class = df_class[[col for col in df_class.columns if ( (col != 'class') & (col != 'class_binary') )]]
+X_scaled_class = helper.scale_data(X_class)
+for key in predictableClasses:
     probabilities_dict[key]=pd.DataFrame()
 for seed in range(1,iterations+1):
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0200, test_size=0.1,
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0050, test_size=0.1,
                                                         random_state=13*seed)
 
     # # =============================================================================
     # # Train and test random forest classifier
     # # =============================================================================
-    clf = rfc(n_estimators=500, max_depth = 6, max_features = .3, max_leaf_nodes = 10,
+    clf = rfc(n_estimators=400, max_depth = 6, max_features = .3, max_leaf_nodes = 10,
               random_state=seed, oob_score = True, n_jobs = -1,
             #  class_weight = {0:0.33, 1: 0.33, 2: 0.34})
               class_weight ='balanced')
@@ -341,8 +163,14 @@ for seed in range(1,iterations+1):
         randomforest_fitted_clf = clf.fit(X_train, y_train)
     y_hat = randomforest_fitted_clf.predict(X_test)
     print('*************  RANDOM FOREST  - X_TEST  **********************')
-    print(sklearn.metrics.classification_report(y_test, y_hat))
-    print(sklearn.metrics.confusion_matrix(y_test, y_hat))
+    report = sklearn.metrics.classification_report(y_test, y_hat, output_dict=True)
+    print(report)
+    #export_report = pd.DataFrame(report).to_csv(r'C:\Users\ME\Desktop\export_report_riau.csv', index=None,
+        #                           header=True)
+    confMatrix= sklearn.metrics.confusion_matrix(y_test, y_hat)
+    print(confMatrix)
+   # export_csv = pd.DataFrame(confMatrix).to_csv(r'C:\Users\ME\Desktop\export_confusion_riau.csv', index=None,
+      #                     header=True)  # Don't forget to add '.csv' at the end of the path
 
     y_hat = randomforest_fitted_clf.predict(X_train)
     print('*************  RANDOM FOREST  - X_TRAIN  **********************')
@@ -422,72 +250,77 @@ for seed in range(1,iterations+1):
     # =============================================================================
 
 
-    predictions[seed] = randomforest_fitted_clf.predict(X_scaled_class)
-    #mytemp=randomforest_fitted_clf.predict_proba(X_scaled_class)[:,0]
-    for key in classes.keys():
-        probabilities_dict[key][seed] = randomforest_fitted_clf.predict_proba(X_scaled_class)[:,key]
-
-
-if iterations>1:
-    temp = predictions.mode(axis=1)
-else:
-    temp=predictions
-full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
-temp = temp.set_index(full_index)
-for key in classes.keys():
-    if iterations > 1:
-        tempMean = probabilities_dict[key].mean(axis=1)
-    else:
-        tempMean = probabilities_dict[key]
-    probabilities_dict[key] = pd.DataFrame(tempMean).set_index(full_index)
-    probabilities_dict[key] = probabilities_dict[key].values.reshape(shape[1], shape[2])
-
-if(iterations>1):
-    df_class['predicted']=temp[0]#this should give majority class for the
-else:
-    df_class['predicted'] = temp
-clas_df = pd.DataFrame(index = full_index)
-classified = clas_df.merge(df_class['predicted'], left_index = True, right_index = True, how = 'left').sort_index()
-classified = classified['predicted'].values.reshape(shape[1], shape[2])
-clas_img = ((classified * 255)/2).astype('uint8')
-clas_img = mask_water(clas_img,classConcession)
-clas_img = Image.fromarray(clas_img)
-#clas_img.show()
-print('*************  RANDOM FOREST  - ACTUAL  **********************')
-print(df_class.shape)
-df_class[df_class <= -999] = np.nan
-df_class = df_class.dropna()
-print(df_class.shape)
-print(sklearn.metrics.classification_report(df_class['class'], df_class['predicted']))
-print(sklearn.metrics.confusion_matrix(df_class['class'], df_class['predicted']))
-classified = classified[np.newaxis, :, :].astype(rio.int16)
-outclas_file = base_dir + classConcession + '/sklearn_test/classified' + suffix
-referencefile = base_dir + classConcession + '/' + classConcession + '_remap_2class.remapped.tif'
-prob_file = base_dir + classConcession +  '/sklearn_test/prob_file' + suffix
-
-file_list = sorted(glob.glob(referencefile))
-with rio.open(file_list[0]) as src:
-    height = src.height
-    width = src.width
-    crs = src.crs
-    transform = src.transform
-    dtype = rio.int16
-    count = 1
-    with rio.open(outclas_file, 'w', driver = 'GTiff',
-                  height = height, width = width, 
-                  crs = crs, dtype = dtype, 
-                  count = count, transform = transform) as clas_dst:
-        clas_dst.write(classified)
-    with rio.open(prob_file, 'w', driver = 'GTiff',
-                  height = height, width = width,
-                  crs = crs, dtype = rio.float32,
-                  count = len(randomforest_fitted_clf.classes_), transform = transform) as prob_dst:
-        for key, value in probabilities_dict.items():
-            print(key, '....')
-            prob_dst.write_band(key+1, value.astype(rio.float32))
-prob_dst.close()
-clas_dst.close()
-src.close()
+#     predictions[seed] = randomforest_fitted_clf.predict(X_scaled_class)
+#     tempProb=randomforest_fitted_clf.predict_proba(X_scaled_class)[:,:]
+#     print(randomforest_fitted_clf.classes_)
+#     print(tempProb.shape)
+#     #print(tempProb[:,16])
+#     tempDf = pd.DataFrame(tempProb)
+#     for i, key in enumerate(randomforest_fitted_clf.classes_):
+#         probabilities_dict[key][seed] = tempProb[:,i]
+#
+#
+# if iterations>1:
+#     temp = predictions.mode(axis=1)
+# else:
+#     temp=predictions
+# full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
+# temp = temp.set_index(full_index)
+# for key in randomforest_fitted_clf.classes_:
+#     if iterations > 1:
+#         tempMean = probabilities_dict[key].mean(axis=1)
+#     else:
+#         tempMean = probabilities_dict[key]
+#     probabilities_dict[key] = pd.DataFrame(tempMean).set_index(full_index)
+#     probabilities_dict[key] = probabilities_dict[key].values.reshape(shape[1], shape[2])
+#
+# if(iterations>1):
+#     df_class['predicted']=temp[0]#this should give majority class for the
+# else:
+#     df_class['predicted'] = temp
+# clas_df = pd.DataFrame(index = full_index)
+# classified = clas_df.merge(df_class['predicted'], left_index = True, right_index = True, how = 'left').sort_index()
+# classified = classified['predicted'].values.reshape(shape[1], shape[2])
+# clas_img = ((classified * 255)/2).astype('uint8')
+# clas_img = helper.mask_water(clas_img,classConcession)
+# clas_img = Image.fromarray(clas_img)
+# #clas_img.show()
+# print('*************  RANDOM FOREST  - ACTUAL  **********************')
+# print(df_class.shape)
+# df_class[df_class <= -999] = np.nan
+# df_class = df_class.dropna()
+# print(df_class.shape)
+# print(sklearn.metrics.classification_report(df_class['class'], df_class['predicted']))
+# print(sklearn.metrics.confusion_matrix(df_class['class'], df_class['predicted']))
+# classified = classified[np.newaxis, :, :].astype(rio.int16)
+# outclas_file = base_dir + classConcession + '/sklearn_test/classified' + suffix
+# referencefile = base_dir + classConcession + '/' + classConcession + '_remap_2class.remapped.tif'
+# prob_file = base_dir + classConcession +  '/sklearn_test/prob_file' + suffix
+#
+# file_list = sorted(glob.glob(referencefile))
+# band=0
+# with rio.open(file_list[0]) as src:
+#     height = src.height
+#     width = src.width
+#     crs = src.crs
+#     transform = src.transform
+#     dtype = rio.int16
+#     count = 1
+#     with rio.open(outclas_file, 'w', driver = 'GTiff',
+#                   height = height, width = width,
+#                   crs = crs, dtype = dtype,
+#                   count = count, transform = transform) as clas_dst:
+#         clas_dst.write(classified)
+#     with rio.open(prob_file, 'w', driver = 'GTiff',
+#                   height = height, width = width,
+#                   crs = crs, dtype = rio.float32,
+#                   count = len(randomforest_fitted_clf.classes_), transform = transform) as prob_dst:
+#         for key, value in probabilities_dict.items():
+#             print(key, '....')
+#             prob_dst.write_band(band+1, value.astype(rio.float32))
+# prob_dst.close()
+# clas_dst.close()
+# src.close()
 # =============================================================================
 # Blockwise predicted map (could be useful for larger maps)
 # Probably would need to be modified to work with windowed values rather than multiband image
