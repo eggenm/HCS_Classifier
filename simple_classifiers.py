@@ -108,7 +108,7 @@ def forest_importance_ranking(forest):
 train_df = helper.get_all_concession_data(concessions)
 
 #data_df = combine_input_landcover(allInput, landcover)
-X = train_df[[col for col in train_df.columns if ( (col != 'class')& (col != 'class_binary'))]]
+X = train_df[[col for col in train_df.columns if ( (col != 'class') & (col != 'class_binary'))]]
 X_scaled = helper.scale_data(X)
 landcover = train_df['class'].values
 print('VALUE_COUNTS:  ',pd.Series(landcover).value_counts(dropna=False))

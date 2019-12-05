@@ -17,21 +17,40 @@ l8_band_dict =  {'B1': 'ublue',
 
 s2_band_dict = {
     # 'B1': 'S2_ublue',
-              'B2': 'S2_blue',
-               'B3': 'S2_green',
-             'B4': 'S2_red',
-             'B5': 'rededge1',
-            'B6': 'rededge2',
-           'B7': 'rededge3',
+ #             'B2': 'S2_blue_max',
+#               'B3': 'S2_green_max',
+ #           'B4': 'S2_red_max',
+  #           'B5': 'rededge1_max',
+  #          'B6': 'rededge2_max',
+  #         'B7': 'rededge3_max',
     # ,
-               'B8': 'S2_nir',
-                'B8A': 'S2_nir2',
-              'B9': 'S2_vape',
+  #             'B8': 'S2_nir_max',
+      #          'B8A': 'S2_nir2_max',
+              'B9': 'S2_vape_max',
     #,
-              'B10': 'S2_swir1',
-            'B11': 'S2_swir2',
-           'B12': 'S2_swir3',
-              'nd': 'ndvi_s2'
+    #          'B10': 'S2_swir1_max',
+    #        'B11': 'S2_swir2_max',
+      #     'B12': 'S2_swir3_max',
+              'nd': 'ndvi_s2_max'
+}
+
+s2_band_dict_median = {
+    # 'B1': 'S2_ublue',
+    #           'B2': 'S2_blue_median',
+    #            'B3': 'S2_green_median',
+    #          'B4': 'S2_red_median',
+    #          'B5': 'rededge1_median',
+    #         'B6': 'rededge2_median',
+    #        'B7': 'rededge3_median',
+    # # ,
+    #            'B8': 'S2_nir_median',
+               'B8A': 'S2_nir2_median',
+             'B9': 'S2_vape_median',
+
+             'B10': 'S2_swir1_median',
+           'B11': 'S2_swir2_median',
+          'B12': 'S2_swir3_median',
+             'nd': 'ndvi_s2_median'
 }
 
 s1_band_dict = {'VH': 'VH',
@@ -114,8 +133,8 @@ def prep_s2(img):
     img = maskS2clouds(img)
     # Rename bands
     img = img.addBands(img.normalizedDifference(['B8', 'B4']))
-    old_names = list(s2_band_dict.keys())
-    new_names = list(s2_band_dict.values())
+    old_names = list(s2_band_dict_median.keys())
+    new_names = list(s2_band_dict_median.values())
     img = img.select(old_names, new_names)
     # Add ndvi
 

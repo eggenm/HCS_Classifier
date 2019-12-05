@@ -10,7 +10,7 @@ from osgeo import gdal,gdalconst
 import rasterio as rio
 import matplotlib.pyplot as plt
 import data_helper as helper
-
+from sklearn.model_selection import train_test_split
 
 classes = {
 1:	'HDF',
@@ -35,15 +35,19 @@ classes = {
 20:	'AG',
 21:	'TP'
 }
+
+
 concessions = [ 'app_riau']
 data_frame = helper.get_all_concession_data(concessions)
 print(data_frame.head())
 
 
-myclass_data = data_frame[ (data_frame.clas==21.0) | (data_frame.clas==4.0)  ] #  | (data_frame.clas==9.0)  | (data_frame.clas==18.0) | | ((data_frame.clas==12.0) | (data_frame.clas==9.0)  | (data_frame.clas==18.0)] # or data_frame.clas==6.0]# or data_frame[['class']]==4.0 or data_frame[['class']]==9.0 or data_frame[['class']]==21.0 or data_frame[['class']]==18.0]
-print(myclass_data.head())
-myclass_data = myclass_data.filter(['S2_nir', 'VH_2015', 'S2_swir1', 'ndvi_s2', 'clas', 'class_binary', 'S2_vape', 'median_rededge3', 'ls5_ndvi_2009_max'])
-print(myclass_data.head())
+X = data_frame[ (data_frame.clas==21.0) | (data_frame.clas==4.0)  ] #  | (data_frame.clas==9.0)  | (data_frame.clas==18.0) | | ((data_frame.clas==12.0) | (data_frame.clas==9.0)  | (data_frame.clas==18.0)] # or data_frame.clas==6.0]# or data_frame[['class']]==4.0 or data_frame[['class']]==9.0 or data_frame[['class']]==21.0 or data_frame[['class']]==18.0]
+print(X.head())
+X = X.filter(['S2_nir', 'VH_2015', 'S2_swir1', 'ndvi_s2', 'clas', 'class_binary', 'S2_vape', 'median_rededge3', 'ls5_ndvi_2009_max'])
+print(X.head())
+myclass_data, X_test= train_test_split(X, train_size=0.0040, test_size=0.1,
+                                                        random_state=13)
 df = pd.DataFrame(dict(x=myclass_data.S2_swir1, y=myclass_data.median_rededge3, label=myclass_data.clas))
 groups = df.groupby('label')
 

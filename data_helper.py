@@ -19,10 +19,25 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
 pixel_window_size = 1
-stackData = True
+stackData = False
 
 #classes = {1: "HCSA",
      #      0: "NA"}
+
+
+bands_base=['S2_blue_max', 'S2_green_max', 'S2_red_max', 'S2_nir_max', 'S2_nir2_max', 'S2_swir1_max', 'S2_swir2_max', 'S2_swir3_max', 'S2_vape_max']
+
+bands_historical=['ndvi_2013', 'ndvi_2014', 'ndvi_2015', 'ndvi_2011', 'ndvi_2010', 'ndvi_2009', 'ndvi_2008', 'ndvi_2007', 'ndvi_2006', 'ndvi_2005', 'ndvi_2004', 'ndvi_2003']
+
+bands_median=['S2_blue_median', 'S2_green_median', 'S2_red_median', 'S2_nir_median', 'S2_nir2_median', 'S2_swir1_median', 'S2_swir2_median', 'S2_swir3_median', 'S2_vape_median']
+
+bands_radar=['VH_2015', 'VV_2015']
+
+bands_dem=['elevation', 'slope']
+
+bands_extended=['rededge1', 'rededge2', 'rededge3']
+
+
 
 classes = {
 1:	'HDF',
@@ -110,32 +125,29 @@ def gen_windows(array, n):
     return (windows)
 
 
-def stack_image_input_data(concession):
+def stack_image_input_data(concession, bands, name):
     input_dir = base_dir + concession + "/in/"
     print(input_dir)
-    outtif = base_dir + concession + '/out/input_' + concession + '.tif'
+    outtif = base_dir + concession + '/out/input_' + concession + '_'+ name + '.tif'
     if stackData:
-        file_list = sorted(glob.glob(input_dir + "/*.tif"))
+        print(input_dir + "*" + bands[0] + "*.tif")
+        file_list = sorted(glob.glob(input_dir + "*" + bands[0] + "*.tif"))
         with rasterio.open(file_list[0]) as src0:
             meta = src0.meta
 
         # Update meta to reflect the number of layers
-        meta.update(count=len(file_list), dtype='float64')
+        meta.update(count=len(bands), dtype='float64')
 
         # Read each layer and write it to stack
-        bands=[]
         with rasterio.open(outtif, 'w', **meta) as dst:
-            for i, layer in enumerate(file_list, start=1):
-                print(i, '....', layer)
-                print(os.path.basename(layer))
-                print(os.path.basename(layer).split('.', 3)[1])
+            for i, band in enumerate(bands, start=1):
+                print(i, '....', band)
+                layer = sorted(glob.glob(input_dir + "*" + band + "*.tif"))[0]
                 name = os.path.basename(layer)
                 if re.search('median', name)is not None and re.search('median', name).span()[0]>0:
                         name = 'median_'+name.split('.', 3)[1]
                 else:
                     name = name.split('.', 3)[1]
-                bands.append(name)
-                print(name)
                 with rasterio.open(layer) as src1:
                     band = src1.read(1).astype('float64')
                     # print('Max:  ', band.max())
@@ -181,10 +193,12 @@ def combine_input_landcover(input, landcover_all, landcover2):
 
 def scale_data(x):
     print('x min:  ', x.min())
+    print('mean ', x.mean())
     print('xmax:  ', x.max())
     scaler = StandardScaler()
     x_scaled = scaler.fit_transform(x.astype(np.float64))
     print('x_scaled min:  ', x_scaled.min())
+    print('x scaled mean ', x.mean())
     print('x_scaled max:  ', x_scaled.max())
     return x_scaled
 
@@ -201,7 +215,10 @@ def mask_water(an_img, concession):
 def get_all_concession_data(concessions):
     data = pd.DataFrame()
     for concession in concessions:
-        outtif, bands = stack_image_input_data(concession)
+        outtif = base_dir + concession + '/out/input_' + concession +'.tif'
+        if(stackData):
+            outtif, bands = stack_image_input_data(concession)
+
         with rio.open(outtif) as img_src:
             img = img_src.read()
             x = gen_windows(img, pixel_window_size)
@@ -218,3 +235,11 @@ def get_all_concession_data(concessions):
             data = pd.concat([data, combine_input_landcover(x, y, y2)], ignore_index=True)
             print("  data.shape:  ", data.shape)
     return data
+
+
+def remove_low_occurance_classes( X, class_data):
+    df= pd.DataFrame(data=[X, class_data])
+    threshold = 10  # Anything that occurs less than this will be removed.
+    df = df.groupby('clas').filter(lambda x: len(x) > threshold)
+
+#stack_image_input_data('app_riau', bands_dem, 'bands_dem')

@@ -36,11 +36,11 @@ to_vals = list(key_df['code_simpl'].astype(float).values)
 #         'app_muba',
 #         'app_riau',
 #         'crgl_stal', 'gar_pgm', 'nbpol_ob', 'wlmr_calaro']
-sites = ['gar_pgm',
+sites = [#'gar_pgm',
      'app_riau'
-    ,
-        'app_jambi',#,
-   'app_oki'
+   # ,
+   #     'app_jambi',#,
+  # 'app_oki'
     ]
 
 feature_dict = {}
@@ -197,7 +197,7 @@ slope = ee.Terrain.slope(elevation);
 dem = ee.Image(elevation.addBands(slope));
 sentinel2_masked = sentinel2.map(sat_ops.prep_s2)
 clean_s2_img_med=ee.Image(sentinel2_masked.median())
-#clean_s2_img_green = sentinel2_masked.qualityMosaic('ndvi_s2')
+clean_s2_img_green = sentinel2_masked.qualityMosaic('ndvi_s2_max')
 
 # =============================================================================
 # Create site-level images for classification with reclassed strata and landsat data
@@ -250,7 +250,8 @@ for site in sites:
     strata_img = strata_img.int()
     images = {
       #  'landsat': clean_l8_img,
-         #     '_median_s2': clean_s2_img_med
+     #         '_max_s2': clean_s2_img_green,
+        '_median_s2': clean_s2_img_med
          #    '_S2_ndvi': ndvis,#S,
     #    '_L8_ndvi':ndvis_l8,
      #   '_l5_ndvi': ndvis_l5
