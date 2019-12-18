@@ -48,7 +48,7 @@ band_evi2 = ['EVI2_s2_max']
 
 bands_evi2 = ['S2_red_max', 'S2_nir_max', 'EVI2_s2_max']
 
-key_csv = '/Users/ME/Dropbox/HCSproject/data/strata_key.csv'
+key_csv = base_dir + 'strata_key.csv'
 key_df = pd.read_csv(key_csv)
 from_vals = list(key_df['project_code'].astype(float).values)
 to_vals = list(key_df['code_3class'].astype(float).values)
