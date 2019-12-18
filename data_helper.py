@@ -19,11 +19,18 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
 pixel_window_size = 1
-stackData = False
+stackData = True
 
 #classes = {1: "HCSA",
      #      0: "NA"}
-
+# sites = ['gar_pgm',
+#     'app_riau',
+#   'app_kalbar',
+#          'app_kaltim',
+#       'app_jambi',
+#  'app_oki',
+#         'crgl_stal'
+#     ]
 
 bands_base=['S2_blue_max', 'S2_green_max', 'S2_red_max', 'S2_nir_max', 'S2_nir2_max', 'S2_swir1_max', 'S2_swir2_max', 'S2_swir3_max', 'S2_vape_max']
 
@@ -36,6 +43,18 @@ bands_radar=['VH_2015', 'VV_2015']
 bands_dem=['elevation', 'slope']
 
 bands_extended=['rededge1', 'rededge2', 'rededge3']
+
+bands_evi2_separate=['S2_red_max', 'S2_nir_max']
+
+band_evi2 = ['EVI2_s2_max']
+
+bands_evi2 = ['S2_red_max', 'S2_nir_max', 'EVI2_s2_max']
+
+key_csv = '/Users/ME/Dropbox/HCSproject/data/strata_key.csv'
+key_df = pd.read_csv(key_csv)
+from_vals = list(key_df['project_code'].astype(float).values)
+to_vals = list(key_df['code_3class'].astype(float).values)
+landcoverClassMap = dict( zip(from_vals,to_vals ))
 
 
 
@@ -127,10 +146,10 @@ def gen_windows(array, n):
 
 def stack_image_input_data(concession, bands, name):
     input_dir = base_dir + concession + "/in/"
-    print(input_dir)
+    #print(input_dir)
     outtif = base_dir + concession + '/out/input_' + concession + '_'+ name + '.tif'
     if stackData:
-        print(input_dir + "*" + bands[0] + "*.tif")
+        #print(input_dir + "*" + bands[0] + "*.tif")
         file_list = sorted(glob.glob(input_dir + "*" + bands[0] + "*.tif"))
         with rasterio.open(file_list[0]) as src0:
             meta = src0.meta
@@ -141,7 +160,7 @@ def stack_image_input_data(concession, bands, name):
         # Read each layer and write it to stack
         with rasterio.open(outtif, 'w', **meta) as dst:
             for i, band in enumerate(bands, start=1):
-                print(i, '....', band)
+               # print(i, '....', band)
                 layer = sorted(glob.glob(input_dir + "*" + band + "*.tif"))[0]
                 name = os.path.basename(layer)
                 if re.search('median', name)is not None and re.search('median', name).span()[0]>0:
@@ -158,17 +177,17 @@ def stack_image_input_data(concession, bands, name):
 
 
 def get_landcover_class_image(concession):
-    two_class_file = base_dir + concession + '/' + concession + '_remap_2class.remapped.tif'
+    #three_class_file = base_dir + concession + '/' + concession + '_remap_3class.remapped.tif'
     allclass_file = base_dir + concession + '/' + concession + '_all_class.remapped.tif'
-
-    file_list = sorted(glob.glob(two_class_file))
+    #print(three_class_file)
+    #file_list = sorted(glob.glob(three_class_file))
     ## Read classification labels
-    with rio.open(file_list[0]) as clas_src:
-        two_class = clas_src.read()
+    #with rio.open(file_list[0]) as clas_src:
+        #three_class = clas_src.read()
     file_list = sorted(glob.glob(allclass_file))
     with rio.open(file_list[0]) as clas_src:
         all_class = clas_src.read()
-    return two_class, all_class
+    return  all_class
 
 
 def get_classes(classImage, name):
@@ -187,19 +206,19 @@ def combine_input_landcover(input, landcover_all, landcover2):
     data_df = landcover2.merge(data_df, left_index=True, right_index=True, how='left')
     data_df[data_df <= -999] = np.nan
     data_df = data_df.dropna()
-    print('*****data_df shape:  ', data_df.shape)
+    #print('*****data_df shape:  ', data_df.shape)
     return data_df
 
 
 def scale_data(x):
-    print('x min:  ', x.min())
-    print('mean ', x.mean())
-    print('xmax:  ', x.max())
+    # print('x min:  ', x.min())
+    # print('mean ', x.mean())
+    # print('xmax:  ', x.max())
     scaler = StandardScaler()
     x_scaled = scaler.fit_transform(x.astype(np.float64))
-    print('x_scaled min:  ', x_scaled.min())
-    print('x scaled mean ', x.mean())
-    print('x_scaled max:  ', x_scaled.max())
+    # print('x_scaled min:  ', x_scaled.min())
+    # print('x scaled mean ', x.mean())
+    # print('x_scaled max:  ', x_scaled.max())
     return x_scaled
 
 
@@ -211,6 +230,55 @@ def mask_water(an_img, concession):
     an_img = an_img * watermask
     return an_img
 
+def get_feature_inputs(band_groups, concession):
+    srcs_to_mosaic=[]
+    outtif=''
+    for bands in band_groups:
+        outtif = os.path.join(base_dir, concession, 'out', 'input_' + concession + '_' + bands + '.tif')
+        #print(outtif)
+        file = glob.glob(outtif)
+        srcs_to_mosaic.append(file[0])
+        #print(srcs_to_mosaic)
+    array = []
+    for ii, ifile in enumerate(srcs_to_mosaic):
+        bands = rio.open(srcs_to_mosaic[ii]).read()
+        if bands.shape[0] > 1:
+            for i in range(0, bands.shape[0]):
+                band=bands[i]
+                array.append(band)
+        elif bands.shape[0] == 1:
+            band = np.squeeze(bands)
+            array.append(band)
+    return array
+
+
+def get_concession_bands(bands, concession):
+    img = get_feature_inputs(bands, concession)
+    array = np.asarray(img)
+    x = gen_windows(array, pixel_window_size)
+    return x
+
+def get_concession_data(bands, concessions):
+    data = pd.DataFrame()
+    if(isinstance(concessions, str)):
+        all_class_image = get_landcover_class_image(concessions)
+        # class_image = mask_water(class_image, concession)
+        y = get_classes(all_class_image, 'clas')
+        #y2 = get_classes(two_class_image, 'class_remap')
+        x = get_concession_bands(bands, concessions)
+        data = combine_input_landcover(x, y)
+    else:
+        for concession in concessions:
+            all_class_image = get_landcover_class_image(concession)
+            # class_image = mask_water(class_image, concession)
+            y = get_classes(all_class_image, 'clas')
+            #y2 = get_classes(two_class_image, 'class_remap')
+            x = get_concession_bands(bands, concession)
+            if data.empty:
+                data = combine_input_landcover(x, y)
+            else:
+                data = pd.concat([data, combine_input_landcover(x, y)], ignore_index=True)
+    return data
 
 def get_all_concession_data(concessions):
     data = pd.DataFrame()
@@ -222,18 +290,18 @@ def get_all_concession_data(concessions):
         with rio.open(outtif) as img_src:
             img = img_src.read()
             x = gen_windows(img, pixel_window_size)
-            print('x.shape:  ', x.shape)
+            #print('x.shape:  ', x.shape)
             x.columns=bands
-        two_class_image, all_class_image = get_landcover_class_image(concession)
+        all_class_image = get_landcover_class_image(concession)
         # class_image = mask_water(class_image, concession)
         y = get_classes(all_class_image, 'clas')
-        y2 = get_classes(two_class_image, 'class_binary')
-        print('y.shape:  ', y.shape)
+        #y2 = get_classes(two_class_image, 'class_remap')
+       # print('y.shape:  ', y.shape)
         if data.empty:
-            data = combine_input_landcover(x, y, y2)
+            data = combine_input_landcover(x, y)
         else:
-            data = pd.concat([data, combine_input_landcover(x, y, y2)], ignore_index=True)
-            print("  data.shape:  ", data.shape)
+            data = pd.concat([data, combine_input_landcover(x, y)], ignore_index=True)
+           # print("  data.shape:  ", data.shape)
     return data
 
 
@@ -242,4 +310,19 @@ def remove_low_occurance_classes( X, class_data):
     threshold = 10  # Anything that occurs less than this will be removed.
     df = df.groupby('clas').filter(lambda x: len(x) > threshold)
 
-#stack_image_input_data('app_riau', bands_dem, 'bands_dem')
+def map_to_3class(X):
+    return pd.Series(X).map(landcoverClassMap)
+
+#print(landcoverClassMap)
+#for site in sites:
+    # stack_image_input_data(site, bands_base, 'bands_base')
+    #     # stack_image_input_data(site, bands_radar, 'bands_radar')
+    #     # stack_image_input_data(site, bands_median, 'bands_median')
+    #     # stack_image_input_data(site, bands_dem, 'bands_dem')
+    # stack_image_input_data(site, bands_evi2, 'bands_evi2')
+    # stack_image_input_data(site, band_evi2, 'evi2_only')
+    # stack_image_input_data(site, bands_evi2_separate, 'bands_evi2_separate')
+    #stack_image_input_data(site, bands_extended, 'bands_extended')
+
+# trainConcessions = ['app_riau', 'app_jambi']
+# get_concession_data(['bands_radar'], trainConcessions)

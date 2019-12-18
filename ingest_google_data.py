@@ -30,17 +30,19 @@ date_end = ee.Date.fromYMD(2015, 12, 31)
 key_csv = '/Users/ME/Dropbox/HCSproject/data/strata_key.csv'
 key_df = pd.read_csv(key_csv)
 from_vals = list(key_df['project_code'].astype(float).values)
-to_vals = list(key_df['code_simpl'].astype(float).values)
+to_vals = list(key_df['code_3class'].astype(float).values)
 
 # sites = ['app_jambi', 'app_oki', 'app_kaltim', 'app_kalbar',
 #         'app_muba',
-#         'app_riau',
+     #   'app_riau'
 #         'crgl_stal', 'gar_pgm', 'nbpol_ob', 'wlmr_calaro']
-sites = [#'gar_pgm',
-     'app_riau'
-   # ,
-   #     'app_jambi',#,
-  # 'app_oki'
+sites = ['gar_pgm',
+    'app_riau',
+  'app_kalbar',
+         'app_kaltim',
+      'app_jambi',
+ 'app_oki',
+        'crgl_stal'
     ]
 
 feature_dict = {}
@@ -211,7 +213,7 @@ print(bands)
 img_dict = dict.fromkeys(sites, 0)
 
 def downloadLandcoverFiles(site):
-    prefix = site + '_remap_2class'
+    prefix = site + '_remap_3class'
     # fd.close()
     filename2 = out_path + '/' + site + '/' + prefix + '.zip'
     url = strata_remapped.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 60})
@@ -250,15 +252,15 @@ for site in sites:
     strata_img = strata_img.int()
     images = {
       #  'landsat': clean_l8_img,
-     #         '_max_s2': clean_s2_img_green,
-        '_median_s2': clean_s2_img_med
+            '_max_s2': clean_s2_img_green
+      #  '_median_s2': clean_s2_img_med,
          #    '_S2_ndvi': ndvis,#S,
     #    '_L8_ndvi':ndvis_l8,
      #   '_l5_ndvi': ndvis_l5
-      #     '_radar': radar_composite #, 'class': strata_img
-   #     '_dem': dem
+    #       '_radar': radar_composite ,# 'class': strata_img
+   #    '_dem': dem
         }
-    downloadLandcoverFiles(site)
+    #downloadLandcoverFiles(site)
     for key, value in images.items():
         prefix = site + key
         print('prefix:  ', prefix)

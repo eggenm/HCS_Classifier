@@ -12,26 +12,27 @@ l8_band_dict =  {'B1': 'ublue',
               'B10': 'tir1',
               'B11': 'tir2',
               'sr_aerosol': 'sr_aerosol'
-#             ,'nd': 'ndvi_l8'
+           #  ,'nd': 'ndvi_l8'
               }
 
 s2_band_dict = {
-    # 'B1': 'S2_ublue',
- #             'B2': 'S2_blue_max',
-#               'B3': 'S2_green_max',
- #           'B4': 'S2_red_max',
-  #           'B5': 'rededge1_max',
-  #          'B6': 'rededge2_max',
+   # 'B1': 'S2_ublue',
+   #          'B2': 'S2_blue_max',
+   #           'B3': 'S2_green_max',
+   #         'B4': 'S2_red_max',
+   #          'B5': 'rededge1_max',
+   #        'B6': 'rededge2_max',
   #         'B7': 'rededge3_max',
-    # ,
-  #             'B8': 'S2_nir_max',
-      #          'B8A': 'S2_nir2_max',
-              'B9': 'S2_vape_max',
-    #,
-    #          'B10': 'S2_swir1_max',
-    #        'B11': 'S2_swir2_max',
-      #     'B12': 'S2_swir3_max',
-              'nd': 'ndvi_s2_max'
+  #
+  #              'B8': 'S2_nir_max',
+  #               'B8A': 'S2_nir2_max',
+  #             'B9': 'S2_vape_max',
+  #
+  #            'B10': 'S2_swir1_max',
+  #          'B11': 'S2_swir2_max',
+  #         'B12': 'S2_swir3_max',
+              'nd': 'ndvi_s2_max',
+    'EVI':'EVI_s2_max'
 }
 
 s2_band_dict_median = {
@@ -43,14 +44,16 @@ s2_band_dict_median = {
     #         'B6': 'rededge2_median',
     #        'B7': 'rededge3_median',
     # # ,
-    #            'B8': 'S2_nir_median',
-               'B8A': 'S2_nir2_median',
-             'B9': 'S2_vape_median',
 
-             'B10': 'S2_swir1_median',
-           'B11': 'S2_swir2_median',
-          'B12': 'S2_swir3_median',
-             'nd': 'ndvi_s2_median'
+          #       'B8': 'S2_nir_median',
+          #      'B8A': 'S2_nir2_median',
+          #    'B9': 'S2_vape_median',
+          #
+          #    'B10': 'S2_swir1_median',
+          #  'B11': 'S2_swir2_median',
+          # 'B12': 'S2_swir3_median',
+    #         'nd': 'ndvi_s2_median'
+    'EVI2':'EVI2_s2_median'
 }
 
 s1_band_dict = {'VH': 'VH',
@@ -133,16 +136,37 @@ def prep_s2(img):
     img = maskS2clouds(img)
     # Rename bands
     img = img.addBands(img.normalizedDifference(['B8', 'B4']))
-    old_names = list(s2_band_dict_median.keys())
-    new_names = list(s2_band_dict_median.values())
-    img = img.select(old_names, new_names)
+    old_names = list(s2_band_dict.keys())
+    new_names = list(s2_band_dict.values())
     # Add ndvi
-
+    img = add_EVI_s2(img)
+    img = add_EVI2_s2(img)
+    img = img.select(old_names, new_names)
     return img
 
 def addNDVI_s2(image):
   ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
   return image.addBands(ndvi);
+
+def add_EVI_s2(image):
+    bands = {
+        'BLUE':image.select('B2'),
+        'RED': image.select('B4'),
+        'NIR': image.select('B8')
+  }
+    evi = image.expression('2.5 * (NIR - RED) / ((NIR + 6.0 * RED - 7.5 * BLUE) + 1.0)', bands).rename('EVI');
+
+    return image.addBands(evi);
+
+def add_EVI2_s2(image):
+    bands = {
+        'RED': image.select('B4'),
+        'NIR': image.select('B8')
+  }
+    evi2 = image.expression('2.4 * (NIR - RED) / (NIR + RED + 1)', bands).rename('EVI2');
+
+    return image.addBands(evi2);
+
 
 
 def add_ndvi(img, keys, values, platform):
