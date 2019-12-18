@@ -201,9 +201,9 @@ def get_classes(classImage, name):
     return classes
 
 
-def combine_input_landcover(input, landcover_all, landcover2):
+def combine_input_landcover(input, landcover_all):
     data_df = landcover_all.merge(input, left_index=True, right_index=True, how='left')
-    data_df = landcover2.merge(data_df, left_index=True, right_index=True, how='left')
+    #data_df = landcover2.merge(data_df, left_index=True, right_index=True, how='left')
     data_df[data_df <= -999] = np.nan
     data_df = data_df.dropna()
     #print('*****data_df shape:  ', data_df.shape)

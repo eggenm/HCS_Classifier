@@ -21,13 +21,13 @@ import sklearn.metrics
 from sklearn.metrics import f1_score
 
 #############   SETUP  PARAMS    ######################
-sites = ['gar_pgm',
+sites = [#'gar_pgm',
     'app_riau',
   'app_kalbar',
          'app_kaltim',
       'app_jambi',
  'app_oki',
-        'crgl_stal'
+       # 'crgl_stal'
     ]
 base_dir = dirfuncs.guess_data_dir()
 band_set ={#1:['bands_radar'],
@@ -58,8 +58,8 @@ def show_results(y_test, y_hat):
 
 
 def train_model(X_train, y_train):
-    print('Training:  ', pd.Series(y_train).value_counts())
-    print(X_train[:7])
+    #print('Training:  ', pd.Series(y_train).value_counts())
+    #print(X_train[:7])
     clf = rfc(n_estimators=40, max_depth=6, max_features=.3, max_leaf_nodes=10,
               random_state=16, oob_score=True, n_jobs=-1,
               #  class_weight = {0:0.33, 1: 0.33, 2: 0.34})
