@@ -9,10 +9,6 @@ import hcs_database as hcs_db
 import glob
 import numpy as np
 import pandas as pd
-import geopandas as gpd
-import earthpy as et
-import earthpy.spatial as es
-import earthpy.plot as ep
 import os
 from sklearn.model_selection import train_test_split, cross_val_score, \
     GridSearchCV, cross_val_predict, ShuffleSplit, learning_curve, RandomizedSearchCV
