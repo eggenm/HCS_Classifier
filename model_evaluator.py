@@ -1,17 +1,9 @@
-import matplotlib.pyplot as plt
-from numpy.distutils.misc_util import as_list
-
 import data_helper as helper
+import data.hcs_database as db
 import dirfuncs
-import rasterio as rio
-from rasterio.rio.stack import stack
-import hcs_database as hcs_db
-import glob
 import numpy as np
 import pandas as pd
-import os
-from sklearn.model_selection import train_test_split, cross_val_score, \
-    GridSearchCV, cross_val_predict, ShuffleSplit, learning_curve, RandomizedSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier as rfc
 import sklearn.metrics
 from sklearn.metrics import f1_score
@@ -19,24 +11,24 @@ from sklearn.metrics import f1_score
 #############   SETUP  PARAMS    ######################
 sites = [#'gar_pgm',
     'app_riau',
-  'app_kalbar',
-         'app_kaltim',
-      'app_jambi',
- 'app_oki',
-       # 'crgl_stal'
+   'app_kalbar',
+          'app_kaltim',
+       'app_jambi',
+  'app_oki',
+        'crgl_stal'
     ]
 base_dir = dirfuncs.guess_data_dir()
-band_set ={#1:['bands_radar'],
+band_set ={1:['bands_radar'],
            2: ['bands_base'],
-           3: ['bands_median'],
-           4: ['bands_base','bands_radar'],
-       #    5: ['bands_base','bands_radar','bands_dem']#,
-      #     6: ['bands_radar','bands_dem']
-           7:['bands_evi2_separate'],
-           8:['evi2_only'],
-           #9:['bands_evi2'],
+            3: ['bands_median'],
+            4: ['bands_base','bands_radar'],
+      #  #    5: ['bands_base','bands_radar','bands_dem']#,
+      # #     6: ['bands_radar','bands_dem']
+            7:['bands_evi2_separate'],
+            8:['evi2_only'],
+            9:['bands_evi2'],
            10:['bands_base','bands_radar','evi2_only'],
-           11:['bands_base','bands_median','bands_radar','evi2_only']
+            11:['bands_base','bands_median','bands_radar','evi2_only']
            }
 
 pixel_window_size=1
@@ -80,64 +72,95 @@ def train_model(X_train, y_train):
     print('n_estimators: ', randomforest_fitted_clf.get_params()['n_estimators'])
     return randomforest_fitted_clf
 
-def score_model(X, Y, model):
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, train_size=0.0020, test_size=0.3,
-                                                        random_state=27)
-    #print('Scoring:  ', pd.Series(y_test).value_counts())
-    yhat = model.predict(X_test)
-    if(max(yhat)>2):
-        y_test = helper.map_to_3class(y_test)
-        yhat = helper.map_to_3class(yhat)
+
+def score_model(y_test, yhat):
     show_results(y_test, yhat)
     f1 = f1_score(y_test, yhat, average='macro')
-    return f1
+    f1_weighted = f1_score(y_test, yhat, average='weighted')
+    return f1,f1_weighted
 
-def trim_data(input):
-    return input.groupby('clas').filter(lambda x: len(x) > 10000)
+class model_performance_logger:
+    def __init__(self, model, concession, bands, training_concessions):
+        """
+        Parameters
+        ----------
+        block: np array
+            array drawn from raster using rasterio block read
 
-def trim_data2(input):
-    #return input[input.clas.isin([21.0, 18.0, 7.0, 6.0, 4.0, 5.0, 20.0])]
-    return input[np.logical_not(input.clas.isin([8.0]))]
+        fitted_clf: sklearn classifier
+            classifier that should be applid to block
+        """
+        self.model = model
+        self.concession = concession
+        self.bands = bands
+        self.training_concessions = training_concessions
+        self.score_type=''
+        self.score=np.nan
+        self.score_weighted=np.nan
+        self.score_2_reclass=np.nan
+        self.score_2_reclass_weighted = np.nan
+
+
+    def set_scores(self, type, score, weighted, two_class, two_class_weighted):
+        self.score_type = type
+        self.score = score
+        self.score_weighted = weighted
+        self.score_2_reclass = two_class
+        self.score_2_reclass_weighted = two_class_weighted
+
+    def save_score(self):
+        print('saved')
 
 def evaluate_model():
-    i = 0
+
     for scoreConcession in sites:
         print(scoreConcession)
         trainConcessions = list(sites)
         trainConcessions.remove(scoreConcession)
-        result = pd.DataFrame(columns = ['concession', 'bands', 'class_scheme', 'score'])
+        i = 0
+        result = pd.DataFrame(columns=['concession', 'bands', 'score_type', 'class_scheme', 'score', 'score_weighted',
+                                       'two_class_score', 'two_class_score_weighted', 'training_concessions',
+                                       'max_depth',
+                                       'max_leaf_nodes', 'max_features', 'n_estimators'])
         for key, bands in band_set.items():
             print(key, '....',bands)
             data = pd.DataFrame()
             data_scoring = helper.get_concession_data(bands, scoreConcession)
-            data_scoring = trim_data2(data_scoring)
+            data_scoring = helper.trim_data2(data_scoring)
             X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
             X_scaled_score = helper.scale_data(X_score)
             y_score_all = data_scoring['clas'].values
 
-            data = trim_data(helper.get_concession_data(bands, trainConcessions))
+            data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
             X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
             X_scaled = helper.scale_data(X)
             landcover = data['clas'].values
             X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0030, test_size=0.1,
                                                                 random_state=16)
             model = train_model(X_train, y_train)
-            score_all = score_model(X_scaled_score, y_score_all, model)
-            result.loc[i] = [scoreConcession, str(bands), 'ALL', score_all]
+            yhat = model.predict(X_scaled_score)
+            score_all, score_all_weighted = score_model(helper.map_to_3class(y_score_all), helper.map_to_3class(yhat))
+            score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_to_2class(yhat))
+            result.loc[i] = [scoreConcession, str(bands), 'F1', 'ALL', score_all, score_all_weighted, score_two, score_two_weighted, str(trainConcessions),
+                             model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'] ]
             print(result.loc[i])
             i+=1
             # landcover = data['class_remap'].values
             # X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0040, test_size=0.1,
             #                                                     random_state=16)
             model = train_model(X_train, helper.map_to_3class(y_train))
-            score_3 = score_model(X_scaled_score, helper.map_to_3class(y_score_all), model)
-            result.loc[i] = [scoreConcession, str(bands), '3CLASS', score_3]
+            yhat = model.predict(X_scaled_score)
+            score_3, score_3_weighted = score_model(helper.map_to_3class(y_score_all), yhat)
+            score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_3_to_2class(yhat))
+            result.loc[i] = [scoreConcession, str(bands), 'F1' , '3CLASS', score_3,score_3_weighted, score_two, score_two_weighted, str(trainConcessions),
+                             model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'] ]
             print(result.loc[i])
             i += 1
-            scores = [score_all, score_3]
-            print('scores:  ',scores)
-    print(result)
-    result.to_csv(r'/home/eggen/result.csv', index=False)
+        db.save_model_performance(result)
+    #print(result)
+    #resultfile = base_dir + 'result.csv'
+    #result.to_csv(resultfile, index=False)
+    print(db.get_all_model_performance())
 
 evaluate_model()
 # img=get_feature_inputs(band_set.get(5))

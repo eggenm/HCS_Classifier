@@ -3,8 +3,7 @@
 # =============================================================================
 import ee
 ee.Initialize()
-import numpy as np
-import hcs_database as hcs_db
+from data import hcs_database as hcs_db
 import satellite_image_operations as sat_ops
 import pandas as pd
 import requests

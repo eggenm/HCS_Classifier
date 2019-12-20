@@ -1,13 +1,4 @@
-
-import dirfuncs
-import hcs_database as hcs_db
-import glob
 import pandas as pd
-from pathlib import Path
-from PIL import Image
-import numpy as np
-from osgeo import gdal,gdalconst
-import rasterio as rio
 import matplotlib.pyplot as plt
 import data_helper as helper
 from sklearn.model_selection import train_test_split

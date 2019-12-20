@@ -1,3 +1,6 @@
+import sqlite3
+conn = sqlite3.connect('data/hcs_database.db')
+
 maps_dict = {'app_jambi': 'ft:1bgkWL4VgYSgfAupZmVGcnXJJqMmvyBtl3_VgfyVV',
              'app_kalbar': 'ft:16yV7XDfeb1fGhH-N68CIetxd0FW8OvsTHdB7I4ka',
              'app_muba': 'ft:12FXxeD_Thxl84MQ-Bk1E0AEhL8N3ORg45uCTxXIx',
@@ -60,3 +63,4 @@ rasters = {'app_kalbar': gee_dir + 'Kalbar_DTK_Stratification',
            'gar_pgm': gee_dir + 'gar_pgm',
            'nbpol_ob': gee_dir + 'nbpol_ob',
            'wlmr_calaro': gee_dir + 'wlmr_calaro'}
+

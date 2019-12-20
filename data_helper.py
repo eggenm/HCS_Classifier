@@ -52,8 +52,10 @@ key_csv = base_dir + 'strata_key.csv'
 key_df = pd.read_csv(key_csv)
 from_vals = list(key_df['project_code'].astype(float).values)
 to_vals = list(key_df['code_3class'].astype(float).values)
-landcoverClassMap = dict( zip(from_vals,to_vals ))
-
+to_2class = list(key_df['code_simpl'].astype(float).values)
+three_class_landcoverClassMap = dict( zip(from_vals,to_vals ))
+two_class_landcoverClassMap = dict( zip(from_vals,to_2class ))
+three_to_two_class_landcoverClassMap = dict( zip(to_vals,to_2class ))
 
 
 classes = {
@@ -199,11 +201,12 @@ def get_classes(classImage, name):
     return classes
 
 
-def combine_input_landcover(input, landcover_all):
+def combine_input_landcover(input, landcover_all, isClass):
     data_df = landcover_all.merge(input, left_index=True, right_index=True, how='left')
     #data_df = landcover2.merge(data_df, left_index=True, right_index=True, how='left')
-    data_df[data_df <= -999] = np.nan
-    data_df = data_df.dropna()
+    if( not isClass):
+        data_df[data_df <= -999] = np.nan
+        data_df = data_df.dropna()
     #print('*****data_df shape:  ', data_df.shape)
     return data_df
 
@@ -256,7 +259,7 @@ def get_concession_bands(bands, concession):
     x = gen_windows(array, pixel_window_size)
     return x
 
-def get_concession_data(bands, concessions):
+def get_concession_data(bands, concessions, isClass=False):
     data = pd.DataFrame()
     if(isinstance(concessions, str)):
         all_class_image = get_landcover_class_image(concessions)
@@ -264,7 +267,7 @@ def get_concession_data(bands, concessions):
         y = get_classes(all_class_image, 'clas')
         #y2 = get_classes(two_class_image, 'class_remap')
         x = get_concession_bands(bands, concessions)
-        data = combine_input_landcover(x, y)
+        data = combine_input_landcover(x, y, isClass)
     else:
         for concession in concessions:
             all_class_image = get_landcover_class_image(concession)
@@ -273,12 +276,12 @@ def get_concession_data(bands, concessions):
             #y2 = get_classes(two_class_image, 'class_remap')
             x = get_concession_bands(bands, concession)
             if data.empty:
-                data = combine_input_landcover(x, y)
+                data = combine_input_landcover(x, y, isClass)
             else:
-                data = pd.concat([data, combine_input_landcover(x, y)], ignore_index=True)
+                data = pd.concat([data, combine_input_landcover(x, y, isClass)], ignore_index=True)
     return data
 
-def get_all_concession_data(concessions):
+def get_all_concession_data(concessions, isClass=False):
     data = pd.DataFrame()
     for concession in concessions:
         outtif = base_dir + concession + '/out/input_' + concession +'.tif'
@@ -296,9 +299,9 @@ def get_all_concession_data(concessions):
         #y2 = get_classes(two_class_image, 'class_remap')
        # print('y.shape:  ', y.shape)
         if data.empty:
-            data = combine_input_landcover(x, y)
+            data = combine_input_landcover(x, y, isClass)
         else:
-            data = pd.concat([data, combine_input_landcover(x, y)], ignore_index=True)
+            data = pd.concat([data, combine_input_landcover(x, y, isClass)], ignore_index=True)
            # print("  data.shape:  ", data.shape)
     return data
 
@@ -309,7 +312,23 @@ def remove_low_occurance_classes( X, class_data):
     df = df.groupby('clas').filter(lambda x: len(x) > threshold)
 
 def map_to_3class(X):
-    return pd.Series(X).map(landcoverClassMap)
+    return pd.Series(X).map(three_class_landcoverClassMap)
+
+def map_to_2class(X):
+    return pd.Series(X).map(two_class_landcoverClassMap)
+
+def map_3_to_2class(X):
+    return pd.Series(X).map(three_to_two_class_landcoverClassMap)
+
+def trim_data(input):
+    return input.groupby('clas').filter(lambda x: len(x) > 10000)
+
+def trim_data2(input):
+    #return input[input.clas.isin([21.0, 18.0, 7.0, 6.0, 4.0, 5.0, 20.0])]
+    return input[np.logical_not(input.clas.isin([8.0]))]
+
+def log_result():
+    print('')
 
 #print(landcoverClassMap)
 #for site in sites:
