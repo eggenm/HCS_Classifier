@@ -31,12 +31,14 @@ import matplotlib.pyplot as plt
 # Identify files
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
-concessions = [ 'gar_pgm', 'app_riau', 'app_jambi']
-classConcession = 'app_oki'
+concessions = ['app_riau', 'app_oki']
+classConcession = 'app_jambi'
+bands = ['bands_base', 'bands_radar', 'evi2_only']
 pixel_window_size = 1
 iterations = 1
-suffix = 'RF_x' + str(iterations) + '_BaseRadarEVI.tif'
-doGridSearch = False
+suffix = 'RF_x' + str(iterations) + '_12232019_004_BaseRadarEVI.tif'
+doGridSearch = True
+scheme='3class'
 
 #classes = {1: "HCSA",
      #      0: "NA"}
@@ -90,7 +92,7 @@ def forest_importance_ranking(forest):
     plt.show()
 
 
-train_df = helper.get_concession_data(['bands_base','bands_radar','evi2_only'], concessions)
+train_df = helper.get_concession_data(bands, concessions)
 
 #data_df = combine_input_landcover(allInput, landcover)
 train_df= helper.trim_data2(train_df)
@@ -98,6 +100,8 @@ X = train_df[[col for col in train_df.columns if  (col != 'clas') ]]
 
 X_scaled = helper.scale_data(X)
 landcover = train_df['clas'].values
+if(scheme=='3class'):
+    landcover=helper.map_to_3class(landcover)
 print('VALUE_COUNTS:  ',pd.Series(landcover).value_counts(dropna=False))
 predictableClasses = pd.Series(landcover).value_counts(dropna=False).index.tolist()
 print(predictableClasses)
@@ -110,32 +114,38 @@ predictions = pd.DataFrame()
 probabilities_dict = {}
 
 
-df_class = helper.get_concession_data(['bands_base','bands_radar','evi2_only'], classConcession, True)
+df_class = helper.get_concession_data(bands, classConcession, True)
 #df_class=helper.trim_data2(df_class)
 X_class = df_class[[col for col in df_class.columns if  (col != 'clas') ]]
 X_scaled_class = helper.scale_data(X_class)
-y = df_class['clas'].values
+y_class = df_class['clas'].values
+if(scheme=='3class'):
+    y_class=helper.map_to_3class(y_class)
 
 for key in predictableClasses:
     probabilities_dict[key]=pd.DataFrame()
 for seed in range(1,iterations+1):
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0050, test_size=0.1,
-                                                        random_state=13*seed)
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0040, test_size=0.1,
+                                                      #  random_state=13*seed)
+    random_state = 16)
 
     # # =============================================================================
     # # Train and test random forest classifier
     # # =============================================================================
-    clf = rfc(n_estimators=400, max_depth = 6, max_features = .3, max_leaf_nodes = 10,
-              random_state=seed, oob_score = True, n_jobs = -1,
+    clf = rfc(n_estimators=400, max_depth = 12, max_features = .25, #max_leaf_nodes = 10,
+              #random_state=seed,
+              random_state=16,
+              oob_score = True, n_jobs = -1,
             #  class_weight = {0:0.33, 1: 0.33, 2: 0.34})
               class_weight ='balanced')
     if doGridSearch:
         print(" ############  IN GRID SEARCH  ############# ")
-        param_grid = [{'max_depth': [6, 10, 16],
-                       'max_leaf_nodes': [40, 60, 100],
-                       'max_features': [.25, .5, .75],
-                       'n_estimators': [100, 250, 500]}]
-        grid_search = GridSearchCV(clf, param_grid, cv=5,  # scoring = 'balanced_accuracy',
+        param_grid = [{#'max_depth': [14, 16, 18, 20],
+                       'max_leaf_nodes': [14,15,16],
+                     #  'max_features': [.15, .2 ,.25, .3, .35, .4 ],
+                       'n_estimators': [ 450, 500, 550]}]
+
+        grid_search = GridSearchCV(clf, param_grid, cv=5,  scoring = 'f1_macro',
                                    return_train_score=True, refit=True)
 
         grid_search.fit(X_train, y_train)
@@ -144,8 +154,13 @@ for seed in range(1,iterations+1):
     else:
         randomforest_fitted_clf = clf.fit(X_train, y_train)
     y_hat = randomforest_fitted_clf.predict(X_test)
+
+    print('max_depth: ', randomforest_fitted_clf.get_params()['max_depth'])
+    print('max_leaf_nodes: ', randomforest_fitted_clf.get_params()['max_leaf_nodes'])
+    print('max_features: ', randomforest_fitted_clf.get_params()['max_features'])
+    print('n_estimators: ', randomforest_fitted_clf.get_params()['n_estimators'])
     print('*************  RANDOM FOREST  - X_TEST  **********************')
-    report = sklearn.metrics.classification_report(y_test, y_hat, output_dict=True)
+    report = sklearn.metrics.classification_report(y_test, y_hat)
     print(report)
     #export_report = pd.DataFrame(report).to_csv(r'C:\Users\ME\Desktop\export_report_riau.csv', index=None,
         #                           header=True)
@@ -260,9 +275,6 @@ with rio.open(file_list[0]) as src:
     transform = src.transform
     dtype = rio.int16
     count = 1
-    print(height)
-    print(width)
-    print(shape)
     full_index = pd.MultiIndex.from_product([range(shape[0]), range(shape[1])], names=['i', 'j'])
     temp = temp.set_index(full_index)
     for key in randomforest_fitted_clf.classes_:
@@ -280,17 +292,20 @@ with rio.open(file_list[0]) as src:
     else:
         df_class['predicted'] = temp
     clas_df = pd.DataFrame(index = full_index)
-    classified = clas_df.merge(helper.map_to_3class(df_class['predicted']), left_index = True, right_index = True, how = 'left').sort_index()
+    classified = clas_df.merge(df_class['predicted'], left_index = True, right_index = True, how = 'left').sort_index()
     classified = classified['predicted'].values.reshape(shape[0], shape[1])
     clas_img = ((classified * 255)/2).astype('uint8')
     clas_img = helper.mask_water(clas_img,classConcession)
     clas_img = Image.fromarray(clas_img)
     #clas_img.show()
     print('*************  RANDOM FOREST  - ACTUAL  **********************')
-    print(df_class.shape)
+
     df_class[df_class <= -999] = np.nan
     df_class = df_class.dropna()
-    print(df_class.shape)
+    print('ACTUAL:  ', df_class['clas'].value_counts())
+    print('Predicted:  ', df_class['predicted'].value_counts())
+    if (scheme == '3class'):
+        df_class['clas'] = helper.map_to_3class(df_class['clas'])
     print(sklearn.metrics.classification_report(df_class['clas'], df_class['predicted']))
     print(sklearn.metrics.confusion_matrix(df_class['clas'], df_class['predicted']))
     classified = classified[np.newaxis, :, :].astype(rio.int16)

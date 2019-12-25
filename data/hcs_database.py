@@ -1,4 +1,5 @@
 import sqlite3
+import pandas as pd
 conn = sqlite3.connect('data/hcs_database.db')
 
 maps_dict = {'app_jambi': 'ft:1bgkWL4VgYSgfAupZmVGcnXJJqMmvyBtl3_VgfyVV',
@@ -68,10 +69,11 @@ def init_database():
     c = conn.cursor()
 
     # Create table
+    c.execute('DROP TABLE model_performance_log')
     c.execute('''CREATE TABLE model_performance_log
                  (concession text, bands text, score_type text , class_scheme text, score real, score_weighted real,
                                    two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
-                                   max_leaf_nodes int, max_features real, n_estimators int)''')
+                                   max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
 
     # Save (commit) the changes
     conn.commit()
@@ -92,13 +94,12 @@ def delete_model_performance():
     conn.commit()
 
 def get_all_model_performance():
-    c = conn.cursor()
-    c.execute('SELECT * FROM model_performance_log')
-    return c.fetchall()
+    df = pd.read_sql_query("SELECT * FROM model_performance_log", conn)
+    return df
 
 if __name__ == "__main__":
     print('in main')
     #init_database()
     #delete_model_performance()
-    print(get_all_model_performance())
+    #print(get_all_model_performance().head())
     conn.close()

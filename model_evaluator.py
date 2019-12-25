@@ -9,13 +9,14 @@ import sklearn.metrics
 from sklearn.metrics import f1_score
 
 #############   SETUP  PARAMS    ######################
+training_sample_rate = 0.003
 sites = [#'gar_pgm',
-    'app_riau',
+   'app_riau',
    'app_kalbar',
-          'app_kaltim',
+         'app_kaltim',
        'app_jambi',
-  'app_oki',
-        'crgl_stal'
+ 'app_oki' #,
+      # 'crgl_stal'
     ]
 base_dir = dirfuncs.guess_data_dir()
 band_set ={1:['bands_radar'],
@@ -25,8 +26,8 @@ band_set ={1:['bands_radar'],
       #  #    5: ['bands_base','bands_radar','bands_dem']#,
       # #     6: ['bands_radar','bands_dem']
             7:['bands_evi2_separate'],
-            8:['evi2_only'],
-            9:['bands_evi2'],
+            8:['bands_evi2'],
+            9:['bands_evi2','bands_radar'],
            10:['bands_base','bands_radar','evi2_only'],
             11:['bands_base','bands_median','bands_radar','evi2_only']
            }
@@ -54,11 +55,11 @@ def train_model(X_train, y_train):
               class_weight='balanced')
     if doGridSearch:
         print(" ############  IN GRID SEARCH  ############# ")
-        param_grid = [{'max_depth': [6, 10, 16],
-                       'max_leaf_nodes': [40, 60, 100],
+        param_grid = [{'max_depth': [8, 12, 16, 20],
+                       'max_leaf_nodes': [5, 10, 15],
                        'max_features': [.25, .5, .75 ],
                        'n_estimators': [100, 250, 500]}]
-        grid_search = GridSearchCV(clf, param_grid, cv = 5, #scoring = 'balanced_accuracy',
+        grid_search = GridSearchCV(clf, param_grid, cv = 5, scoring = 'f1_macro',
                                    return_train_score = True, refit = True)
 
         grid_search.fit(X_train, y_train)
@@ -121,7 +122,7 @@ def evaluate_model():
         result = pd.DataFrame(columns=['concession', 'bands', 'score_type', 'class_scheme', 'score', 'score_weighted',
                                        'two_class_score', 'two_class_score_weighted', 'training_concessions',
                                        'max_depth',
-                                       'max_leaf_nodes', 'max_features', 'n_estimators'])
+                                       'max_leaf_nodes', 'max_features', 'n_estimators', 'training_sample_rate'])
         for key, bands in band_set.items():
             print(key, '....',bands)
             data = pd.DataFrame()
@@ -135,25 +136,28 @@ def evaluate_model():
             X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
             X_scaled = helper.scale_data(X)
             landcover = data['clas'].values
-            X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0030, test_size=0.1,
-                                                                random_state=16)
+            X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.1,
+                    random_state=16)
+
+            ##########################################################
+            #####     MODEL WITH ALL CLASSES     #########
             model = train_model(X_train, y_train)
             yhat = model.predict(X_scaled_score)
             score_all, score_all_weighted = score_model(helper.map_to_3class(y_score_all), helper.map_to_3class(yhat))
             score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_to_2class(yhat))
             result.loc[i] = [scoreConcession, str(bands), 'F1', 'ALL', score_all, score_all_weighted, score_two, score_two_weighted, str(trainConcessions),
-                             model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'] ]
+                             model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'], training_sample_rate ]
             print(result.loc[i])
             i+=1
-            # landcover = data['class_remap'].values
-            # X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0040, test_size=0.1,
-            #                                                     random_state=16)
+
+            ##########################################################
+            #####     MODEL WITH 3 CLASSES     #########
             model = train_model(X_train, helper.map_to_3class(y_train))
             yhat = model.predict(X_scaled_score)
             score_3, score_3_weighted = score_model(helper.map_to_3class(y_score_all), yhat)
             score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_3_to_2class(yhat))
-            result.loc[i] = [scoreConcession, str(bands), 'F1' , '3CLASS', score_3,score_3_weighted, score_two, score_two_weighted, str(trainConcessions),
-                             model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'] ]
+            result.loc[i] = [scoreConcession, str(bands), 'F1' , '3CLASS', score_3, score_3_weighted, score_two, score_two_weighted, str(trainConcessions),
+                             model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'], model.get_params()['n_estimators'], training_sample_rate ]
             print(result.loc[i])
             i += 1
         db.save_model_performance(result)
@@ -162,7 +166,9 @@ def evaluate_model():
     #result.to_csv(resultfile, index=False)
     print(db.get_all_model_performance())
 
-evaluate_model()
+#evaluate_model()
+resultfile = base_dir + 'result.12252019.csv'
+db.get_all_model_performance().to_csv(resultfile, index=False)
 # img=get_feature_inputs(band_set.get(5))
 # array=np.asarray(img)
 # x = helper.gen_windows(array, pixel_window_size)
