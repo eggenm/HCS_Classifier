@@ -30,14 +30,14 @@ import matplotlib.pyplot as plt
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
 
-concessions = ['app_oki' , 'app_riau']
-classConcession = 'app_jambi'
+concessions = ['app_oki' , 'app_jambi']
+classConcession = 'app_riau'
 bands = ['bands_base', 'bands_radar', 'evi2_only']
 sample_rate=0.004
 pixel_window_size = 1
 iterations = 1
 doGridSearch = True
-scheme='ALL'
+scheme='3class'
 suffix = 'RF_x' + str(iterations) + '_'+scheme + '_'+ str(int(round(sample_rate*1000, 0))) +'_BaseRadarEVI.tif'
 #classes = {1: "HCSA",
      #      0: "NA"}
@@ -133,8 +133,7 @@ for seed in range(1,iterations+1):
     # # =============================================================================
 
 
-
-    clf = rfc(n_estimators=400, max_depth = 8, max_features = .25, max_leaf_nodes = 15,
+    clf = rfc(n_estimators=400, max_depth = 8, max_features = .75, max_leaf_nodes = 15,
               #random_state=seed,
               random_state=16,
               oob_score = True, n_jobs = -1,
