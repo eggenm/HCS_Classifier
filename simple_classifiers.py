@@ -294,9 +294,9 @@ with rio.open(file_list[0]) as src:
     classified = clas_df.merge(df_class['predicted'], left_index=True, right_index=True, how='left').sort_index()
     if (scheme == 'ALL'):
         classified = helper.map_to_3class(classified['predicted']).values.reshape(shape[0], shape[1])
-    clas_img = ((classified * 255) / 2).astype('uint8')
-    clas_img = helper.mask_water(clas_img, classConcession)
-    clas_img = Image.fromarray(clas_img)
+    # clas_img = ((classified * 255) / 2).astype('uint8')
+    # clas_img = helper.mask_water(clas_img, classConcession)
+    # clas_img = Image.fromarray(clas_img)
     # clas_img.show()
 
     print('*************  RANDOM FOREST  - ACTUAL  **********************')
