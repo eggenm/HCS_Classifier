@@ -278,6 +278,9 @@ with rio.open(file_list[0]) as src:
     count = 1
     full_index = pd.MultiIndex.from_product([range(shape[0]), range(shape[1])], names=['i', 'j'])
     temp = temp.set_index(full_index)
+    print(shape[0])
+    print(shape[1])
+    print(full_index.size)
     for key in randomforest_fitted_clf.classes_:
         if iterations > 1:
             tempMean = probabilities_dict[key].mean(axis=1)
