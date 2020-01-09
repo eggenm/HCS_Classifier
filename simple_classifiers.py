@@ -30,8 +30,8 @@ import matplotlib.pyplot as plt
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
 
-concessions = ['gar_pgm', 'app_kaltim', 'crgl_stal']
-classConcession = 'app_kalbar'
+concessions = ['gar_pgm', 'app_kalbar', 'crgl_stal']
+classConcession = 'app_kaltim'
 bands = ['bands_base', 'bands_radar', 'evi2_only']
 sample_rate=0.010
 pixel_window_size = 1
@@ -131,7 +131,9 @@ for seed in range(1,iterations+1):
     # # =============================================================================
     # # Train and test random forest classifier
     # # =============================================================================
-    clf = rfc(n_estimators=400, max_depth = 8, max_features = .25, #max_leaf_nodes = 10,
+
+
+    clf = rfc(n_estimators=400, max_depth = 8, max_features = .75, max_leaf_nodes = 15,
               #random_state=seed,
               random_state=16,
               oob_score = True, n_jobs = -1,
@@ -140,7 +142,7 @@ for seed in range(1,iterations+1):
     if doGridSearch:
         print(" ############  IN GRID SEARCH  ############# ")
         param_grid = [{#'max_depth': [14, 16, 18, 20],
-                       'max_leaf_nodes': [14,15,16],
+                     #  'max_leaf_nodes': [14,15,16],
                      #  'max_features': [.15, .2 ,.25, .3, .35, .4 ],
                        'n_estimators': [ 450, 500, 550]}]
 
