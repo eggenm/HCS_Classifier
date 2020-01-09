@@ -237,7 +237,7 @@ def get_feature_inputs(band_groups, concession):
     outtif=''
     for bands in band_groups:
         outtif = os.path.join(base_dir, concession, 'out', 'input_' + concession + '_' + bands + '.tif')
-        #print(outtif)
+        print(outtif)
         file = glob.glob(outtif)
         srcs_to_mosaic.append(file[0])
         #print(srcs_to_mosaic)
