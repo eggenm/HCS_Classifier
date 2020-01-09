@@ -29,16 +29,16 @@ import matplotlib.pyplot as plt
 # Identify files
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
-concessions = ['app_riau', 'app_oki']
-classConcession = 'app_jambi'
-bands = ['bands_base', 'bands_median', 'bands_radar', 'evi2_only']
-sample_rate=0.0040
+
+concessions = ['gar_pgm', 'app_kaltim', 'crgl_stal']
+classConcession = 'app_kalbar'
+bands = ['bands_base', 'bands_radar', 'evi2_only']
+sample_rate=0.010
 pixel_window_size = 1
 iterations = 1
-suffix = 'RF_x' + str(iterations) + '_12252019_004_BaseMedianRadarEVI.tif'
 doGridSearch = True
 scheme='ALL'
-suffix = 'RF_x' + str(iterations) + '_'+scheme + '_12252019_004_BaseMedianRadarEVI.tif'
+suffix = 'RF_x' + str(iterations) + '_'+scheme + '_'+ str(int(round(sample_rate*100, 0))) +'_BaseRadarEVI.tif'
 #classes = {1: "HCSA",
      #      0: "NA"}
 
