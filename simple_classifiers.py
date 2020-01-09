@@ -7,8 +7,6 @@ Created on Wed Sep 11 15:12:56 2019
 # =============================================================================
 # Imports
 # =============================================================================
-import ee
-ee.Initialize()
 import dirfuncs
 import data_helper as helper
 import glob
@@ -33,13 +31,14 @@ import matplotlib.pyplot as plt
 base_dir = dirfuncs.guess_data_dir()
 concessions = ['app_riau', 'app_oki']
 classConcession = 'app_jambi'
-bands = ['bands_base', 'bands_radar', 'evi2_only']
+bands = ['bands_base', 'bands_median', 'bands_radar', 'evi2_only']
+sample_rate=0.0040
 pixel_window_size = 1
 iterations = 1
-suffix = 'RF_x' + str(iterations) + '_12232019_004_BaseRadarEVI.tif'
+suffix = 'RF_x' + str(iterations) + '_12252019_004_BaseMedianRadarEVI.tif'
 doGridSearch = True
-scheme='3class'
-
+scheme='ALL'
+suffix = 'RF_x' + str(iterations) + '_'+scheme + '_12252019_004_BaseMedianRadarEVI.tif'
 #classes = {1: "HCSA",
      #      0: "NA"}
 
@@ -125,14 +124,14 @@ if(scheme=='3class'):
 for key in predictableClasses:
     probabilities_dict[key]=pd.DataFrame()
 for seed in range(1,iterations+1):
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=0.0040, test_size=0.1,
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=sample_rate, test_size=0.1,
                                                       #  random_state=13*seed)
     random_state = 16)
 
     # # =============================================================================
     # # Train and test random forest classifier
     # # =============================================================================
-    clf = rfc(n_estimators=400, max_depth = 12, max_features = .25, #max_leaf_nodes = 10,
+    clf = rfc(n_estimators=400, max_depth = 8, max_features = .25, #max_leaf_nodes = 10,
               #random_state=seed,
               random_state=16,
               oob_score = True, n_jobs = -1,
@@ -292,20 +291,24 @@ with rio.open(file_list[0]) as src:
     else:
         df_class['predicted'] = temp
     clas_df = pd.DataFrame(index = full_index)
-    classified = clas_df.merge(df_class['predicted'], left_index = True, right_index = True, how = 'left').sort_index()
-    classified = classified['predicted'].values.reshape(shape[0], shape[1])
-    clas_img = ((classified * 255)/2).astype('uint8')
-    clas_img = helper.mask_water(clas_img,classConcession)
+    classified = clas_df.merge(df_class['predicted'], left_index=True, right_index=True, how='left').sort_index()
+    if (scheme == 'ALL'):
+        classified = helper.map_to_3class(classified['predicted']).values.reshape(shape[0], shape[1])
+    clas_img = ((classified * 255) / 2).astype('uint8')
+    clas_img = helper.mask_water(clas_img, classConcession)
     clas_img = Image.fromarray(clas_img)
-    #clas_img.show()
+    # clas_img.show()
+
     print('*************  RANDOM FOREST  - ACTUAL  **********************')
 
     df_class[df_class <= -999] = np.nan
     df_class = df_class.dropna()
+
+    if (scheme == 'ALL'):
+        df_class['clas'] = helper.map_to_3class(df_class['clas'])
+        df_class['predicted'] = helper.map_to_3class(df_class['predicted'])
     print('ACTUAL:  ', df_class['clas'].value_counts())
     print('Predicted:  ', df_class['predicted'].value_counts())
-    if (scheme == '3class'):
-        df_class['clas'] = helper.map_to_3class(df_class['clas'])
     print(sklearn.metrics.classification_report(df_class['clas'], df_class['predicted']))
     print(sklearn.metrics.confusion_matrix(df_class['clas'], df_class['predicted']))
     classified = classified[np.newaxis, :, :].astype(rio.int16)
@@ -317,14 +320,14 @@ with rio.open(file_list[0]) as src:
                   crs = crs, dtype = dtype,
                   count = count, transform = transform) as clas_dst:
         clas_dst.write(classified)
-    with rio.open(prob_file, 'w', driver = 'GTiff',
-                  height = height, width = width,
-                  crs = crs, dtype = rio.float32,
-                  count = len(randomforest_fitted_clf.classes_), transform = transform) as prob_dst:
-        for key, value in probabilities_dict.items():
-            print(key, '....')
-            prob_dst.write_band(band+1, value.astype(rio.float32))
-prob_dst.close()
+    # with rio.open(prob_file, 'w', driver = 'GTiff',
+    #               height = height, width = width,
+    #               crs = crs, dtype = rio.float32,
+    #               count = len(randomforest_fitted_clf.classes_), transform = transform) as prob_dst:
+    #     for key, value in probabilities_dict.items():
+    #         print(key, '....')
+    #         prob_dst.write_band(band+1, value.astype(rio.float32))
+#prob_dst.close()
 clas_dst.close()
 src.close()
 # =============================================================================

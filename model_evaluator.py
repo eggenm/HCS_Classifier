@@ -12,24 +12,24 @@ from sklearn.metrics import f1_score
 training_sample_rate = 0.003
 sites = [#'gar_pgm',
    'app_riau',
-   'app_kalbar',
-         'app_kaltim',
+ #  'app_kalbar',
+ #        'app_kaltim',
        'app_jambi',
  'app_oki' #,
       # 'crgl_stal'
     ]
 base_dir = dirfuncs.guess_data_dir()
-band_set ={1:['bands_radar'],
-           2: ['bands_base'],
-            3: ['bands_median'],
-            4: ['bands_base','bands_radar'],
+band_set ={#1:['bands_radar'],
+       #    2: ['bands_base'],
+     #       3: ['bands_median'],
+      #      4: ['bands_base','bands_radar'],
       #  #    5: ['bands_base','bands_radar','bands_dem']#,
       # #     6: ['bands_radar','bands_dem']
-            7:['bands_evi2_separate'],
-            8:['bands_evi2'],
-            9:['bands_evi2','bands_radar'],
+      #      7:['bands_evi2_separate'],
+    #        8:['bands_evi2'],
+       #     9:['bands_evi2','bands_radar'],
            10:['bands_base','bands_radar','evi2_only'],
-            11:['bands_base','bands_median','bands_radar','evi2_only']
+      #      11:['bands_base','bands_median','bands_radar','evi2_only']
            }
 
 pixel_window_size=1
@@ -118,57 +118,61 @@ def evaluate_model():
         print(scoreConcession)
         trainConcessions = list(sites)
         trainConcessions.remove(scoreConcession)
-        i = 0
+
         result = pd.DataFrame(columns=['concession', 'bands', 'score_type', 'class_scheme', 'score', 'score_weighted',
                                        'two_class_score', 'two_class_score_weighted', 'training_concessions',
                                        'max_depth',
                                        'max_leaf_nodes', 'max_features', 'n_estimators', 'training_sample_rate'])
+        x = range(3, 18, 3)
         for key, bands in band_set.items():
-            print(key, '....',bands)
-            data = pd.DataFrame()
-            data_scoring = helper.get_concession_data(bands, scoreConcession)
-            data_scoring = helper.trim_data2(data_scoring)
-            X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
-            X_scaled_score = helper.scale_data(X_score)
-            y_score_all = data_scoring['clas'].values
+            i = 0
+            for y in range(3, 18, 3):
+                training_sample_rate = y/1000
+                print(key, '....',bands)
+                data = pd.DataFrame()
+                data_scoring = helper.get_concession_data(bands, scoreConcession)
+                data_scoring = helper.trim_data2(data_scoring)
+                X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
+                X_scaled_score = helper.scale_data(X_score)
+                y_score_all = data_scoring['clas'].values
 
-            data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
-            X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
-            X_scaled = helper.scale_data(X)
-            landcover = data['clas'].values
-            X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.1,
-                    random_state=16)
+                data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
+                X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
+                X_scaled = helper.scale_data(X)
+                landcover = data['clas'].values
+                X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.1,
+                        random_state=16)
 
-            ##########################################################
-            #####     MODEL WITH ALL CLASSES     #########
-            model = train_model(X_train, y_train)
-            yhat = model.predict(X_scaled_score)
-            score_all, score_all_weighted = score_model(helper.map_to_3class(y_score_all), helper.map_to_3class(yhat))
-            score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_to_2class(yhat))
-            result.loc[i] = [scoreConcession, str(bands), 'F1', 'ALL', score_all, score_all_weighted, score_two, score_two_weighted, str(trainConcessions),
-                             model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'], training_sample_rate ]
-            print(result.loc[i])
-            i+=1
+                ##########################################################
+                #####     MODEL WITH ALL CLASSES     #########
+                model = train_model(X_train, y_train)
+                yhat = model.predict(X_scaled_score)
+                score_all, score_all_weighted = score_model(helper.map_to_3class(y_score_all), helper.map_to_3class(yhat))
+                score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_to_2class(yhat))
+                result.loc[i] = [scoreConcession, str(bands), 'F1', 'ALL', score_all, score_all_weighted, score_two, score_two_weighted, str(trainConcessions),
+                                 model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'], training_sample_rate ]
+                print(result.loc[i])
+                i+=1
 
-            ##########################################################
-            #####     MODEL WITH 3 CLASSES     #########
-            model = train_model(X_train, helper.map_to_3class(y_train))
-            yhat = model.predict(X_scaled_score)
-            score_3, score_3_weighted = score_model(helper.map_to_3class(y_score_all), yhat)
-            score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_3_to_2class(yhat))
-            result.loc[i] = [scoreConcession, str(bands), 'F1' , '3CLASS', score_3, score_3_weighted, score_two, score_two_weighted, str(trainConcessions),
-                             model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'], model.get_params()['n_estimators'], training_sample_rate ]
-            print(result.loc[i])
-            i += 1
-        db.save_model_performance(result)
+                ##########################################################
+                #####     MODEL WITH 3 CLASSES     #########
+                model = train_model(X_train, helper.map_to_3class(y_train))
+                yhat = model.predict(X_scaled_score)
+                score_3, score_3_weighted = score_model(helper.map_to_3class(y_score_all), yhat)
+                score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_3_to_2class(yhat))
+                result.loc[i] = [scoreConcession, str(bands), 'F1' , '3CLASS', score_3, score_3_weighted, score_two, score_two_weighted, str(trainConcessions),
+                                 model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'], model.get_params()['n_estimators'], training_sample_rate ]
+                print(result.loc[i])
+                i += 1
+            db.save_model_performance(result)
     #print(result)
     #resultfile = base_dir + 'result.csv'
     #result.to_csv(resultfile, index=False)
     print(db.get_all_model_performance())
 
-#evaluate_model()
-resultfile = base_dir + 'result.12252019.csv'
-db.get_all_model_performance().to_csv(resultfile, index=False)
+evaluate_model()
+#resultfile = base_dir + 'result.12252019.csv'
+#db.get_all_model_performance().to_csv(resultfile, index=False)
 # img=get_feature_inputs(band_set.get(5))
 # array=np.asarray(img)
 # x = helper.gen_windows(array, pixel_window_size)
