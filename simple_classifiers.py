@@ -313,12 +313,17 @@ with rio.open(file_list[0]) as src:
     df_class = df_class.dropna()
     print('ACTUAL:  ', df_class['clas'].value_counts())
     df_class['clas'] = helper.map_to_2class(df_class['clas'])
+    print('ACTUAL:  ', df_class['clas'].value_counts())
     if (scheme == 'ALL'):
+        print('Predicted:  ', df_class['predicted'].value_counts())
         df_class['predicted'] = helper.map_to_2class(df_class['predicted'])
+        print('Predicted:  ', df_class['predicted'].value_counts())
     else:
+        print('Predicted:  ', df_class['predicted'].value_counts())
         df_class['predicted'] = helper.map_3_to_2class(df_class['predicted'])
+        print('Predicted:  ', df_class['predicted'].value_counts())
     #print('ACTUAL:  ', df_class['clas'].value_counts())
-    print('Predicted:  ', df_class['predicted'].value_counts())
+
     print(sklearn.metrics.classification_report(df_class['clas'], df_class['predicted']))
     print(sklearn.metrics.confusion_matrix(df_class['clas'], df_class['predicted']))
     classified = classified[np.newaxis, :, :].astype(rio.int16)
