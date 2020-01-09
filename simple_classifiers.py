@@ -30,8 +30,8 @@ import matplotlib.pyplot as plt
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
 
-concessions = ['app_jambi' , 'app_riau']
-classConcession = 'app_oki'
+concessions = ['app_oki' , 'app_riau']
+classConcession = 'app_jambi'
 bands = ['bands_base', 'bands_radar', 'evi2_only']
 sample_rate=0.004
 pixel_window_size = 1
@@ -133,7 +133,8 @@ for seed in range(1,iterations+1):
     # # =============================================================================
 
 
-    clf = rfc(n_estimators=400, max_depth = 8, max_features = .5, max_leaf_nodes = 15,
+
+    clf = rfc(n_estimators=400, max_depth = 8, max_features = .25, max_leaf_nodes = 15,
               #random_state=seed,
               random_state=16,
               oob_score = True, n_jobs = -1,
@@ -145,7 +146,7 @@ for seed in range(1,iterations+1):
         param_grid = [{#'max_depth': [14, 16, 18, 20],
                      #  'max_leaf_nodes': [14,15,16],
                      #  'max_features': [.15, .2 ,.25, .3, .35, .4 ],
-                       'n_estimators': [ 50, 100, 150]}]
+                       'n_estimators': [ 200, 250, 300]}]
 
         grid_search = GridSearchCV(clf, param_grid, cv=5,  scoring = 'f1_macro',
                                    return_train_score=True, refit=True)
