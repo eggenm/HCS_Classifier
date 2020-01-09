@@ -184,6 +184,7 @@ def get_landcover_class_image(concession):
     ## Read classification labels
     #with rio.open(file_list[0]) as clas_src:
         #three_class = clas_src.read()
+    print(allclass_file)
     file_list = sorted(glob.glob(allclass_file))
     with rio.open(file_list[0]) as clas_src:
         all_class = clas_src.read()
