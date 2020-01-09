@@ -305,14 +305,13 @@ with rio.open(file_list[0]) as src:
 
     df_class[df_class <= -999] = np.nan
     df_class = df_class.dropna()
-
+    df_class['clas'] = helper.map_to_2class(df_class['clas'])
     if (scheme == 'ALL'):
-        y_class = helper.map_to_3class(df_class['clas'])
-        df_class['predicted'] = helper.map_to_3class(df_class['predicted'])
-    print('ACTUAL:  ', y_class.value_counts())
+        df_class['predicted'] = helper.map_to_2class(df_class['predicted'])
+    print('ACTUAL:  ', df_class['clas'].value_counts())
     print('Predicted:  ', df_class['predicted'].value_counts())
-    print(sklearn.metrics.classification_report(y_class, df_class['predicted']))
-    print(sklearn.metrics.confusion_matrix(y_class, df_class['predicted']))
+    print(sklearn.metrics.classification_report(df_class['clas'], df_class['predicted']))
+    print(sklearn.metrics.confusion_matrix(df_class['clas'], df_class['predicted']))
     classified = classified[np.newaxis, :, :].astype(rio.int16)
 
     band=0
