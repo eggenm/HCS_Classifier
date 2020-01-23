@@ -134,6 +134,8 @@ def evaluate_model():
                 data = pd.DataFrame()
                 data_scoring = helper.get_concession_data(bands, scoreConcession)
                 data_scoring = helper.trim_data2(data_scoring)
+                data_scoring[data_scoring <= -999] = np.nan
+                data_scoring = data_scoring.dropna()
                 X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
                 X_scaled_score = helper.scale_data(X_score)
                 y_score_all = data_scoring['clas'].values
