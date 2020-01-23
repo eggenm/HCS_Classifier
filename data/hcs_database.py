@@ -68,12 +68,17 @@ rasters = {'app_kalbar': gee_dir + 'Kalbar_DTK_Stratification',
 def init_database():
     c = conn.cursor()
 
+    addColumn = "ALTER TABLE model_performance_log ADD COLUMN resolution int"
+
+    c.execute(addColumn)
+    update = "UPDATE model_performance_log set resolution=60"
+    c.execute(update)
     # Create table
-    c.execute('DROP TABLE model_performance_log')
-    c.execute('''CREATE TABLE model_performance_log
-                 (concession text, bands text, score_type text , class_scheme text, score real, score_weighted real,
-                                   two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
-                                   max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
+    # c.execute('DROP TABLE model_performance_log')
+    # c.execute('''CREATE TABLE model_performance_log
+    #              (concession text, bands text, score_type text , class_scheme text, score real, score_weighted real,
+    #                                two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
+    #                                max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
 
     # Save (commit) the changes
     conn.commit()
@@ -101,5 +106,5 @@ if __name__ == "__main__":
     print('in main')
     #init_database()
     #delete_model_performance()
-    #print(get_all_model_performance().head())
+    print(get_all_model_performance().head())
     conn.close()

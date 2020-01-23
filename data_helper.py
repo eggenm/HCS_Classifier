@@ -21,14 +21,14 @@ stackData = True
 
 #classes = {1: "HCSA",
      #      0: "NA"}
-# sites = ['gar_pgm',
-#     'app_riau',
-#   'app_kalbar',
-#          'app_kaltim',
-#       'app_jambi',
-#  'app_oki',
-#         'crgl_stal'
-#     ]
+sites = ['gar_pgm',
+    'app_riau',
+  'app_kalbar',
+         'app_kaltim',
+      'app_jambi',
+ 'app_oki',
+        'crgl_stal'
+    ]
 
 bands_base=['S2_blue_max', 'S2_green_max', 'S2_red_max', 'S2_nir_max', 'S2_nir2_max', 'S2_swir1_max', 'S2_swir2_max', 'S2_swir3_max', 'S2_vape_max']
 
@@ -130,6 +130,7 @@ def gen_windows(array, n):
         of pixel i,j
     """
     shape = array.shape
+    print('SHAPE:  ',shape)
     start = int((n - 1) / 2)
     end_i = shape[1] - start
     end_j = shape[2] - start
@@ -332,15 +333,15 @@ def log_result():
     print('')
 
 #print(landcoverClassMap)
-#for site in sites:
-    # stack_image_input_data(site, bands_base, 'bands_base')
-    #     # stack_image_input_data(site, bands_radar, 'bands_radar')
-    #     # stack_image_input_data(site, bands_median, 'bands_median')
+for site in sites:
+    stack_image_input_data(site, bands_base, 'bands_base')
+    stack_image_input_data(site, bands_radar, 'bands_radar')
+    stack_image_input_data(site, bands_median, 'bands_median')
     #     # stack_image_input_data(site, bands_dem, 'bands_dem')
-    # stack_image_input_data(site, bands_evi2, 'bands_evi2')
-    # stack_image_input_data(site, band_evi2, 'evi2_only')
-    # stack_image_input_data(site, bands_evi2_separate, 'bands_evi2_separate')
-    #stack_image_input_data(site, bands_extended, 'bands_extended')
+    stack_image_input_data(site, bands_evi2, 'bands_evi2')
+    stack_image_input_data(site, band_evi2, 'evi2_only')
+    stack_image_input_data(site, bands_evi2_separate, 'bands_evi2_separate')
+    stack_image_input_data(site, bands_extended, 'bands_extended')
 
 # trainConcessions = ['app_riau', 'app_jambi']
 # get_concession_data(['bands_radar'], trainConcessions)

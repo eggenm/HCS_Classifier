@@ -2,6 +2,9 @@
 # Imports
 # =============================================================================
 import ee
+
+from satellite_image_operations import s2_band_dict_median, s2_band_dict
+
 ee.Initialize()
 from data import hcs_database as hcs_db
 import satellite_image_operations as sat_ops
@@ -37,11 +40,11 @@ to_vals = list(key_df['code_3class'].astype(float).values)
 #         'crgl_stal', 'gar_pgm', 'nbpol_ob', 'wlmr_calaro']
 sites = ['gar_pgm',
     'app_riau',
-  'app_kalbar',
-         'app_kaltim',
-      'app_jambi',
- 'app_oki',
-        'crgl_stal'
+'app_kalbar',
+        'app_kaltim',
+     'app_jambi',
+'app_oki',
+       'crgl_stal'
     ]
 
 feature_dict = {}
@@ -167,7 +170,7 @@ print(clean_l8_img.bandNames().getInfo())
 # =============================================================================
 # radarCollectionByYear = ee.ImageCollection(ee.List.sequence(2014,2018,1).map(prep_sar))
 radar_composite = ee.Image()
-for year in range(2015, 2019):
+for year in range(2015, 2016):
     sentinel1 = ee.ImageCollection('COPERNICUS/S1_GRD')
     date_start = ee.Date.fromYMD(year, 1, 1)
     date_end = ee.Date.fromYMD(year, 12, 31)
@@ -190,15 +193,19 @@ sentinel2 = sentinel2.filterDate(date_start, date_end)
 # Pre-filter to get less cloudy granules.
 sentinel2 = sentinel2.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 35))
 sentinel2 = sentinel2.filterBounds(all_study_area)
-ndvis_s2 = getYearlyNdvi_s2()
-ndvis_l8 = getYearlyNdvi_L8()
-ndvis_l5 = getYearlyNdvi_L5()
-elevation = getDEM().select('elevation');
-slope = ee.Terrain.slope(elevation);
-dem = ee.Image(elevation.addBands(slope));
+#ndvis_s2 = getYearlyNdvi_s2()
+#ndvis_l8 = getYearlyNdvi_L8()
+#ndvis_l5 = getYearlyNdvi_L5()
+#elevation = getDEM().select('elevation');
+#slope = ee.Terrain.slope(elevation);
+#dem = ee.Image(elevation.addBands(slope));
 sentinel2_masked = sentinel2.map(sat_ops.prep_s2)
-clean_s2_img_med=ee.Image(sentinel2_masked.median())
-clean_s2_img_green = sentinel2_masked.qualityMosaic('ndvi_s2_max')
+old_names = list(s2_band_dict_median.keys())
+new_names = list(s2_band_dict_median.values())
+clean_s2_img_med=ee.Image(sentinel2_masked.median()).select(old_names, new_names)
+old_names = list(s2_band_dict.keys())
+new_names = list(s2_band_dict.values())
+clean_s2_img_green = sentinel2_masked.qualityMosaic('EVI2').select(old_names, new_names)
 
 # =============================================================================
 # Create site-level images for classification with reclassed strata and landsat data
@@ -215,7 +222,7 @@ def downloadLandcoverFiles(site):
     prefix = site + '_remap_3class'
     # fd.close()
     filename2 = out_path + '/' + site + '/' + prefix + '.zip'
-    url = strata_remapped.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 60})
+    url = strata_remapped.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
     r = requests.get(url, stream=True)
     with open(filename2, 'wb') as fd:
          for chunk in r.iter_content(chunk_size=1024):
@@ -229,7 +236,7 @@ def downloadLandcoverFiles(site):
     prefix = site + '_all_class'
     # fd.close()
     filename2 = out_path + '/' + site + '/' + prefix + '.zip'
-    url = strata_img.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 60})
+    url = strata_img.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
     r = requests.get(url, stream=True)
     with open(filename2, 'wb') as fd:
         for chunk in r.iter_content(chunk_size=1024):
@@ -251,8 +258,8 @@ for site in sites:
     strata_img = strata_img.int()
     images = {
       #  'landsat': clean_l8_img,
-            '_max_s2': clean_s2_img_green
-      #  '_median_s2': clean_s2_img_med,
+            '_max_s2': clean_s2_img_green,
+    #    '_median_s2': clean_s2_img_med,
          #    '_S2_ndvi': ndvis,#S,
     #    '_L8_ndvi':ndvis_l8,
      #   '_l5_ndvi': ndvis_l5
@@ -263,7 +270,7 @@ for site in sites:
     for key, value in images.items():
         prefix = site + key
         print('prefix:  ', prefix)
-        url = value.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 60})
+        url = value.clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
         filename = out_path + '\\' + site + '\\in\\' + prefix + '.zip'
         print(url)
         try:

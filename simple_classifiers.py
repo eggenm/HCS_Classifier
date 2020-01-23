@@ -38,7 +38,7 @@ pixel_window_size = 1
 iterations = 1
 doGridSearch = True
 scheme='ALL'
-suffix = 'RF_x' + str(iterations) + '_'+scheme + '_'+ str(int(round(sample_rate*1000, 0))) +'_BaseRadarEVI.tif'
+suffix = 'RF_x' + str(iterations) + '_'+scheme + '_'+ str(int(round(sample_rate*1000, 0))) +'_30m_BaseRadarEVI.tif'
 #classes = {1: "HCSA",
      #      0: "NA"}
 

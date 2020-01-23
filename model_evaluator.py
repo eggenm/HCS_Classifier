@@ -10,11 +10,13 @@ from sklearn.metrics import f1_score
 
 #############   SETUP  PARAMS    ######################
 training_sample_rate = 0.003
+resolution = 30
 sites = [#'gar_pgm',
+     'app_jambi',
    'app_riau',
  #  'app_kalbar',
  #        'app_kaltim',
-       'app_jambi',
+
  'app_oki' #,
       # 'crgl_stal'
     ]
@@ -122,11 +124,11 @@ def evaluate_model():
         result = pd.DataFrame(columns=['concession', 'bands', 'score_type', 'class_scheme', 'score', 'score_weighted',
                                        'two_class_score', 'two_class_score_weighted', 'training_concessions',
                                        'max_depth',
-                                       'max_leaf_nodes', 'max_features', 'n_estimators', 'training_sample_rate'])
+                                       'max_leaf_nodes', 'max_features', 'n_estimators', 'training_sample_rate', 'resolution'])
         x = range(3, 18, 3)
         for key, bands in band_set.items():
             i = 0
-            for y in range(3, 18, 3):
+            for y in range(1, 3, 1):
                 training_sample_rate = y/1000
                 print(key, '....',bands)
                 data = pd.DataFrame()
@@ -150,7 +152,7 @@ def evaluate_model():
                 score_all, score_all_weighted = score_model(helper.map_to_3class(y_score_all), helper.map_to_3class(yhat))
                 score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_to_2class(yhat))
                 result.loc[i] = [scoreConcession, str(bands), 'F1', 'ALL', score_all, score_all_weighted, score_two, score_two_weighted, str(trainConcessions),
-                                 model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'], training_sample_rate ]
+                                 model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'], training_sample_rate, resolution ]
                 print(result.loc[i])
                 i+=1
 
@@ -161,7 +163,7 @@ def evaluate_model():
                 score_3, score_3_weighted = score_model(helper.map_to_3class(y_score_all), yhat)
                 score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_3_to_2class(yhat))
                 result.loc[i] = [scoreConcession, str(bands), 'F1' , '3CLASS', score_3, score_3_weighted, score_two, score_two_weighted, str(trainConcessions),
-                                 model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'], model.get_params()['n_estimators'], training_sample_rate ]
+                                 model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'], model.get_params()['n_estimators'], training_sample_rate, resolution ]
                 print(result.loc[i])
                 i += 1
             db.save_model_performance(result)
@@ -171,7 +173,7 @@ def evaluate_model():
     print(db.get_all_model_performance())
 
 evaluate_model()
-#resultfile = base_dir + 'result.12252019.csv'
+#resultfile = base_dir + 'result.01102020.csv'
 #db.get_all_model_performance().to_csv(resultfile, index=False)
 # img=get_feature_inputs(band_set.get(5))
 # array=np.asarray(img)
