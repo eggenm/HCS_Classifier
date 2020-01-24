@@ -138,6 +138,7 @@ def evaluate_model():
                 data_scoring = data_scoring.dropna()
                 X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
                 X_scaled_score = helper.scale_data(X_score)
+                print('ACTUAL:  ', data_scoring['clas'].value_counts())
                 y_score_all = data_scoring['clas'].values
 
                 data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
@@ -151,6 +152,7 @@ def evaluate_model():
                 #####     MODEL WITH ALL CLASSES     #########
                 model = train_model(X_train, y_train)
                 yhat = model.predict(X_scaled_score)
+                print('PREDICTED:  ', yhat.value_counts())
                 score_all, score_all_weighted = score_model(helper.map_to_3class(y_score_all), helper.map_to_3class(yhat))
                 score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_to_2class(yhat))
                 result.loc[i] = [scoreConcession, str(bands), 'F1', 'ALL', score_all, score_all_weighted, score_two, score_two_weighted, str(trainConcessions),
