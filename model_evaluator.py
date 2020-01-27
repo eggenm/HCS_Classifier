@@ -13,7 +13,7 @@ training_sample_rate = 0.003
 resolution = 30
 sites = [#'gar_pgm',
      'app_jambi',
- #  'app_riau',
+   'app_riau',
  #  'app_kalbar',
  #        'app_kaltim',
 
