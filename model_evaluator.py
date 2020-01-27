@@ -13,7 +13,7 @@ training_sample_rate = 0.003
 resolution = 30
 sites = [#'gar_pgm',
      'app_jambi',
-   'app_riau',
+ #  'app_riau',
  #  'app_kalbar',
  #        'app_kaltim',
 
@@ -135,6 +135,7 @@ def evaluate_model():
                 data_scoring = helper.get_concession_data(bands, scoreConcession)
                 data_scoring = helper.trim_data2(data_scoring)
                 data_scoring[data_scoring <= -999] = np.nan
+                data_scoring[data_scoring == 255]  = np.nan
                 data_scoring = data_scoring.dropna()
                 X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
                 X_scaled_score = helper.scale_data(X_score)
@@ -142,6 +143,9 @@ def evaluate_model():
                 y_score_all = data_scoring['clas'].values
 
                 data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
+                data[data <= -999] = np.nan
+                data[data == 255] = np.nan
+                data= data_scoring.dropna()
                 X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
                 X_scaled = helper.scale_data(X)
                 landcover = data['clas'].values
@@ -152,7 +156,7 @@ def evaluate_model():
                 #####     MODEL WITH ALL CLASSES     #########
                 model = train_model(X_train, y_train)
                 yhat = model.predict(X_scaled_score)
-                print('PREDICTED:  ', yhat.value_counts())
+                print('PREDICTED:  ', pd.Series(yhat).value_counts())
                 score_all, score_all_weighted = score_model(helper.map_to_3class(y_score_all), helper.map_to_3class(yhat))
                 score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_to_2class(yhat))
                 result.loc[i] = [scoreConcession, str(bands), 'F1', 'ALL', score_all, score_all_weighted, score_two, score_two_weighted, str(trainConcessions),
