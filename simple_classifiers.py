@@ -270,7 +270,7 @@ else:
     temp=predictions
 
 outclas_file = base_dir + classConcession + '/sklearn_test/classified' + suffix
-referencefile = base_dir + classConcession + '/' + classConcession + '_remap_3class.remapped.tif'
+referencefile = base_dir + classConcession + '/' + classConcession + '_all_class.remapped.tif'
 prob_file = base_dir + classConcession +  '/sklearn_test/prob_file' + suffix
 print(referencefile)
 file_list = sorted(glob.glob(referencefile))
@@ -333,6 +333,14 @@ with rio.open(file_list[0]) as src:
     print(sklearn.metrics.confusion_matrix(df_class['clas'], df_class['predicted']))
     classified = classified[np.newaxis, :, :].astype(rio.int16)
 
+    score_all, score_all_weighted = helper.score_model(helper.map_to_3class(df_class['clas']), helper.map_to_3class(df_class['predicted']))
+    score_two, score_two_weighted = helper.score_model(helper.map_to_2class(df_class['clas']), helper.map_to_2class(df_class['predicted']))
+    result.loc[i] = [scoreConcession, str(bands), 'F1', 'ALL', score_all, score_all_weighted, score_two,
+                     score_two_weighted, str(trainConcessions),
+                     model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'],
+                     model.get_params()['max_features'], model.get_params()['n_estimators'], training_sample_rate,
+                     resolution]
+    print(result.loc[i])
     band=0
 
     with rio.open(outclas_file, 'w', driver = 'GTiff',
