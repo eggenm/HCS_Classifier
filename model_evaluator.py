@@ -175,21 +175,22 @@ def evaluate_model():
                 print(result.loc[i])
                 i += 1
             db.save_model_performance(result)
-    #print(result)
+    #print(result)trim_data2
     #resultfile = base_dir + 'result.csv'
     #result.to_csv(resultfile, index=False)
     print(db.get_all_model_performance())
 
-evaluate_model()
-#resultfile = base_dir + 'result.01102020.csv'
-#db.get_all_model_performance().to_csv(resultfile, index=False)
-# img=get_feature_inputs(band_set.get(5))
-# array=np.asarray(img)
-# x = helper.gen_windows(array, pixel_window_size)
-# two_class_y, all_class_y = helper.get_landcover_class_image(classConcession)
-# y = helper.get_classes(all_class_y, 'clas')
-# y2 = helper.get_classes(two_class_y, 'class_binary')
-# data = helper.combine_input_landcover(x, y, y2)
-# data = data.groupby('clas').filter(lambda x: len(x) > 1000)
-# X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_binary'))]]
-# X_scaled = helper.scale_data(X)
+if __name__ == "__main__":
+    evaluate_model()
+    #resultfile = base_dir + 'result.01302020.csv'
+    #db.get_all_model_performance().to_csv(resultfile, index=False)
+    # img=get_feature_inputs(band_set.get(5))
+    # array=np.asarray(img)
+    # x = helper.gen_windows(array, pixel_window_size)
+    # two_class_y, all_class_y = helper.get_landcover_class_image(classConcession)
+    # y = helper.get_classes(all_class_y, 'clas')
+    # y2 = helper.get_classes(two_class_y, 'class_binary')
+    # data = helper.combine_input_landcover(x, y, y2)
+    # data = data.groupby('clas').filter(lambda x: len(x) > 1000)
+    # X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_binary'))]]
+    # X_scaled = helper.scale_data(X)
