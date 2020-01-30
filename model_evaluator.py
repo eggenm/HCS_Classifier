@@ -134,18 +134,14 @@ def evaluate_model():
                 data = pd.DataFrame()
                 data_scoring = helper.get_concession_data(bands, scoreConcession)
                 data_scoring = helper.trim_data2(data_scoring)
-                data_scoring[data_scoring <= -999] = np.nan
-                data_scoring[data_scoring == 255]  = np.nan
-                data_scoring = data_scoring.dropna()
+                data_scoring = helper.drop_no_data(data_scoring)
                 X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
                 X_scaled_score = helper.scale_data(X_score)
                 print('ACTUAL:  ', data_scoring['clas'].value_counts())
                 y_score_all = data_scoring['clas'].values
 
                 data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
-                data[data <= -999] = np.nan
-                data[data == 255] = np.nan
-                data= data_scoring.dropna()
+                data=helper.drop_no_data(data)
                 X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
                 X_scaled = helper.scale_data(X)
                 landcover = data['clas'].values
