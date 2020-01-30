@@ -332,6 +332,11 @@ def trim_data2(input):
 def log_result():
     print('')
 
+def drop_no_data(data):
+    data[data <= -999] = np.nan
+    data[data == 255] = np.nan
+    return data.dropna()
+
 #print(landcoverClassMap)
 for site in sites:
     stack_image_input_data(site, bands_base, 'bands_base')

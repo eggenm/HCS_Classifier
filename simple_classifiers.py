@@ -33,7 +33,7 @@ base_dir = dirfuncs.guess_data_dir()
 concessions = ['app_oki' , 'app_riau']
 classConcession = 'app_jambi'
 bands = ['bands_base', 'bands_radar', 'evi2_only']
-sample_rate=0.004
+sample_rate=0.002
 pixel_window_size = 1
 iterations = 1
 doGridSearch = True
@@ -95,6 +95,7 @@ train_df = helper.get_concession_data(bands, concessions)
 
 #data_df = combine_input_landcover(allInput, landcover)
 train_df= helper.trim_data2(train_df)
+train_df= helper.drop_no_data(train_df)
 X = train_df[[col for col in train_df.columns if  (col != 'clas') ]]
 
 X_scaled = helper.scale_data(X)
@@ -146,7 +147,10 @@ for seed in range(1,iterations+1):
         param_grid = [{#'max_depth': [14, 16, 18, 20],
                      #  'max_leaf_nodes': [14,15,16],
                      #  'max_features': [.15, .2 ,.25, .3, .35, .4 ],
-                       'n_estimators': [ 200, 250, 300]}]
+                       'n_estimators': [ #400,
+                                         450, 500
+                           #, 550, 600
+                           ]}]
 
         grid_search = GridSearchCV(clf, param_grid, cv=5,  scoring = 'f1_macro',
                                    return_train_score=True, refit=True)
@@ -311,7 +315,7 @@ with rio.open(file_list[0]) as src:
     print('*************  RANDOM FOREST  - ACTUAL  **********************')
 
     df_class[df_class <= -999] = np.nan
-    df_class = df_class.dropna()
+    df_class = helper.drop_no_data(df_class)
     print('ACTUAL:  ', df_class['clas'].value_counts())
     df_class['clas'] = helper.map_to_2class(df_class['clas'])
     print('ACTUAL:  ', df_class['clas'].value_counts())
