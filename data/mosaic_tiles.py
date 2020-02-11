@@ -1,30 +1,36 @@
 import rasterio
 from rasterio.merge import merge
-from rasterio.plot import show
+import satellite_image_operations as sat_ops
 import glob
 import os
 
-dirpath = r'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\Sumatra\\in\\2015'
-out_fp = r'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\Sumatra\\out\\SumatraMosaicBlue.tif'
-search_criteria = "*blue_max*.tif"
-q = os.path.join(dirpath, search_criteria)
-image_files = glob.glob(q)
+dirpath = r'/home/eggen/data/Sumatra/in/2015'
+out_fp = r'/home/eggen/data/Sumatra/out/2015/'
 
-src_files_to_mosaic = []
-for f in image_files:
-    src = rasterio.open(f)
-    src_files_to_mosaic.append(src)
+my_dict = sat_ops.l8_band_dict.copy()
+my_dict.update(sat_ops.s1_band_dict)
+for band in my_dict.values():
+    search_criteria='*'+band+'*.tif'
+    out_file = band+'.tif'
+    print(search_criteria)
+    q = os.path.join(dirpath, search_criteria)
+    image_files = glob.glob(q)
+    out = os.path.join(out_fp, out_file)
+    print(out)
+    src_files_to_mosaic = []
+    for f in image_files:
+        src = rasterio.open(f)
+        src_files_to_mosaic.append(src)
 
-print(src_files_to_mosaic)
-mosaic, out_trans = merge(src_files_to_mosaic)
-out_meta = src.meta.copy()
-# Update the metadata
-out_meta.update({"driver": "GTiff",
-     "height": mosaic.shape[1],
-     "width": mosaic.shape[2],
-     "transform": out_trans,
-   #  "crs": "+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs "
-                 }
-)
-with rasterio.open(out_fp, "w", **out_meta) as dest:
-     dest.write(mosaic)
+    print(src_files_to_mosaic)
+    mosaic, out_trans = merge(src_files_to_mosaic)
+    out_meta = src.meta.copy()
+    # Update the metadata
+    out_meta.update({"driver": "GTiff",
+         "height": mosaic.shape[1],
+         "width": mosaic.shape[2],
+         "transform": out_trans
+                     }
+    )
+    with rasterio.open(out, "w", **out_meta) as dest:
+         dest.write(mosaic)
