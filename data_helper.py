@@ -31,7 +31,7 @@ sites = ['gar_pgm',
         'crgl_stal'
     ]
 
-bands_base=['S2_blue_max', 'S2_green_max', 'S2_red_max', 'S2_nir_max', 'S2_nir2_max', 'S2_swir1_max', 'S2_swir2_max', 'S2_swir3_max', 'S2_vape_max']
+bands_base=['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max']
 
 bands_historical=['ndvi_2013', 'ndvi_2014', 'ndvi_2015', 'ndvi_2011', 'ndvi_2010', 'ndvi_2009', 'ndvi_2008', 'ndvi_2007', 'ndvi_2006', 'ndvi_2005', 'ndvi_2004', 'ndvi_2003']
 

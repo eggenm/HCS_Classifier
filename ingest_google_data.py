@@ -167,6 +167,22 @@ def assemble_l8(study_area, year):
     return(clean_l8_img)
 
 # =============================================================================
+# Prep landsat data
+# =============================================================================
+def get_water_mask(study_area):
+    water = ee.ImageCollection('COPERNICUS/S1_GRD')
+    date_start = ee.Date.fromYMD(2013, 1, 1)
+    date_end = ee.Date.fromYMD(2019, 12, 31)
+    water = water.filterDate(date_start, date_end)
+    water = water.filter(ee.Filter.eq('instrumentMode', 'IW'))
+    water = water.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
+    water = water.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
+    water = water.filterBounds(study_area)
+    water = water.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'));
+    mask = ee.Image(sat_ops.prep_sar(water)).select(['VH'])
+    return mask.gt(-19.0)
+
+# =============================================================================
 # Prep SAR data
 # =============================================================================
 # radarCollectionByYear = ee.ImageCollection(ee.List.sequence(2014,2018,1).map(prep_sar))

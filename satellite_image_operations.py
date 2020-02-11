@@ -92,6 +92,8 @@ def addNDVI_l5(image):
 def addNDVI_l8(image):
   return image.addBands(image.normalizedDifference(['B5', 'B4']).rename('NDVI'));
 
+def unit_scale_l8_SR(image):
+    return image.unitScale(0,10000)
 
 def prep_ls8(img):
     """
@@ -100,6 +102,7 @@ def prep_ls8(img):
     """
     # Mask out flagged clouds
     img = maskCloudsLandsat8(img)
+    img = img.unitScale(0,10000)
 
     # Rename bands
 
