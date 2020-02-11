@@ -40,6 +40,7 @@ out_path = dirfuncs.guess_data_dir()
 
     # for each band
 def get_grid_polygons(lon_start, lon_end, lat_start,lat_end):
+    print(lon_start, lon_end, lat_start,lat_end)
     polys = [];
     lon = lon_start
     cell_id=0
@@ -56,7 +57,7 @@ def get_grid_polygons(lon_start, lon_end, lat_start,lat_end):
         lat += lat_edge
         print('x1: ' , x1, '  y1: ', y1, 'x2: ' , x2, '  y2: ', y2)
         polys.append(ee.Feature(ee.Geometry.Rectangle(x1, y1, x2, y2) , {'label': str(cell_id)}));
-        return(polys)
+    return(polys)
 
 
 def download_data(polygons,i):
