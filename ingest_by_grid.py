@@ -26,11 +26,11 @@ import pandas as pd
 # # lat_edge = 2
 # # site = 'Kalimantan'
 year = 2015
-lon_start=100
-lon_edge=2
-lon_end=106
-lat_start = -6
-lat_end = 1
+lon_start=97
+lon_edge=1
+lon_end=104
+lat_start = 1
+lat_end = 3
 lat_edge = 1
 site = 'Sumatra'
 out_path = dirfuncs.guess_data_dir()
@@ -75,7 +75,7 @@ for key, value in images.items():
         print(band)
         for geometry in polys:
 
-            prefix = site + key +'_'+ geometry.get('label').getInfo() + '_' + band
+            prefix = site + key +'_2_'+ geometry.get('label').getInfo() + '_' + band
             print('prefix:  ', prefix)
             url = value.select(band).clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
             filename = out_path  + site + '/in/'+ str(year) + '/' + prefix + '.zip'
