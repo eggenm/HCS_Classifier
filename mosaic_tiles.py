@@ -14,9 +14,10 @@ for band in my_dict.values():
     out_file = band+'.tif'
     print(search_criteria)
     q = os.path.join(dirpath, search_criteria)
+    print(q)
     image_files = glob.glob(q)
     out = os.path.join(out_fp, out_file)
-    print(out)
+    print(image_files)
     src_files_to_mosaic = []
     for f in image_files:
         src = rasterio.open(f)
