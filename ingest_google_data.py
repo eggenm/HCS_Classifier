@@ -29,10 +29,7 @@ date_end = ee.Date.fromYMD(2015, 12, 31)
 # =============================================================================
 # Load study data
 # =============================================================================
-key_csv = '/Users/ME/Dropbox/HCSproject/data/strata_key.csv'
-key_df = pd.read_csv(key_csv)
-from_vals = list(key_df['project_code'].astype(float).values)
-to_vals = list(key_df['code_3class'].astype(float).values)
+
 
 # sites = ['app_jambi', 'app_oki', 'app_kaltim', 'app_kalbar',
 #         'app_muba',
@@ -261,6 +258,10 @@ bands.extend(list(sat_ops.s1_band_dict.values()))
 print(bands)
 img_dict = dict.fromkeys(sites, 0)
 if __name__ == "__main__":
+    key_csv = '/Users/ME/Dropbox/HCSproject/data/strata_key.csv'
+    key_df = pd.read_csv(key_csv)
+    from_vals = list(key_df['project_code'].astype(float).values)
+    to_vals = list(key_df['code_3class'].astype(float).values)
     for site in sites:
         strata_img = ee.Image(hcs_db.rasters[site])
         strata_remapped = strata_img.remap(from_vals, to_vals, 4)
