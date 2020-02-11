@@ -108,18 +108,12 @@ def cleanup_files():
         except:
             print("Error while deleting file : ", filePath)
 
-polygons = get_grid_polygons(99, 100, 2,3)
-download_data(polygons,1)
+
+polygons = get_grid_polygons(98, 102, 2,4)
+download_data(polygons, 1)
 cleanup_files()
 
-polygons = get_grid_polygons(100, 101, 2,3)
-download_data(polygons,2)
+polygons = get_grid_polygons(98, 106, -6,2)
+download_data(polygons, 2)
 cleanup_files()
 
-# polygons = get_grid_polygons(98, 102, 2,4)
-# download_data(polygons)
-# cleanup_files()
-#
-# polygons = get_grid_polygons(98, 106, -6,2)
-# download_data(polygons)
-# cleanup_files()
