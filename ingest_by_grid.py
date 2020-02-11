@@ -78,7 +78,7 @@ for key, value in images.items():
             prefix = site + key +'_'+ geometry.get('label').getInfo() + '_' + band
             print('prefix:  ', prefix)
             url = value.select(band).clip(geometry).getDownloadURL({'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
-            filename = out_path + '/' + site + '/in/'+ str(year) + '/' + prefix + '.zip'
+            filename = out_path  + site + '/in/'+ str(year) + '/' + prefix + '.zip'
             print(url)
             try:
                 with timer.Timer() as t:
