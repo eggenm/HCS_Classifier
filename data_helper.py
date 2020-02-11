@@ -10,7 +10,8 @@ import numpy as np
 import rasterio as rio
 import rasterio.crs
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-
+import sklearn.metrics
+from sklearn.metrics import f1_score
 
 # =============================================================================
 # Identify files
@@ -331,6 +332,20 @@ def trim_data2(input):
 
 def log_result():
     print('')
+
+def score_model(y_test, yhat):
+    show_results(y_test, yhat)
+    f1 = f1_score(y_test, yhat, average='macro')
+    f1_weighted = f1_score(y_test, yhat, average='weighted')
+    return f1,f1_weighted
+
+def show_results(y_test, y_hat):
+    report = sklearn.metrics.classification_report(y_test, y_hat, output_dict=True)
+    print(report)
+    # export_report = pd.DataFrame(report).to_csv(r'C:\Users\ME\Desktop\export_report_riau.csv', index=None,
+    #                           header=True)
+    confMatrix = sklearn.metrics.confusion_matrix(y_test, y_hat)
+    print(confMatrix)
 
 def drop_no_data(data):
     data[data <= -999] = np.nan

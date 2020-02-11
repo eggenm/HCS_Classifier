@@ -2,37 +2,37 @@ import ee
 ee.Initialize()
 import numpy as np
 
-l8_band_dict =  {'B1': 'ublue',
-              'B2': 'blue',
-              'B3': 'green',
-              'B4': 'red',
-              'B5': 'nir',
-              'B6': 'swir1',
-              'B7': 'swir2',
-              'B10': 'tir1',
-              'B11': 'tir2',
-              'sr_aerosol': 'sr_aerosol'
-           #  ,'nd': 'ndvi_l8'
+l8_band_dict =  {#'B1': 'ublue',
+              'B2': 'blue_max',
+              'B3': 'green_max',
+              'B4': 'red_max',
+              'B5': 'nir_max',
+              'B6': 'swir1_max',
+              'B7': 'swir2_max',
+      #        'B10': 'tir1',
+      #        'B11': 'tir2',
+       #       'sr_aerosol': 'sr_aerosol'
+             'EVI2': 'EVI'
               }
 
 s2_band_dict = {
     #'B1': 'S2_ublue',
-      #       'B2': 'S2_blue_max',
-           #   'B3': 'S2_green_max',
-     #      'B4': 'S2_red_max',
+            'B2': 'blue_max',
+           'B3': 'green_max',
+          'B4': 'red_max',
      #        'B5': 'rededge1_max',
      #      'B6': 'rededge2_max',
      #       'B7': 'rededge3_max',
   #
-    #            'B8': 'S2_nir_max',
-     #            'B8A': 'S2_nir2_max',
-              'B9': 'S2_vape_max',
+                'B8': 'nir_max',
+        #         'B8A': 'S2_nir2_max',
+     #         'B9': 'S2_vape_max',
   #
-          #    'B10': 'S2_swir1_max',
-        #    'B11': 'S2_swir2_max',
-   #       'B12': 'S2_swir3_max',
+             'B10': 'swir1_max',
+           'B11': 'swir2_max',
+      #   'B12': 'S2_swir3_max',
    #           'nd': 'ndvi_s2_max',
-    'EVI2':'EVI2_s2_max'
+    'EVI2':'EVI'
 }
 
 s2_band_dict_median = {
@@ -102,18 +102,15 @@ def prep_ls8(img):
     img = maskCloudsLandsat8(img)
 
     # Rename bands
+
+    # Add ndvi
+   # img = img.addBands(img.normalizedDifference(['nir', 'red']))
+    img = add_EVI2_l8(img)
+    # Rename ndvi
     old_names = list(l8_band_dict.keys())
     new_names = list(l8_band_dict.values())
     img = img.select(old_names, new_names)
-    # Add ndvi
-    img = img.addBands(img.normalizedDifference(['nir', 'red']))
-
-    # Rename ndvi
-    newer_names = new_names.copy()
-    newest_names = new_names.copy()
-    newer_names.append('nd')
-    newest_names.append('ndvi_l8')
-    img = img.select(newer_names, newest_names)
+    #img = img.select(newer_names, newest_names)
 
     return img
 
@@ -167,7 +164,14 @@ def add_EVI2_s2(image):
 
     return image.addBands(evi2);
 
+def add_EVI2_l8(image):
+    bands = {
+        'RED': image.select('B4'),
+        'NIR': image.select('B5')
+  }
+    evi2 = image.expression('2.4 * (NIR - RED) / (NIR + RED + 1)', bands).rename('EVI2');
 
+    return image.addBands(evi2);
 
 def add_ndvi(img, keys, values, platform):
     print(platform)

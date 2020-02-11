@@ -95,7 +95,7 @@ def save_model_performance(rows):
 
 def delete_model_performance():
     c = conn.cursor()
-    c.execute('DELETE FROM model_performance_log')
+    c.execute('DELETE FROM model_performance_log where resolution=30 ')
     conn.commit()
 
 def get_all_model_performance():
@@ -106,5 +106,5 @@ if __name__ == "__main__":
     print('in main')
     #init_database()
     #delete_model_performance()
-    print(get_all_model_performance().head())
+    print(get_all_model_performance().tail())
     conn.close()

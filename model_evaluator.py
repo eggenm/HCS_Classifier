@@ -177,9 +177,9 @@ def evaluate_model():
     print(db.get_all_model_performance())
 
 if __name__ == "__main__":
-    evaluate_model()
-    #resultfile = base_dir + 'result.01302020.csv'
-    #db.get_all_model_performance().to_csv(resultfile, index=False)
+    #evaluate_model()
+    resultfile = base_dir + 'result.02062020.csv'
+    db.get_all_model_performance().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)
     # x = helper.gen_windows(array, pixel_window_size)
