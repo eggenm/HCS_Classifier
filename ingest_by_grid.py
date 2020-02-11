@@ -68,7 +68,7 @@ l8 = ingest.assemble_l8(all_study_area, year)
 images = {
               #  '_greenest': sentinel,
                '_radar': radar ,# 'class': strata_img,
-              #  '_greenest':l8
+               '_greenest':l8
             }
 for key, value in images.items():
     for band in value.bandNames().getInfo():
