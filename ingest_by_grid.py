@@ -70,7 +70,7 @@ def download_data(polygons,i):
 
     images = {
         #  '_greenest': sentinel,
-        '_radar': radar,  # 'class': strata_img,
+      #  '_radar': radar,  # 'class': strata_img,
         '_greenest': l8,
        # '_watermask': water_mask
 
@@ -110,9 +110,9 @@ def cleanup_files():
             print("Error while deleting file : ", filePath)
 
 
-polygons = get_grid_polygons(98, 102, 2,4)
-download_data(polygons, 1)
-cleanup_files()
+# polygons = get_grid_polygons(98, 102, 2,4)
+# download_data(polygons, 1)
+# cleanup_files()
 
 polygons = get_grid_polygons(98, 106, -6,2)
 download_data(polygons, 2)
