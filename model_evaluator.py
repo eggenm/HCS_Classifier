@@ -11,6 +11,8 @@ from sklearn.metrics import f1_score
 #############   SETUP  PARAMS    ######################
 training_sample_rate = 0.003
 resolution = 30
+island='Sumatra'
+year=str(2015)
 sites = [#'gar_pgm',
      'app_jambi',
    'app_riau',
@@ -30,7 +32,8 @@ band_set ={#1:['bands_radar'],
       #      7:['bands_evi2_separate'],
     #        8:['bands_evi2'],
        #     9:['bands_evi2','bands_radar'],
-           10:['bands_base','bands_radar','evi2_only'],
+           10:[ helper.bands_base, #helper.bands_radar,
+                helper.band_evi2 ],
       #      11:['bands_base','bands_median','bands_radar','evi2_only']
            }
 
@@ -132,7 +135,8 @@ def evaluate_model():
                 training_sample_rate = y/1000
                 print(key, '....',bands)
                 data = pd.DataFrame()
-                data_scoring = helper.get_concession_data(bands, scoreConcession)
+                #data_scoring = helper.get_concession_data(bands, scoreConcession)
+                data_scoring = helper.get_input_data(bands, island, year, False, scoreConcession)
                 data_scoring = helper.trim_data2(data_scoring)
                 data_scoring = helper.drop_no_data(data_scoring)
                 X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
@@ -140,7 +144,8 @@ def evaluate_model():
                 print('ACTUAL:  ', data_scoring['clas'].value_counts())
                 y_score_all = data_scoring['clas'].values
 
-                data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
+                #data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
+                data = helper.trim_data2(helper.get_input_data(bands, island, year, False, trainConcessions))
                 data=helper.drop_no_data(data)
                 X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
                 X_scaled = helper.scale_data(X)
@@ -177,9 +182,9 @@ def evaluate_model():
     print(db.get_all_model_performance())
 
 if __name__ == "__main__":
-    #evaluate_model()
-    resultfile = base_dir + 'result.02062020.csv'
-    db.get_all_model_performance().to_csv(resultfile, index=False)
+    evaluate_model()
+    #resultfile = base_dir + 'result.02062020.csv'
+    #db.get_all_model_performance().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)
     # x = helper.gen_windows(array, pixel_window_size)

@@ -12,6 +12,10 @@ import rasterio.crs
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import sklearn.metrics
 from sklearn.metrics import f1_score
+import ShapefileHelper as shapefilehelp
+import data.hcs_database  as db
+import itertools
+from rasterio.mask import mask
 
 # =============================================================================
 # Identify files
@@ -37,7 +41,7 @@ bands_historical=['ndvi_2013', 'ndvi_2014', 'ndvi_2015', 'ndvi_2011', 'ndvi_2010
 
 bands_median=['S2_blue_median', 'S2_green_median', 'S2_red_median', 'S2_nir_median', 'S2_nir2_median', 'S2_swir1_median', 'S2_swir2_median', 'S2_swir3_median', 'S2_vape_median']
 
-bands_radar=['VH_2015', 'VV_2015']
+bands_radar=['VH', 'VV']
 
 bands_dem=['elevation', 'slope']
 
@@ -45,7 +49,7 @@ bands_extended=['rededge1', 'rededge2', 'rededge3']
 
 bands_evi2_separate=['S2_red_max', 'S2_nir_max']
 
-band_evi2 = ['EVI2_s2_max']
+band_evi2 = ['EVI']
 
 bands_evi2 = ['S2_red_max', 'S2_nir_max', 'EVI2_s2_max']
 
@@ -234,14 +238,26 @@ def mask_water(an_img, concession):
     an_img = an_img * watermask
     return an_img
 
-def get_feature_inputs(band_groups, concession):
+def get_input_band(band, island, year):
+    print(band)
+    return(os.path.join(base_dir, island,'out', year,  band + '.tif'))
+
+def trim_input_band(input_raster, boundary):
+    out_img, out_transform = mask(raster=input_raster, shapes=boundary, crop=True)
+    return out_img, out_transform
+
+def get_feature_inputs(band_groups, bounding_box, island, year):
     srcs_to_mosaic=[]
     outtif=''
-    for bands in band_groups:
-        outtif = os.path.join(base_dir, concession, 'out', 'input_' + concession + '_' + bands + '.tif')
+    all_bands = list(itertools.chain(*band_groups))
+    print('ALL_BANDS:', all_bands)
+    for band in all_bands:
+        outtif=get_input_band(band, island, year)
+        outtif=os.path.join(outtif)
         print(outtif)
         file = glob.glob(outtif)
-        srcs_to_mosaic.append(file[0])
+        out_img, out_trans = trim_input_band(rasterio.open(file[0]), bounding_box)
+        srcs_to_mosaic.append(out_img)
         #print(srcs_to_mosaic)
     array = []
     for ii, ifile in enumerate(srcs_to_mosaic):
@@ -256,11 +272,25 @@ def get_feature_inputs(band_groups, concession):
     return array
 
 
-def get_concession_bands(bands, concession):
-    img = get_feature_inputs(bands, concession)
+def get_concession_bands(bands, island, year, bounding_box):
+    img = get_feature_inputs(bands, bounding_box, island, year)
     array = np.asarray(img)
     x = gen_windows(array, pixel_window_size)
     return x
+
+
+def get_input_data(bands, island, year, isClass=False, *args):
+    data = pd.DataFrame()
+    for concession in args:
+        all_class_image = get_landcover_class_image(concession)
+        y = get_classes(all_class_image, 'clas')
+        box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])
+        x = get_concession_bands(bands, island, year, box)
+        if data.empty:
+            data = combine_input_landcover(x, y, isClass)
+        else:
+            data = pd.concat([data, combine_input_landcover(x, y, isClass)], ignore_index=True)
+    return data
 
 def get_concession_data(bands, concessions, isClass=False):
     data = pd.DataFrame()
@@ -353,15 +383,16 @@ def drop_no_data(data):
     return data.dropna()
 
 #print(landcoverClassMap)
-for site in sites:
-    stack_image_input_data(site, bands_base, 'bands_base')
-    stack_image_input_data(site, bands_radar, 'bands_radar')
-    stack_image_input_data(site, bands_median, 'bands_median')
-    #     # stack_image_input_data(site, bands_dem, 'bands_dem')
-    stack_image_input_data(site, bands_evi2, 'bands_evi2')
-    stack_image_input_data(site, band_evi2, 'evi2_only')
-    stack_image_input_data(site, bands_evi2_separate, 'bands_evi2_separate')
-    stack_image_input_data(site, bands_extended, 'bands_extended')
+if __name__ == "__main__":
+    for site in sites:
+        stack_image_input_data(site, bands_base, 'bands_base')
+        stack_image_input_data(site, bands_radar, 'bands_radar')
+        stack_image_input_data(site, bands_median, 'bands_median')
+        #     # stack_image_input_data(site, bands_dem, 'bands_dem')
+        stack_image_input_data(site, bands_evi2, 'bands_evi2')
+        stack_image_input_data(site, band_evi2, 'evi2_only')
+        stack_image_input_data(site, bands_evi2_separate, 'bands_evi2_separate')
+        stack_image_input_data(site, bands_extended, 'bands_extended')
 
 # trainConcessions = ['app_riau', 'app_jambi']
 # get_concession_data(['bands_radar'], trainConcessions)

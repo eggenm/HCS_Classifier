@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
-conn = sqlite3.connect('data/hcs_database.db')
+import dirfuncs
+#conn = sqlite3.connect('data/hcs_database.db')
 
 maps_dict = {'app_jambi': 'ft:1bgkWL4VgYSgfAupZmVGcnXJJqMmvyBtl3_VgfyVV',
              'app_kalbar': 'ft:16yV7XDfeb1fGhH-N68CIetxd0FW8OvsTHdB7I4ka',
@@ -45,6 +46,7 @@ study_areas = {'app_muba': {"type":"Polygon","coordinates":[[[102.9583740234375,
                                                              [101.21704135090113,1.1611902706982198]]],"evenOdd":'true'}}
 
 gee_dir = 'users/rheilmayr/indonesia/'
+shapefile_base = dirfuncs.guess_data_dir() + 'stratified_shapefiles/'
 app_rasters = {'app_kalbar': gee_dir + 'Kalbar_DTK_Stratification',
                'app_jambi': gee_dir + 'Jambi_WKS_Stratification',
                'app_kaltim': gee_dir + 'Kaltim_KHL_Stratification',
@@ -52,6 +54,14 @@ app_rasters = {'app_kalbar': gee_dir + 'Kalbar_DTK_Stratification',
                'app_riau': gee_dir + 'Riau_MSK_SK_Stratification',
                'app_oki': gee_dir + 'OKI_BMH_Stratification',
                'app_all': gee_dir + 'app_all'}
+
+shapefiles = {'app_kalbar': shapefile_base + 'Kalbar_DTK_Stratification.shp',
+               'app_jambi': shapefile_base + 'Jambi_WKS_Stratification.shp',
+               'app_kaltim': shapefile_base + 'Kaltim_KHL_Stratification.shp',
+               'app_muba': shapefile_base + 'Muba_BPP2_Stratification.shp',
+               'app_riau': shapefile_base + 'Riau_MSK_SK_Stratification.shp',
+               'app_oki': shapefile_base + 'OKI_BMH_Stratification.shp',
+               'app_all': shapefile_base + 'app_all'}
 
 rasters = {'app_kalbar': gee_dir + 'Kalbar_DTK_Stratification',
            'app_jambi': gee_dir + 'Jambi_WKS_Stratification',
@@ -106,5 +116,6 @@ if __name__ == "__main__":
     print('in main')
     #init_database()
     #delete_model_performance()
-    print(get_all_model_performance().tail())
-    conn.close()
+#    print(get_all_model_performance().tail())
+  #  conn.close()
+    print(shapefiles['app_riau'])
