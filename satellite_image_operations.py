@@ -2,7 +2,7 @@ import ee
 ee.Initialize()
 import numpy as np
 
-l8_band_dict =  {'B1': 'ublue',
+l8_band_dict =  {#'B1': 'ublue',
               'B2': 'blue_max',
               'B3': 'green_max',
               # 'B4': 'red_max',
