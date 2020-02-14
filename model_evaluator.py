@@ -60,10 +60,10 @@ def train_model(X_train, y_train):
               class_weight='balanced')
     if doGridSearch:
         print(" ############  IN GRID SEARCH  ############# ")
-        param_grid = [{'max_depth': [8, 12, 16, 20],
-                      # 'max_leaf_nodes': [5, 10, 15],
-                       'max_features': [.25, .5, .75 ],
-                       'n_estimators': [100, 250, 375, 500]}]
+        param_grid = [{'max_depth': [4, 6, 8, 10, 13 ],
+                       'max_leaf_nodes': [6, 10, 14, 18 ],
+                       'max_features': [.1, .2, .4, .65 ],
+                       'n_estimators': [100, 250, 375, 500, 750]}]
         grid_search = GridSearchCV(clf, param_grid, cv = 5, scoring = 'f1_macro',
                                    return_train_score = True, refit = True)
 
@@ -150,8 +150,8 @@ def evaluate_model():
             X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
             X_scaled = helper.scale_data(X)
             landcover = data['clas'].values
-            for y in range(1, 4, 1):
-                training_sample_rate = y / 1000
+            for y in range(5, 80, 20):
+                training_sample_rate = y / 10000
                 X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.1,
                         random_state=16)
 
