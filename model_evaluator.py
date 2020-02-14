@@ -32,7 +32,7 @@ band_set ={#1:['bands_radar'],
       #      7:['bands_evi2_separate'],
     #        8:['bands_evi2'],
        #     9:['bands_evi2','bands_radar'],
-           10:[ helper.bands_base, #helper.bands_radar,
+           10:[ helper.bands_base, helper.bands_radar,
                 helper.band_evi2 ],
       #      11:['bands_base','bands_median','bands_radar','evi2_only']
            }
@@ -54,16 +54,16 @@ def show_results(y_test, y_hat):
 def train_model(X_train, y_train):
     #print('Training:  ', pd.Series(y_train).value_counts())
     #print(X_train[:7])
-    clf = rfc(n_estimators=40, max_depth=6, max_features=.3, max_leaf_nodes=10,
+    clf = rfc(n_estimators=40, max_depth=6, max_features=.3, max_leaf_nodes=12,
               random_state=16, oob_score=True, n_jobs=-1,
               #  class_weight = {0:0.33, 1: 0.33, 2: 0.34})
               class_weight='balanced')
     if doGridSearch:
         print(" ############  IN GRID SEARCH  ############# ")
         param_grid = [{'max_depth': [8, 12, 16, 20],
-                       'max_leaf_nodes': [5, 10, 15],
+                      # 'max_leaf_nodes': [5, 10, 15],
                        'max_features': [.25, .5, .75 ],
-                       'n_estimators': [100, 250, 500]}]
+                       'n_estimators': [100, 250, 375, 500]}]
         grid_search = GridSearchCV(clf, param_grid, cv = 5, scoring = 'f1_macro',
                                    return_train_score = True, refit = True)
 
@@ -131,25 +131,27 @@ def evaluate_model():
         x = range(3, 18, 3)
         for key, bands in band_set.items():
             i = 0
-            for y in range(1, 3, 1):
-                training_sample_rate = y/1000
-                print(key, '....',bands)
-                data = pd.DataFrame()
-                #data_scoring = helper.get_concession_data(bands, scoreConcession)
-                data_scoring = helper.get_input_data(bands, island, year, False, scoreConcession)
-                data_scoring = helper.trim_data2(data_scoring)
-                data_scoring = helper.drop_no_data(data_scoring)
-                X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
-                X_scaled_score = helper.scale_data(X_score)
-                print('ACTUAL:  ', data_scoring['clas'].value_counts())
-                y_score_all = data_scoring['clas'].values
 
-                #data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
-                data = helper.trim_data2(helper.get_input_data(bands, island, year, False, trainConcessions))
-                data=helper.drop_no_data(data)
-                X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
-                X_scaled = helper.scale_data(X)
-                landcover = data['clas'].values
+
+            print(key, '....',bands)
+            data = pd.DataFrame()
+            #data_scoring = helper.get_concession_data(bands, scoreConcession)
+            data_scoring = helper.get_input_data(bands, island, year, [scoreConcession], False )
+            data_scoring = helper.trim_data2(data_scoring)
+            data_scoring = helper.drop_no_data(data_scoring)
+            X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
+            X_scaled_score = helper.scale_data(X_score)
+            print('ACTUAL:  ', data_scoring['clas'].value_counts())
+            y_score_all = data_scoring['clas'].values
+
+            #data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
+            data = helper.trim_data2(helper.get_input_data(bands, island, year, trainConcessions, False ))
+            data=helper.drop_no_data(data)
+            X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
+            X_scaled = helper.scale_data(X)
+            landcover = data['clas'].values
+            for y in range(1, 4, 1):
+                training_sample_rate = y / 1000
                 X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.1,
                         random_state=16)
 

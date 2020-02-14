@@ -1,7 +1,7 @@
 import sqlite3
 import pandas as pd
 import dirfuncs
-#conn = sqlite3.connect('data/hcs_database.db')
+conn = sqlite3.connect('data/hcs_database.db')
 
 maps_dict = {'app_jambi': 'ft:1bgkWL4VgYSgfAupZmVGcnXJJqMmvyBtl3_VgfyVV',
              'app_kalbar': 'ft:16yV7XDfeb1fGhH-N68CIetxd0FW8OvsTHdB7I4ka',
@@ -78,18 +78,20 @@ rasters = {'app_kalbar': gee_dir + 'Kalbar_DTK_Stratification',
 def init_database():
     c = conn.cursor()
 
+
+   # update = "UPDATE model_performance_log set resolution=60"
+  #  c.execute(update)
+
+   ## Create table
+    c.execute('DROP TABLE model_performance_log')
+    c.execute('''CREATE TABLE model_performance_log
+                 (concession text, bands text, score_type text , class_scheme text, score real, score_weighted real,
+                                   two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
+                                   max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
+
     addColumn = "ALTER TABLE model_performance_log ADD COLUMN resolution int"
 
     c.execute(addColumn)
-    update = "UPDATE model_performance_log set resolution=60"
-    c.execute(update)
-    # Create table
-    # c.execute('DROP TABLE model_performance_log')
-    # c.execute('''CREATE TABLE model_performance_log
-    #              (concession text, bands text, score_type text , class_scheme text, score real, score_weighted real,
-    #                                two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
-    #                                max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
-
     # Save (commit) the changes
     conn.commit()
 
@@ -114,7 +116,7 @@ def get_all_model_performance():
 
 if __name__ == "__main__":
     print('in main')
-    #init_database()
+    init_database()
     #delete_model_performance()
 #    print(get_all_model_performance().tail())
   #  conn.close()

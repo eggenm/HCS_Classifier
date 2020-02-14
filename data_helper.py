@@ -1,6 +1,7 @@
 # =============================================================================
 # Imports
 # =============================================================================
+import pyproj
 import dirfuncs
 import os
 import re
@@ -183,6 +184,7 @@ def stack_image_input_data(concession, bands, name):
 
 
 def get_landcover_class_image(concession):
+    print(concession)
     #three_class_file = base_dir + concession + '/' + concession + '_remap_3class.remapped.tif'
     allclass_file = base_dir + concession + '/' + concession + '_all_class.remapped.tif'
     #print(three_class_file)
@@ -243,7 +245,7 @@ def get_input_band(band, island, year):
     return(os.path.join(base_dir, island,'out', year,  band + '.tif'))
 
 def trim_input_band(input_raster, boundary):
-    out_img, out_transform = mask(raster=input_raster, shapes=boundary, crop=True)
+    out_img, out_transform = mask(input_raster, shapes=boundary, crop=True)
     return out_img, out_transform
 
 def get_feature_inputs(band_groups, bounding_box, island, year):
@@ -257,17 +259,17 @@ def get_feature_inputs(band_groups, bounding_box, island, year):
         print(outtif)
         file = glob.glob(outtif)
         out_img, out_trans = trim_input_band(rasterio.open(file[0]), bounding_box)
-        srcs_to_mosaic.append(out_img)
+        #srcs_to_mosaic.append(out_img)
         #print(srcs_to_mosaic)
-    array = []
-    for ii, ifile in enumerate(srcs_to_mosaic):
-        bands = rio.open(srcs_to_mosaic[ii]).read()
-        if bands.shape[0] > 1:
-            for i in range(0, bands.shape[0]):
-                band=bands[i]
+        array = []
+    ##for ii, ifile in enumerate(srcs_to_mosaic):
+    #    bands = rio.open(srcs_to_mosaic[ii]).read()
+        if out_img.shape[0] > 1:
+            for i in range(0, out_img.shape[0]):
+                band=out_img[i]
                 array.append(band)
-        elif bands.shape[0] == 1:
-            band = np.squeeze(bands)
+        elif out_img.shape[0] == 1:
+            band = np.squeeze(out_img)
             array.append(band)
     return array
 
@@ -279,9 +281,10 @@ def get_concession_bands(bands, island, year, bounding_box):
     return x
 
 
-def get_input_data(bands, island, year, isClass=False, *args):
+def get_input_data(bands, island, year, concessions, isClass=False):
     data = pd.DataFrame()
-    for concession in args:
+    for concession in concessions:
+        print(concession)
         all_class_image = get_landcover_class_image(concession)
         y = get_classes(all_class_image, 'clas')
         box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])

@@ -1,8 +1,19 @@
+import numpy as np
+#############################
+#
+#  Imports are ordered this way for some unknown but necessary reason.
+#  Unused pyproj comes before geopandas comes before osgeo
+#  This was how I got past errors that were totally baffling, probably specific to my environment
+#
+#############################
+import pyproj
+import geopandas as gpd
 from osgeo import ogr, osr
+import os
 import rasterio
 from rasterio.mask import mask
 from shapely.geometry import box
-import geopandas as gpd
+
 from fiona.crs import from_epsg
 import json
 
@@ -20,6 +31,7 @@ def get_bounding_box_polygon(path_to_shape, out_crs='EPSG:4326'):
     crs_init = {'init':out_crs}
     print('CRS_INIT: ',crs_init)
     crs = inLayer.GetSpatialRef()
+    print('crs:  ', crs)
     in_crs_code = crs.GetAuthorityCode(None)
     print('crs_code:  ',in_crs_code)
     print(type(in_crs_code))
@@ -38,8 +50,11 @@ def get_bounding_box_polygon(path_to_shape, out_crs='EPSG:4326'):
     print(xmin, ymin, xmax, ymax)
     print(type(xmin), type(ymin), type(xmax), type(ymax))
     bbox = box(xmin, ymin, xmax, ymax)
-    geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(int(in_crs_code)))
-    geo = geo.to_crs(crs=crs_init)
+    try:
+        geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(in_crs_code))
+    except:
+        geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(4326))
+    geo = geo.to_crs(crs=out_crs)
     coords = getFeatures(geo)
     print('Coords:  ',coords)
     return(coords)
@@ -65,12 +80,14 @@ def read_raster():
   #   with rasterio.open(out_tif, "w", **out_meta) as dest:
   #       dest.write(out_img)
 if __name__ == "__main__":
+    nada = np.nan
+    print(os.getenv('PROJ_LIB'))
     #get_bounding_box_polygon(input)
     #read_raster()
     bobox=box(235186.7964500059, 9825476.572053133 ,379883.6319000004 ,9916487.528701443)
     geo = gpd.GeoDataFrame({'geometry': bobox}, index=[0], crs=from_epsg('32748'))
-    #print(geo)
-    crs_init = {'init': 'EPSG:4326'}
+    print(geo)
+    crs_init = 'EPSG:4326'
     geo = geo.to_crs(crs=crs_init)
     coords = getFeatures(geo)
     print('Coords:  ', coords)
