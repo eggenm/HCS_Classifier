@@ -17,6 +17,8 @@ import ShapefileHelper as shapefilehelp
 import data.hcs_database  as db
 import itertools
 from rasterio.mask import mask
+from rasterio import Affine as A
+from rasterio.warp import reproject, Resampling
 
 # =============================================================================
 # Identify files
@@ -24,6 +26,7 @@ from rasterio.mask import mask
 base_dir = dirfuncs.guess_data_dir()
 pixel_window_size = 1
 stackData = True
+write_input_data = False
 
 #classes = {1: "HCSA",
      #      0: "NA"}
@@ -187,6 +190,7 @@ def get_landcover_class_image(concession):
     print(concession)
     #three_class_file = base_dir + concession + '/' + concession + '_remap_3class.remapped.tif'
     allclass_file = base_dir + concession + '/' + concession + '_all_class.remapped.tif'
+    return allclass_file
     #print(three_class_file)
     #file_list = sorted(glob.glob(three_class_file))
     ## Read classification labels
@@ -194,6 +198,8 @@ def get_landcover_class_image(concession):
         #three_class = clas_src.read()
     print(allclass_file)
     file_list = sorted(glob.glob(allclass_file))
+    #if(write_input_data):
+    #    write_data_array(file_list[0],concession,'class',)
     with rio.open(file_list[0]) as clas_src:
         all_class = clas_src.read()
     return  all_class
@@ -244,37 +250,99 @@ def get_input_band(band, island, year):
     print(band)
     return(os.path.join(base_dir, island,'out', year,  band + '.tif'))
 
-def trim_input_band(input_raster, boundary):
+def trim_input_band_by_shape(input_raster, boundary):
     out_img, out_transform = mask(input_raster, shapes=boundary, crop=True)
     return out_img, out_transform
+
+def trim_input_band_by_raster(input_raster, bounding_raster, band):
+    with rasterio.open(bounding_raster) as image:
+        meta = image.meta
+        height = image.height
+        width = image.width
+        shape = image.shape
+        crs = image.crs
+        trans = image.transform
+
+        data_src = rasterio.open(input_raster)
+        destination = np.zeros(shape, np.float)
+        reproject(
+
+            source=rasterio.band(data_src,1),
+            destination=destination,
+            src_transform=data_src.transform,
+            src_crs=data_src.crs,
+            dst_transform=trans,
+            dst_crs=crs ,
+            resampling=Resampling.nearest)
+    if(write_input_data):
+        outtif = base_dir + 'app_oki' + '/out/input_' + 'app_oki' + band + '.tif'
+        with rasterio.open(outtif, 'w', driver = 'GTiff',
+                      height = height, width = width,
+                      crs = crs, dtype = rio.float64,
+                      count = 1, transform = trans) as dst:
+                    dst.write_band(1, destination)
+        dst.close()
+
+    #dst.close()
+    return destination #, out_transform
+
 
 def get_feature_inputs(band_groups, bounding_box, island, year):
     srcs_to_mosaic=[]
     outtif=''
     all_bands = list(itertools.chain(*band_groups))
     print('ALL_BANDS:', all_bands)
-    for band in all_bands:
+    array = [0 for x in range(len(all_bands))]
+    print('len(array):  ', len(array))
+    for i, band in enumerate(all_bands):
         outtif=get_input_band(band, island, year)
         outtif=os.path.join(outtif)
         print(outtif)
         file = glob.glob(outtif)
-        out_img, out_trans = trim_input_band(rasterio.open(file[0]), bounding_box)
+        out_img = trim_input_band_by_raster(file[0], bounding_box, band)
+        if (write_input_data):
+            print('TODO - check input image, out_img shape: ', out_img.shape)
+            # write_data_array(file, 'app_oki', band, bounding_box)
         #srcs_to_mosaic.append(out_img)
         #print(srcs_to_mosaic)
-        array = []
+
+
     ##for ii, ifile in enumerate(srcs_to_mosaic):
     #    bands = rio.open(srcs_to_mosaic[ii]).read()
-        if out_img.shape[0] > 1:
-            for i in range(0, out_img.shape[0]):
-                band=out_img[i]
-                array.append(band)
-        elif out_img.shape[0] == 1:
-            band = np.squeeze(out_img)
-            array.append(band)
+    #     if out_img.shape[0] > 1:
+    #         for i in range(0, out_img.shape[0]):
+    #             band=out_img[i]
+    #             array.append(band)
+    #     elif out_img.shape[0] == 1:
+    #         band = np.squeeze(out_img)
+        print('I:  ',i)
+        array[i] = out_img
+
+
     return array
 
+def write_data_array(file, concession, band, boundary):
+    with rasterio.open(file[0]) as image:
+        meta = image.meta
+        crs = image.crs
+        #dtype = rio.float64
+        img, trans = trim_input_band_by_shape(image, boundary)
+        print('TRANSFORM: ', trans)
+    print('META:  ',meta)
+    print('SHAPE:  ',img.shape)
+    img = np.squeeze(img)
+    print('META_AFTER_UPDATE:  ', meta)
+    # Update meta to reflect the number of layers
+    outtif = base_dir + concession + '/out/input_' + concession + band  + '.tif'
+    with rasterio.open(outtif, 'w', driver = 'GTiff',
+                  height = img.shape[0], width = img.shape[1],
+                  crs = crs, dtype = img.dtype,
+                  count = 1, transform = trans) as dst:
+                dst.write_band(1, img)
+    dst.close()
+    print('TEST')
 
-def get_concession_bands(bands, island, year, bounding_box):
+def get_concession_bands(bands, island, year, bounding_box, concession):
     img = get_feature_inputs(bands, bounding_box, island, year)
     array = np.asarray(img)
     x = gen_windows(array, pixel_window_size)
@@ -286,60 +354,68 @@ def get_input_data(bands, island, year, concessions, isClass=False):
     for concession in concessions:
         print(concession)
         all_class_image = get_landcover_class_image(concession)
-        y = get_classes(all_class_image, 'clas')
+        class_file = sorted(glob.glob(all_class_image))[0]
+        # if(write_input_data):
+        #    write_data_array(file_list[0],concession,'class',)
+        with rio.open(class_file) as clas_src:
+            all_class = clas_src.read()
+        if(write_input_data):
+            print('TODO - check class image, shape: ', all_class.shape)
+           # write_data_array(class_file, 'Class'+concession)
+        y = get_classes(all_class, 'clas')
         box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])
-        x = get_concession_bands(bands, island, year, box)
+        x = get_concession_bands(bands, island, year, class_file, concession)
         if data.empty:
             data = combine_input_landcover(x, y, isClass)
         else:
             data = pd.concat([data, combine_input_landcover(x, y, isClass)], ignore_index=True)
     return data
 
-def get_concession_data(bands, concessions, isClass=False):
-    data = pd.DataFrame()
-    if(isinstance(concessions, str)):
-        all_class_image = get_landcover_class_image(concessions)
-        # class_image = mask_water(class_image, concession)
-        y = get_classes(all_class_image, 'clas')
-        #y2 = get_classes(two_class_image, 'class_remap')
-        x = get_concession_bands(bands, concessions)
-        data = combine_input_landcover(x, y, isClass)
-    else:
-        for concession in concessions:
-            all_class_image = get_landcover_class_image(concession)
-            # class_image = mask_water(class_image, concession)
-            y = get_classes(all_class_image, 'clas')
-            #y2 = get_classes(two_class_image, 'class_remap')
-            x = get_concession_bands(bands, concession)
-            if data.empty:
-                data = combine_input_landcover(x, y, isClass)
-            else:
-                data = pd.concat([data, combine_input_landcover(x, y, isClass)], ignore_index=True)
-    return data
-
-def get_all_concession_data(concessions, isClass=False):
-    data = pd.DataFrame()
-    for concession in concessions:
-        outtif = base_dir + concession + '/out/input_' + concession +'.tif'
-        if(stackData):
-            outtif, bands = stack_image_input_data(concession)
-
-        with rio.open(outtif) as img_src:
-            img = img_src.read()
-            x = gen_windows(img, pixel_window_size)
-            #print('x.shape:  ', x.shape)
-            x.columns=bands
-        all_class_image = get_landcover_class_image(concession)
-        # class_image = mask_water(class_image, concession)
-        y = get_classes(all_class_image, 'clas')
-        #y2 = get_classes(two_class_image, 'class_remap')
-       # print('y.shape:  ', y.shape)
-        if data.empty:
-            data = combine_input_landcover(x, y, isClass)
-        else:
-            data = pd.concat([data, combine_input_landcover(x, y, isClass)], ignore_index=True)
-           # print("  data.shape:  ", data.shape)
-    return data
+# def get_concession_data(bands, concessions, isClass=False):
+#     data = pd.DataFrame()
+#     if(isinstance(concessions, str)):
+#         all_class_image = get_landcover_class_image(concessions)
+#         # class_image = mask_water(class_image, concession)
+#         y = get_classes(all_class_image, 'clas')
+#         #y2 = get_classes(two_class_image, 'class_remap')
+#         x = get_concession_bands(bands, concessions)
+#         data = combine_input_landcover(x, y, isClass)
+#     else:
+#         for concession in concessions:
+#             all_class_image = get_landcover_class_image(concession)
+#             # class_image = mask_water(class_image, concession)
+#             y = get_classes(all_class_image, 'clas')
+#             #y2 = get_classes(two_class_image, 'class_remap')
+#             x = get_concession_bands(bands, concession)
+#             if data.empty:
+#                 data = combine_input_landcover(x, y, isClass)
+#             else:
+#                 data = pd.concat([data, combine_input_landcover(x, y, isClass)], ignore_index=True)
+#     return data
+#
+# def get_all_concession_data(concessions, isClass=False):
+#     data = pd.DataFrame()
+#     for concession in concessions:
+#         outtif = base_dir + concession + '/out/input_' + concession +'.tif'
+#         if(stackData):
+#             outtif, bands = stack_image_input_data(concession)
+#
+#         with rio.open(outtif) as img_src:
+#             img = img_src.read()
+#             x = gen_windows(img, pixel_window_size)
+#             #print('x.shape:  ', x.shape)
+#             x.columns=bands
+#         all_class_image = get_landcover_class_image(concession)
+#         # class_image = mask_water(class_image, concession)
+#         y = get_classes(all_class_image, 'clas')
+#         #y2 = get_classes(two_class_image, 'class_remap')
+#        # print('y.shape:  ', y.shape)
+#         if data.empty:
+#             data = combine_input_landcover(x, y, isClass)
+#         else:
+#             data = pd.concat([data, combine_input_landcover(x, y, isClass)], ignore_index=True)
+#            # print("  data.shape:  ", data.shape)
+#     return data
 
 
 def remove_low_occurance_classes( X, class_data):
@@ -387,15 +463,17 @@ def drop_no_data(data):
 
 #print(landcoverClassMap)
 if __name__ == "__main__":
-    for site in sites:
-        stack_image_input_data(site, bands_base, 'bands_base')
-        stack_image_input_data(site, bands_radar, 'bands_radar')
-        stack_image_input_data(site, bands_median, 'bands_median')
-        #     # stack_image_input_data(site, bands_dem, 'bands_dem')
-        stack_image_input_data(site, bands_evi2, 'bands_evi2')
-        stack_image_input_data(site, band_evi2, 'evi2_only')
-        stack_image_input_data(site, bands_evi2_separate, 'bands_evi2_separate')
-        stack_image_input_data(site, bands_extended, 'bands_extended')
+    write_input_data=True
+    get_input_data([bands_base, bands_radar],'Sumatra', str(2015), ['app_oki'],False )
+    # for site in sites:
+    #     stack_image_input_data(site, bands_base, 'bands_base')
+    #     stack_image_input_data(site, bands_radar, 'bands_radar')
+    #     stack_image_input_data(site, bands_median, 'bands_median')
+    #     #     # stack_image_input_data(site, bands_dem, 'bands_dem')
+    #     stack_image_input_data(site, bands_evi2, 'bands_evi2')
+    #     stack_image_input_data(site, band_evi2, 'evi2_only')
+    #     stack_image_input_data(site, bands_evi2_separate, 'bands_evi2_separate')
+    #     stack_image_input_data(site, bands_extended, 'bands_extended')
 
 # trainConcessions = ['app_riau', 'app_jambi']
 # get_concession_data(['bands_radar'], trainConcessions)
