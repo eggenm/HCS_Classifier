@@ -116,7 +116,7 @@ def get_all_model_performance():
 
 if __name__ == "__main__":
     print('in main')
-    init_database()
+#    init_database()
     #delete_model_performance()
 #    print(get_all_model_performance().tail())
   #  conn.close()

@@ -190,6 +190,7 @@ def get_landcover_class_image(concession):
     print(concession)
     #three_class_file = base_dir + concession + '/' + concession + '_remap_3class.remapped.tif'
     allclass_file = base_dir + concession + '/' + concession + '_all_class.remapped.tif'
+    print("**get_landcover_class_image:  allclass_file:  ", allclass_file)
     return allclass_file
     #print(three_class_file)
     #file_list = sorted(glob.glob(three_class_file))
@@ -354,6 +355,7 @@ def get_input_data(bands, island, year, concessions, isClass=False):
     for concession in concessions:
         print(concession)
         all_class_image = get_landcover_class_image(concession)
+        print(all_class_image)
         class_file = sorted(glob.glob(all_class_image))[0]
         # if(write_input_data):
         #    write_data_array(file_list[0],concession,'class',)

@@ -14,12 +14,13 @@ resolution = 30
 island='Sumatra'
 year=str(2015)
 sites = [#'gar_pgm',
-     'app_jambi',
+
    'app_riau',
  #  'app_kalbar',
  #        'app_kaltim',
 
- 'app_oki' #,
+ 'app_oki',
+    'app_jambi' #,
       # 'crgl_stal'
     ]
 base_dir = dirfuncs.guess_data_dir()
@@ -54,15 +55,16 @@ def show_results(y_test, y_hat):
 def train_model(X_train, y_train):
     #print('Training:  ', pd.Series(y_train).value_counts())
     #print(X_train[:7])
-    clf = rfc(n_estimators=40, max_depth=6, max_features=.3, max_leaf_nodes=12,
+    clf = rfc(n_estimators=40, max_depth=6, max_features=.3, max_leaf_nodes=18,
               random_state=16, oob_score=True, n_jobs=-1,
               #  class_weight = {0:0.33, 1: 0.33, 2: 0.34})
               class_weight='balanced')
     if doGridSearch:
         print(" ############  IN GRID SEARCH  ############# ")
         param_grid = [{'max_depth': [4, 6, 8, 10, 13 ],
-                       'max_leaf_nodes': [6, 10, 14, 18 ],
-                       'max_features': [.1, .2, .4, .65 ],
+                    #   'max_leaf_nodes': [6, 10, 14, 18 ],
+                       'max_features': [.1, .2, .4, .65,
+                                        .8, .92 ],
                        'n_estimators': [100, 250, 375, 500, 750]}]
         grid_search = GridSearchCV(clf, param_grid, cv = 5, scoring = 'f1_macro',
                                    return_train_score = True, refit = True)
@@ -185,7 +187,7 @@ def evaluate_model():
 
 if __name__ == "__main__":
     evaluate_model()
-    #resultfile = base_dir + 'result.02062020.csv'
+    #resultfile = base_dir + 'result.02182020.csv'
     #db.get_all_model_performance().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)

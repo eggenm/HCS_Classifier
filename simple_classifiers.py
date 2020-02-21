@@ -30,15 +30,19 @@ import matplotlib.pyplot as plt
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
 
-concessions = ['app_oki' , 'app_riau']
-classConcession = 'app_jambi'
-bands = ['bands_base', 'bands_radar', 'evi2_only']
-sample_rate=0.002
+concessions = ['app_oki' , 'app_jambi']
+island = 'Sumatra'
+classConcession = ['app_riau']
+year = str(2015)
+bands = [ helper.bands_base, helper.bands_radar,
+                helper.band_evi2 ]
+sample_rate=0.0025
+
 pixel_window_size = 1
 iterations = 1
 doGridSearch = True
-scheme='ALL'
-suffix = 'RF_x' + str(iterations) + '_'+scheme + '_'+ str(int(round(sample_rate*1000, 0))) +'_30m_BaseRadarEVI.tif'
+scheme='3CLASS'
+suffix = 'RF_x' + str(iterations) + '_'+scheme + '_'+ str(int(round(sample_rate*10000, 0))) +'_30m_BaseRadarEVI.tif'
 #classes = {1: "HCSA",
      #      0: "NA"}
 
@@ -91,11 +95,9 @@ def forest_importance_ranking(forest):
     plt.show()
 
 
-train_df = helper.get_concession_data(bands, concessions)
 
-#data_df = combine_input_landcover(allInput, landcover)
-train_df= helper.trim_data2(train_df)
-train_df= helper.drop_no_data(train_df)
+train_df = helper.trim_data2(helper.get_input_data(bands, island, year, concessions, False))
+train_df = helper.drop_no_data(train_df)
 X = train_df[[col for col in train_df.columns if  (col != 'clas') ]]
 
 X_scaled = helper.scale_data(X)
@@ -114,7 +116,7 @@ predictions = pd.DataFrame()
 probabilities_dict = {}
 
 
-df_class = helper.get_concession_data(bands, classConcession, True)
+df_class = helper.get_input_data(bands, island, year, classConcession, True)
 #df_class=helper.trim_data2(df_class)
 X_class = df_class[[col for col in df_class.columns if  (col != 'clas') ]]
 X_scaled_class = helper.scale_data(X_class)
@@ -135,7 +137,7 @@ for seed in range(1,iterations+1):
 
 
 
-    clf = rfc(n_estimators=400, max_depth = 8, max_features = .25, max_leaf_nodes = 15,
+    clf = rfc(n_estimators=400, max_depth = 6, max_features = .25, max_leaf_nodes = 12,
               #random_state=seed,
               random_state=16,
               oob_score = True, n_jobs = -1,
@@ -146,11 +148,10 @@ for seed in range(1,iterations+1):
 
         param_grid = [{#'max_depth': [14, 16, 18, 20],
                      #  'max_leaf_nodes': [14,15,16],
-                     #  'max_features': [.15, .2 ,.25, .3, .35, .4 ],
+                       'max_features': [.15,  .35, .65 ,.85,.88, .92, .95],
                        'n_estimators': [ #400,
-                                         450, 500
-                           #, 550, 600
-                           ]}]
+                                        400, 450,500, 550, 600]
+        }]
 
         grid_search = GridSearchCV(clf, param_grid, cv=5,  scoring = 'f1_macro',
                                    return_train_score=True, refit=True)
@@ -269,9 +270,9 @@ if iterations>1:
 else:
     temp=predictions
 
-outclas_file = base_dir + classConcession + '/sklearn_test/classified' + suffix
-referencefile = base_dir + classConcession + '/' + classConcession + '_all_class.remapped.tif'
-prob_file = base_dir + classConcession +  '/sklearn_test/prob_file' + suffix
+outclas_file = base_dir + classConcession[0] + '/sklearn_test/classified' + suffix
+referencefile = base_dir + classConcession[0] + '/' + classConcession[0] + '_all_class.remapped.tif'
+prob_file = base_dir + classConcession[0] +  '/sklearn_test/prob_file' + suffix
 print(referencefile)
 file_list = sorted(glob.glob(referencefile))
 with rio.open(file_list[0]) as src:
@@ -410,7 +411,7 @@ class classify_block:
         return probabilities
 
 #clas_file = base_dir + classConcession +  '/sklearn_test/class_file.tif'
-prob_file = base_dir + classConcession +  '/sklearn_test/prob_file' + suffix
+prob_file = base_dir + classConcession[0] +  '/sklearn_test/prob_file' + suffix
 
 # with rio.open(outtif) as src:
 #     clas_dst = rio.open(clas_file, 'w', driver = 'GTiff',
