@@ -41,7 +41,7 @@ sample_rate=0.0025
 pixel_window_size = 1
 iterations = 1
 doGridSearch = True
-scheme='3CLASS'
+scheme='3class'
 suffix = 'RF_x' + str(iterations) + '_'+scheme + '_'+ str(int(round(sample_rate*10000, 0))) +'_30m_BaseRadarEVI.tif'
 #classes = {1: "HCSA",
      #      0: "NA"}
@@ -328,6 +328,7 @@ with rio.open(file_list[0]) as src:
     print('ACTUAL:  ', df_class['clas'].value_counts())
     df_class['clas'] = helper.map_to_2class(df_class['clas'])
     print('ACTUAL:  ', df_class['clas'].value_counts())
+    print('***scheme:  ' ,scheme)
     if (scheme == 'ALL'):
         print('Predicted:  ', df_class['predicted'].value_counts())
         df_class['predicted'] = helper.map_to_2class(df_class['predicted'])
