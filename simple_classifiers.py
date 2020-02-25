@@ -120,6 +120,7 @@ df_class = helper.get_input_data(bands, island, year, classConcession, True)
 #df_class=helper.trim_data2(df_class)
 X_class = df_class[[col for col in df_class.columns if  (col != 'clas') ]]
 X_scaled_class = helper.scale_data(X_class)
+X_class=0
 y_class = df_class['clas'].values
 if(scheme=='3class'):
     y_class=helper.map_to_3class(y_class)
@@ -254,15 +255,22 @@ for seed in range(1,iterations+1):
     # Create predicted map
     # =============================================================================
 
+    X=0
+    y_test=0
+    X_train=0
+    y_train=0
+    y_hat=0
 
+    X_scaled=0
+    X_test=0
     predictions[seed] = randomforest_fitted_clf.predict(X_scaled_class)
-    tempProb=randomforest_fitted_clf.predict_proba(X_scaled_class)[:,:]
+    #tempProb=randomforest_fitted_clf.predict_proba(X_scaled_class)[:,:]
     print(randomforest_fitted_clf.classes_)
-    print(tempProb.shape)
+    #print(tempProb.shape)
     #print(tempProb[:,16])
-    tempDf = pd.DataFrame(tempProb)
-    for i, key in enumerate(randomforest_fitted_clf.classes_):
-        probabilities_dict[key][seed] = tempProb[:,i]
+    #tempDf = pd.DataFrame(tempProb)
+    #for i, key in enumerate(randomforest_fitted_clf.classes_):
+       # probabilities_dict[key][seed] = tempProb[:,i]
 
 
 if iterations>1:
@@ -288,13 +296,13 @@ with rio.open(file_list[0]) as src:
     print(shape[0])
     print(shape[1])
     print(full_index.size)
-    for key in randomforest_fitted_clf.classes_:
-        if iterations > 1:
-            tempMean = probabilities_dict[key].mean(axis=1)
-        else:
-            tempMean = probabilities_dict[key]
-        probabilities_dict[key] = pd.DataFrame(tempMean).set_index(full_index)
-        probabilities_dict[key] = probabilities_dict[key].values.reshape(shape[0], shape[1])
+    #for key in randomforest_fitted_clf.classes_:
+        # if iterations > 1:
+        #     tempMean = probabilities_dict[key].mean(axis=1)
+        # else:
+        #     tempMean = probabilities_dict[key]
+        #probabilities_dict[key] = pd.DataFrame(tempMean).set_index(full_index)
+        #probabilities_dict[key] = probabilities_dict[key].values.reshape(shape[0], shape[1])
 
 
 
