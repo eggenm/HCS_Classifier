@@ -291,11 +291,13 @@ def trim_input_band_by_raster(input_raster, bounding_raster, band):
 def get_feature_inputs(band_groups, bounding_box, island, year):
     srcs_to_mosaic=[]
     outtif=''
-    all_bands = list(itertools.chain(*band_groups))
-    print('ALL_BANDS:', all_bands)
-    array = [0 for x in range(len(all_bands))]
+    print('Band_Groups:  ',band_groups)
+    #all_bands = list(itertools.chain(*band_groups))
+    #all_bands = band_groups.flatt
+    #print('ALL_BANDS:', all_bands)
+    array = [0 for x in range(len(band_groups))]
     print('len(array):  ', len(array))
-    for i, band in enumerate(all_bands):
+    for i, band in enumerate(band_groups):
         outtif=get_input_band(band, island, year)
         outtif=os.path.join(outtif)
         print(outtif)
@@ -319,7 +321,7 @@ def get_feature_inputs(band_groups, bounding_box, island, year):
         print('I:  ',i)
         array[i] = out_img
 
-
+    out_img=False
     return array
 
 def write_data_array(file, concession, band, boundary):
@@ -347,6 +349,8 @@ def get_concession_bands(bands, island, year, bounding_box, concession):
     img = get_feature_inputs(bands, bounding_box, island, year)
     array = np.asarray(img)
     x = gen_windows(array, pixel_window_size)
+    array=False
+    img=False
     return x
 
 
@@ -371,6 +375,9 @@ def get_input_data(bands, island, year, concessions, isClass=False):
             data = combine_input_landcover(x, y, isClass)
         else:
             data = pd.concat([data, combine_input_landcover(x, y, isClass)], ignore_index=True)
+    all_class=False
+    x=False
+    y=False
     return data
 
 # def get_concession_data(bands, concessions, isClass=False):

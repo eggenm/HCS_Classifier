@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
 import dirfuncs
+import itertools
 conn = sqlite3.connect('data/hcs_database.db')
 
 maps_dict = {'app_jambi': 'ft:1bgkWL4VgYSgfAupZmVGcnXJJqMmvyBtl3_VgfyVV',
@@ -19,7 +20,9 @@ plots_dict = {'crgl_stal': '',
               'wilm_cal': '',
               'gar_pgm': ''}
 
-
+model_performance_columns = ['concession' , 'bands' , 'score_type'  , 'class_scheme' , 'score' , 'score_weighted' ,
+                                   'two_class_score' , 'two_class_score_weighted' , 'training_concessions' , 'max_depth',
+                                   'max_leaf_nodes' , 'max_features' , 'n_estimators' , 'training_sample_rate' , 'resolution' ]
 study_areas = {'app_muba': {"type":"Polygon","coordinates":[[[102.9583740234375,-2.269723057075878],
                                                              [102.9693603515625,-2.533163135991036],
                                                              [103.4857177734375,-2.533163135991036],
@@ -114,10 +117,45 @@ def get_all_model_performance():
     df = pd.read_sql_query("SELECT * FROM model_performance_log", conn)
     return df
 
+def get_max_model_run(concession):
+    c = conn.cursor()
+    c.execute("SELECT * FROM model_performance_log where two_class_score_weighted = ( SELECT max(two_class_score_weighted) from model_performance_log where max_leaf_nodes < 13 and max_features <.75 and concession = ? )" ,  concession )
+    rows = c.fetchall()
+
+    for row in rows:
+        row_dict = dict(zip(model_performance_columns,row))
+    return row_dict
+
+
+def get_best_training_sample_rate(concession):
+    return get_max_model_run(concession)['training_sample_rate']
+
+
+def get_best_max_features(concession):
+    return get_max_model_run(concession)['max_features']
+
+def get_best_max_leaf_nodes(concession):
+    return get_max_model_run(concession)['max_leaf_nodes']
+
+def get_best_number_estimators(concession):
+    return get_max_model_run(concession)['n_estimators']
+
+def get_best_max_depth(concession):
+    return get_max_model_run(concession)['max_depth']
+
+def get_best_bands(concession):
+    x= get_max_model_run(concession)['bands']
+    bands = x.replace('[', '').replace(']','').replace('\'','')
+    return bands.split(', ');
+
+def get_best_scheme(concession):
+    return get_max_model_run(concession)['class_scheme']
+
 if __name__ == "__main__":
     print('in main')
+    conn = sqlite3.connect('hcs_database.db')
 #    init_database()
     #delete_model_performance()
 #    print(get_all_model_performance().tail())
   #  conn.close()
-    print(shapefiles['app_riau'])
+    #print(all_bands)

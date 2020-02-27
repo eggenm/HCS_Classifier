@@ -19,6 +19,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 import sklearn.metrics
 from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
+import data.hcs_database as db
 
 
 
@@ -34,15 +35,18 @@ concessions = ['app_oki' , 'app_jambi']
 island = 'Sumatra'
 classConcession = ['app_riau']
 year = str(2015)
-bands = [ helper.bands_base, helper.bands_radar,
-                helper.band_evi2 ]
-sample_rate=0.0025
+bands = db.get_best_bands(classConcession)
+sample_rate=db.get_best_training_sample_rate(classConcession)
 
 pixel_window_size = 1
-iterations = 1
-doGridSearch = True
-scheme='3class'
-suffix = 'RF_x' + str(iterations) + '_'+scheme + '_'+ str(int(round(sample_rate*10000, 0))) +'_30m_BaseRadarEVI.tif'
+iterations = 3
+doGridSearch = False
+scheme=db.get_best_scheme(classConcession)
+estimators = db.get_best_number_estimators(classConcession)
+max_features = db.get_best_max_features(classConcession)
+depth = db.get_best_max_depth(classConcession)
+leaf_nodes = db.get_best_max_leaf_nodes(classConcession)
+suffix = 'TEST___RF_x' + str(iterations) + '_'+scheme + '_'+ str(int(round(sample_rate*10000, 0))) +'_30m_BaseRadarEVI.tif'
 #classes = {1: "HCSA",
      #      0: "NA"}
 
@@ -102,7 +106,7 @@ X = train_df[[col for col in train_df.columns if  (col != 'clas') ]]
 
 X_scaled = helper.scale_data(X)
 landcover = train_df['clas'].values
-if(scheme=='3class'):
+if(scheme=='3CLASS'):
     landcover=helper.map_to_3class(landcover)
 print('VALUE_COUNTS:  ',pd.Series(landcover).value_counts(dropna=False))
 predictableClasses = pd.Series(landcover).value_counts(dropna=False).index.tolist()
@@ -122,15 +126,15 @@ X_class = df_class[[col for col in df_class.columns if  (col != 'clas') ]]
 X_scaled_class = helper.scale_data(X_class)
 X_class=0
 y_class = df_class['clas'].values
-if(scheme=='3class'):
+if(scheme=='3CLASS'):
     y_class=helper.map_to_3class(y_class)
 
 for key in predictableClasses:
     probabilities_dict[key]=pd.DataFrame()
 for seed in range(1,iterations+1):
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=sample_rate, test_size=0.1,
-                                                      #  random_state=13*seed)
-    random_state = 16)
+                                                        random_state=13*seed)
+
 
     # # =============================================================================
     # # Train and test random forest classifier
@@ -138,9 +142,9 @@ for seed in range(1,iterations+1):
 
 
 
-    clf = rfc(n_estimators=400, max_depth = 6, max_features = .25, max_leaf_nodes = 12,
+    clf = rfc(n_estimators=estimators, max_depth = depth, max_features = max_features, max_leaf_nodes = leaf_nodes,
               #random_state=seed,
-              random_state=16,
+              random_state=13*seed,
               oob_score = True, n_jobs = -1,
             #  class_weight = {0:0.33, 1: 0.33, 2: 0.34})
               class_weight ='balanced')
@@ -149,9 +153,9 @@ for seed in range(1,iterations+1):
 
         param_grid = [{#'max_depth': [14, 16, 18, 20],
                      #  'max_leaf_nodes': [14,15,16],
-                       'max_features': [.15,  .35, .65 ,.85,.88, .92, .95],
+                       'max_features': [max_features-0.2, max_features-0.1, max_features, max_features+.1],
                        'n_estimators': [ #400,
-                                        400, 450,500, 550, 600]
+                                        estimators-25, estimators, estimators+50, estimators+100]
         }]
 
         grid_search = GridSearchCV(clf, param_grid, cv=5,  scoring = 'f1_macro',
@@ -261,9 +265,12 @@ for seed in range(1,iterations+1):
     y_train=0
     y_hat=0
 
-    X_scaled=0
     X_test=0
-    predictions[seed] = randomforest_fitted_clf.predict(X_scaled_class)
+    if (scheme == 'ALL'):
+        predictions[seed] = helper.map_to_2class(randomforest_fitted_clf.predict(X_scaled_class))
+    else:
+        predictions[seed] = helper.map_3_to_2class(randomforest_fitted_clf.predict(X_scaled_class))
+
     #tempProb=randomforest_fitted_clf.predict_proba(X_scaled_class)[:,:]
     print(randomforest_fitted_clf.classes_)
     #print(tempProb.shape)
@@ -272,9 +279,10 @@ for seed in range(1,iterations+1):
     #for i, key in enumerate(randomforest_fitted_clf.classes_):
        # probabilities_dict[key][seed] = tempProb[:,i]
 
-
+X_scaled=0
+X_scaled_class=0
 if iterations>1:
-    temp = predictions.mode(axis=1)
+    temp = predictions.mode(axis=1)[0]
 else:
     temp=predictions
 
@@ -306,16 +314,11 @@ with rio.open(file_list[0]) as src:
 
 
 
-    if(iterations>1):
-        df_class['predicted']=temp[0]#this should give majority class for the
-    else:
-        df_class['predicted'] = temp
+    df_class['predicted'] = temp
     clas_df = pd.DataFrame(index = full_index)
     classified = clas_df.merge(df_class['predicted'], left_index=True, right_index=True, how='left').sort_index()
-    if (scheme == 'ALL'):
-        classified = helper.map_to_3class(classified['predicted']).values.reshape(shape[0], shape[1])
-    else:
-        classified = classified.values.reshape(shape[0], shape[1])
+
+    classified = classified.values.reshape(shape[0], shape[1])
     # clas_img = ((classified * 255) / 2).astype('uint8')
     # clas_img = helper.mask_water(clas_img, classConcession)
     # clas_img = Image.fromarray(clas_img)
@@ -329,14 +332,8 @@ with rio.open(file_list[0]) as src:
     df_class['clas'] = helper.map_to_2class(df_class['clas'])
     print('ACTUAL:  ', df_class['clas'].value_counts())
     print('***scheme:  ' ,scheme)
-    if (scheme == 'ALL'):
-        print('Predicted:  ', df_class['predicted'].value_counts())
-        df_class['predicted'] = helper.map_to_2class(df_class['predicted'])
-        print('Predicted:  ', df_class['predicted'].value_counts())
-    else:
-        print('Predicted:  ', df_class['predicted'].value_counts())
-        df_class['predicted'] = helper.map_3_to_2class(df_class['predicted'])
-        print('Predicted:  ', df_class['predicted'].value_counts())
+
+    print('Predicted:  ', df_class['predicted'].value_counts())
     #print('ACTUAL:  ', df_class['clas'].value_counts())
 
     print(sklearn.metrics.classification_report(df_class['clas'], df_class['predicted']))
