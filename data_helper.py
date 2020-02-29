@@ -19,6 +19,8 @@ import itertools
 from rasterio.mask import mask
 from rasterio import Affine as A
 from rasterio.warp import reproject, Resampling
+import rioxarray as rx
+import matplotlib.pyplot as plt
 
 # =============================================================================
 # Identify files
@@ -255,7 +257,26 @@ def trim_input_band_by_shape(input_raster, boundary):
     out_img, out_transform = mask(input_raster, shapes=boundary, crop=True)
     return out_img, out_transform
 
+def reproject_match_input_band(input_raster, bounding_raster, band):
+    image2 = rx.open_rasterio(bounding_raster)
+    # plt.figure()
+    # image2.plot()
+    # plt.show()
+    image3 = rx.open_rasterio(input_raster)
+    # plt.figure()
+    # image3.plot()
+    # plt.show()
+    image3 = image3.rio.reproject_match(image2)
+   # plt.figure()
+   # destination.plot(robust=True)
+  #  plt.show()
+
+    image2=False
+    #image3=False
+    return image3
+
 def trim_input_band_by_raster(input_raster, bounding_raster, band):
+
     with rasterio.open(bounding_raster) as image:
         meta = image.meta
         height = image.height
@@ -302,7 +323,8 @@ def get_feature_inputs(band_groups, bounding_box, island, year):
         outtif=os.path.join(outtif)
         print(outtif)
         file = glob.glob(outtif)
-        out_img = trim_input_band_by_raster(file[0], bounding_box, band)
+        out_img = reproject_match_input_band(file[0], bounding_box, band)
+        #out_img = trim_input_band_by_raster(file[0], bounding_box, band)
         if (write_input_data):
             print('TODO - check input image, out_img shape: ', out_img.shape)
             # write_data_array(file, 'app_oki', band, bounding_box)
@@ -347,7 +369,7 @@ def write_data_array(file, concession, band, boundary):
 
 def get_concession_bands(bands, island, year, bounding_box, concession):
     img = get_feature_inputs(bands, bounding_box, island, year)
-    array = np.asarray(img)
+    array = np.asarray(img[0])
     x = gen_windows(array, pixel_window_size)
     array=False
     img=False
@@ -473,7 +495,7 @@ def drop_no_data(data):
 #print(landcoverClassMap)
 if __name__ == "__main__":
     write_input_data=True
-    get_input_data([bands_base, bands_radar],'Sumatra', str(2015), ['app_oki'],False )
+    get_input_data([ 'swir1_max'],'Sumatra', str(2015), ['app_oki'],False )
     # for site in sites:
     #     stack_image_input_data(site, bands_base, 'bands_base')
     #     stack_image_input_data(site, bands_radar, 'bands_radar')
