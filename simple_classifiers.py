@@ -282,7 +282,7 @@ for seed in range(1,iterations+1):
 X_scaled=0
 X_scaled_class=0
 if iterations>1:
-    temp = predictions.mode(axis=1)[0]
+    temp = pd.DataFrame(predictions.mode(axis=1)[0])
 else:
     temp=predictions
 
