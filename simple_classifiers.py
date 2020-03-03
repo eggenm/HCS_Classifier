@@ -39,14 +39,14 @@ bands = db.get_best_bands(classConcession)
 sample_rate=db.get_best_training_sample_rate(classConcession)
 
 pixel_window_size = 1
-iterations = 3
+iterations = 1
 doGridSearch = False
 scheme=db.get_best_scheme(classConcession)
 estimators = db.get_best_number_estimators(classConcession)
 max_features = db.get_best_max_features(classConcession)
 depth = db.get_best_max_depth(classConcession)
 leaf_nodes = db.get_best_max_leaf_nodes(classConcession)
-suffix = 'TEST___RF_x' + str(iterations) + '_'+scheme + '_'+ str(int(round(sample_rate*10000, 0))) +'_30m_BaseRadarEVI.tif'
+suffix = 'TEST2___RF_x' + str(iterations) + '_'+scheme + '_'+ str(int(round(sample_rate*10000, 0))) +'_30m_BaseRadarEVI.tif'
 #classes = {1: "HCSA",
      #      0: "NA"}
 
@@ -73,6 +73,59 @@ classes = {
 20:	'AG',
 21:	'TP'
 }
+
+
+# =============================================================================
+# Blockwise predicted map (could be useful for larger maps)
+# Probably would need to be modified to work with windowed values rather than multiband image
+# =============================================================================
+class classify_block:
+    def __init__(self, block, randomforest_fitted_clf):
+        """
+        Parameters
+        ----------
+        block: np array
+            array drawn from raster using rasterio block read
+
+        fitted_clf: sklearn classifier
+            classifier that should be applid to block
+        """
+        self.fitted_clf = randomforest_fitted_clf
+        self.shape = block.shape
+        block = block.reshape((self.shape[0], self.shape[1] * self.shape[2])).T
+        self.block_df = pd.DataFrame(block)
+        self.x_df = self.block_df.dropna()
+
+    def classify(self):
+        """
+        Returns
+        -------
+        classified: array
+            Array of predicted classes
+        """
+        y_hat = self.fitted_clf.predict(self.x_df)
+        y_hat = pd.Series(y_hat, index=self.x_df.index)
+        y_hat.name = 'y_hat'
+        temp_df = self.block_df.merge(y_hat, left_index=True, right_index=True, how='left')
+        classified = temp_df['y_hat'].to_numpy().reshape(self.shape[1], self.shape[2])
+        classified = classified[np.newaxis, :, :].astype(rio.int16)
+        return classified
+
+    def calc_probabilities(self):
+        """
+        Returns
+        -------
+        probabilities: array
+            Array of predicted probabilities for each class
+        """
+        clas_cols = ['prob_' + str(clas) for clas in randomforest_fitted_clf.classes_]
+        pred_df = self.fitted_clf.predict_proba(self.x_df)
+        pred_df = pd.DataFrame(pred_df, index=self.x_df.index, columns=clas_cols)
+        temp_df = self.block_df.merge(pred_df, left_index=True, right_index=True, how='left')
+        probabilities = temp_df[clas_cols].to_numpy().T.reshape(len(clas_cols), self.shape[1], self.shape[2])
+        probabilities = probabilities.astype(rio.float32)
+        return probabilities
+
 
 def r2(rf, X_train, y_train):
     return r2_score(y_train, rf.predict(X_train))
@@ -350,11 +403,30 @@ with rio.open(file_list[0]) as src:
     # print(result.loc[i])
     band=0
 
-    with rio.open(outclas_file, 'w', driver = 'GTiff',
-                  height = height, width = width,
-                  crs = crs, dtype = dtype,
-                  count = count, transform = transform) as clas_dst:
-        clas_dst.write(classified)
+    clas_dst = rio.open(outclas_file, 'w', driver = 'GTiff',
+                      height = height, width = width,
+                      crs = crs, dtype = dtype,
+                      count = count, transform = transform)
+    #prob_dst = rio.open(prob_file, 'w', driver = 'GTiff',
+                       # height = src.height, width = src.width,
+                       # crs = src.crs, dtype = rio.float32,
+                       # count = len(randomforest_fitted_clf.classes_), transform = src.transform)
+    for ji, window in src.block_windows(1):
+        print('ji:  ', ji)
+        print('window:  ', window)
+        block = src.read(window = window)
+        if sum(sum(sum(~np.isnan(block))))>0:
+                block_classifier = classify_block(block, randomforest_fitted_clf)
+                classified = block_classifier.classify()
+                probabilities = block_classifier.calc_probabilities()
+                clas_dst.write(classified, window = window)
+         #       prob_dst.write(probabilities, window = window)
+
+ # with rio.open(outclas_file, 'w', driver = 'GTiff',
+    #               height = height, width = width,
+    #               crs = crs, dtype = dtype,
+    #               count = count, transform = transform) as clas_dst:
+    #     clas_dst.write(classified)
     # with rio.open(prob_file, 'w', driver = 'GTiff',
     #               height = height, width = width,
     #               crs = crs, dtype = rio.float32,
@@ -364,66 +436,17 @@ with rio.open(file_list[0]) as src:
     #         prob_dst.write_band(band+1, value.astype(rio.float32))
 #prob_dst.close()
 clas_dst.close()
+#prob_dst.close()
 src.close()
-# =============================================================================
-# Blockwise predicted map (could be useful for larger maps)
-# Probably would need to be modified to work with windowed values rather than multiband image
-# =============================================================================
-class classify_block:
-    def __init__(self, block, randomforest_fitted_clf):
-        """
-        Parameters
-        ----------
-        block: np array
-            array drawn from raster using rasterio block read
-        
-        fitted_clf: sklearn classifier
-            classifier that should be applid to block
-        """
-        self.fitted_clf = randomforest_fitted_clf
-        self.shape = block.shape
-        block = block.reshape((self.shape[0], self.shape[1] * self.shape[2])).T
-        self.block_df = pd.DataFrame(block)
-        self.x_df = self.block_df.dropna()
-    
-    def classify(self):
-        """
-        Returns
-        -------
-        classified: array
-            Array of predicted classes
-        """
-        y_hat = self.fitted_clf.predict(self.x_df)
-        y_hat = pd.Series(y_hat, index = self.x_df.index)
-        y_hat.name = 'y_hat'
-        temp_df = self.block_df.merge(y_hat, left_index = True, right_index = True, how = 'left')
-        classified = temp_df['y_hat'].to_numpy().reshape(self.shape[1], self.shape[2])
-        classified = classified[np.newaxis, :, :].astype(rio.int16)
-        return classified
-    
-    def calc_probabilities(self):
-        """
-        Returns
-        -------
-        probabilities: array
-            Array of predicted probabilities for each class
-        """
-        clas_cols = ['prob_' + str(clas) for clas in randomforest_fitted_clf.classes_]
-        pred_df = self.fitted_clf.predict_proba(self.x_df)
-        pred_df = pd.DataFrame(pred_df, index = self.x_df.index, columns = clas_cols)    
-        temp_df = self.block_df.merge(pred_df, left_index = True, right_index = True, how = 'left')
-        probabilities = temp_df[clas_cols].to_numpy().T.reshape(len(clas_cols), self.shape[1], self.shape[2])
-        probabilities = probabilities.astype(rio.float32)
-        return probabilities
 
 #clas_file = base_dir + classConcession +  '/sklearn_test/class_file.tif'
 prob_file = base_dir + classConcession[0] +  '/sklearn_test/prob_file' + suffix
 
 # with rio.open(outtif) as src:
-#     clas_dst = rio.open(clas_file, 'w', driver = 'GTiff',
-#                    height = src.height, width = src.width,
-#                    crs = src.crs, dtype = rio.int16,
-#                    count = 1, transform = src.transform)
+#     clas_dst = rio.open(outclas_file, 'w', driver = 'GTiff',
+#                   height = height, width = width,
+#                   crs = crs, dtype = dtype,
+#                   count = count, transform = transform)
 #     prob_dst = rio.open(prob_file, 'w', driver = 'GTiff',
 #                    height = src.height, width = src.width,
 #                    crs = src.crs, dtype = rio.float32,
