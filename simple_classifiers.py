@@ -31,15 +31,17 @@ import data.hcs_database as db
 # =============================================================================
 base_dir = dirfuncs.guess_data_dir()
 
-concessions = ['app_oki' , 'app_jambi']
+concessions = ['app_oki' ]
 island = 'Sumatra'
-classConcession = ['app_riau']
+classConcession = ['app_jambi']
 year = str(2015)
 bands = db.get_best_bands(classConcession)
+bands = ['VH', 'swir1_max']
+print(bands)
 sample_rate=db.get_best_training_sample_rate(classConcession)
 
 pixel_window_size = 1
-iterations = 1
+iterations = 2
 doGridSearch = False
 scheme=db.get_best_scheme(classConcession)
 estimators = db.get_best_number_estimators(classConcession)
@@ -92,7 +94,9 @@ class classify_block:
         """
         self.fitted_clf = randomforest_fitted_clf
         self.shape = block.shape
+        print('self.shape:  ', self.shape)
         block = block.reshape((self.shape[0], self.shape[1] * self.shape[2])).T
+        print('self.shape2:  ', block.shape)
         self.block_df = pd.DataFrame(block)
         self.x_df = self.block_df.dropna()
 
@@ -169,7 +173,8 @@ print(predictableClasses)
 #n_classes = encoder.classes_.shape[0]
 #y_encoded = encoder.transform(y)
 
-predictions = pd.DataFrame()
+
+
 probabilities_dict = {}
 
 
@@ -177,6 +182,8 @@ df_class = helper.get_input_data(bands, island, year, classConcession, True)
 #df_class=helper.trim_data2(df_class)
 X_class = df_class[[col for col in df_class.columns if  (col != 'clas') ]]
 X_scaled_class = helper.scale_data(X_class)
+('X_scaled_class.shape:  ', X_scaled_class.shape)
+predictions=np.zeros((iterations,X_scaled_class.shape[0]))
 X_class=0
 y_class = df_class['clas'].values
 if(scheme=='3CLASS'):
@@ -319,10 +326,26 @@ for seed in range(1,iterations+1):
     y_hat=0
 
     X_test=0
-    if (scheme == 'ALL'):
-        predictions[seed] = helper.map_to_2class(randomforest_fitted_clf.predict(X_scaled_class))
-    else:
-        predictions[seed] = helper.map_3_to_2class(randomforest_fitted_clf.predict(X_scaled_class))
+    end = X_scaled_class.shape[0]
+    step = 1000000
+
+    for i in  range(0, end, step):
+        y = min(i + step, end)
+        print(i, y)
+        block = X_scaled_class[i:y,:]
+        print('block.shape: ', block.shape)
+        if (scheme == 'ALL'):
+            predictions[seed-1, i:y] = helper.map_to_2class(randomforest_fitted_clf.predict(block))
+            #test= helper.map_to_2class(randomforest_fitted_clf.predict(block))
+        else:
+            predictions[seed-1, i:y] = helper.map_3_to_2class(randomforest_fitted_clf.predict(block))
+            #test = helper.map_3_to_2class(randomforest_fitted_clf.predict(block))
+        #print('test: ', test)
+
+    # if (scheme == 'ALL'):
+    #     predictions[seed] = helper.map_to_2class(randomforest_fitted_clf.predict(X_scaled_class))
+    # else:
+    #     predictions[seed] = helper.map_3_to_2class(randomforest_fitted_clf.predict(X_scaled_class))
 
     #tempProb=randomforest_fitted_clf.predict_proba(X_scaled_class)[:,:]
     print(randomforest_fitted_clf.classes_)
@@ -335,7 +358,7 @@ for seed in range(1,iterations+1):
 X_scaled=0
 X_scaled_class=0
 if iterations>1:
-    temp = pd.DataFrame(predictions.mode(axis=1)[0])
+    temp = pd.DataFrame(pd.DataFrame(predictions).mode(axis=0)[0])
 else:
     temp=predictions
 
@@ -353,6 +376,8 @@ with rio.open(file_list[0]) as src:
     dtype = rio.int16
     count = 1
     full_index = pd.MultiIndex.from_product([range(shape[0]), range(shape[1])], names=['i', 'j'])
+    print(shape[0])
+    print(shape[1])
     temp = temp.set_index(full_index)
     print(shape[0])
     print(shape[1])
@@ -411,10 +436,10 @@ with rio.open(file_list[0]) as src:
                        # height = src.height, width = src.width,
                        # crs = src.crs, dtype = rio.float32,
                        # count = len(randomforest_fitted_clf.classes_), transform = src.transform)
-    for ji, window in src.block_windows(1):
+    for ji, window in X_scaled_class.block_windows(1):
         print('ji:  ', ji)
         print('window:  ', window)
-        block = src.read(window = window)
+        block = X_scaled_class.read(window = window)
         if sum(sum(sum(~np.isnan(block))))>0:
                 block_classifier = classify_block(block, randomforest_fitted_clf)
                 classified = block_classifier.classify()

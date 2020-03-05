@@ -20,6 +20,7 @@ from rasterio.mask import mask
 from rasterio import Affine as A
 from rasterio.warp import reproject, Resampling
 import rioxarray as rx
+from rioxarray import merge as rxmerge
 import matplotlib.pyplot as plt
 
 # =============================================================================
@@ -259,14 +260,20 @@ def trim_input_band_by_shape(input_raster, boundary):
 
 def reproject_match_input_band(input_raster, bounding_raster, band):
     image2 = rx.open_rasterio(bounding_raster)
+    print('dtype2:  ', image2.dtype)
     # plt.figure()
     # image2.plot()
     # plt.show()
     image3 = rx.open_rasterio(input_raster)
+    print('dtype3 a:  ', image3.dtype)
+    if(image3.dtype=='float64'):
+        image3.data  = np.float32(image3)
+        print('dtype3 b:  ', image3.dtype)
     # plt.figure()
     # image3.plot()
     # plt.show()
     image3 = image3.rio.reproject_match(image2)
+    print('dtype3 c:  ', image3.dtype)
    # plt.figure()
    # destination.plot(robust=True)
   #  plt.show()
@@ -341,10 +348,12 @@ def get_feature_inputs(band_groups, bounding_box, island, year):
     #     elif out_img.shape[0] == 1:
     #         band = np.squeeze(out_img)
         print('I:  ',i)
-        array[i] = out_img
+        array[i] = np.asarray(out_img[0])
+        out_img = False
 
-    out_img=False
-    return array
+
+    #array = rxmerge.merge_arrays(array)
+    return np.asarray(array)
 
 def write_data_array(file, concession, band, boundary):
     with rasterio.open(file[0]) as image:
@@ -369,8 +378,8 @@ def write_data_array(file, concession, band, boundary):
 
 def get_concession_bands(bands, island, year, bounding_box, concession):
     img = get_feature_inputs(bands, bounding_box, island, year)
-    array = np.asarray(img[0])
-    x = gen_windows(array, pixel_window_size)
+    #array = np.asarray(img[0])
+    x = gen_windows(img, pixel_window_size)
     array=False
     img=False
     return x
@@ -495,7 +504,7 @@ def drop_no_data(data):
 #print(landcoverClassMap)
 if __name__ == "__main__":
     write_input_data=True
-    get_input_data([ 'swir1_max'],'Sumatra', str(2015), ['app_oki'],False )
+    get_input_data([ 'swir1_max', 'EVI'],'Sumatra', str(2015), ['app_oki'],False )
     # for site in sites:
     #     stack_image_input_data(site, bands_base, 'bands_base')
     #     stack_image_input_data(site, bands_radar, 'bands_radar')
