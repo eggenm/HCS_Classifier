@@ -13,16 +13,20 @@ import os
 import rasterio
 from rasterio.mask import mask
 from shapely.geometry import box
+import rioxarray
 
 from fiona.crs import from_epsg
 import json
 
 #out_tif = r'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\Sumatra\\out\\2015\\jambi_crop_blue_max.tif'
-#input='C:\\Users\\ME\\Dropbox\\HCSproject\\data\\app_files\\stratified_shapefiles\\Jambi_WKS_Stratification.shp'
+input='C:\\Users\\ME\\Dropbox\\HCSproject\\data\\app_files\\stratified_shapefiles\\Jambi_WKS_Stratification.shp'
 
 def getFeatures(gdf):
     """Function to parse features from GeoDataFrame in such a manner that rasterio wants them"""
     return [json.loads(gdf.to_json())['features'][0]['geometry']]
+
+
+
 
 def get_bounding_box_polygon(path_to_shape, out_crs='EPSG:4326'):
     print('PATH:  ', path_to_shape)
@@ -82,12 +86,13 @@ def read_raster():
 if __name__ == "__main__":
     nada = np.nan
     print(os.getenv('PROJ_LIB'))
-    #get_bounding_box_polygon(input)
+    get_bounding_box_polygon(input)
+    clipped = xds.rio.clip(geometries, xds.rio.crs)
     #read_raster()
-    bobox=box(235186.7964500059, 9825476.572053133 ,379883.6319000004 ,9916487.528701443)
-    geo = gpd.GeoDataFrame({'geometry': bobox}, index=[0], crs=from_epsg('32748'))
-    print(geo)
-    crs_init = 'EPSG:4326'
-    geo = geo.to_crs(crs=crs_init)
-    coords = getFeatures(geo)
-    print('Coords:  ', coords)
+    # bobox=box(235186.7964500059, 9825476.572053133 ,379883.6319000004 ,9916487.528701443)
+    # geo = gpd.GeoDataFrame({'geometry': bobox}, index=[0], crs=from_epsg('32748'))
+    # print(geo)
+    # crs_init = 'EPSG:4326'
+    # geo = geo.to_crs(crs=crs_init)
+    # coords = getFeatures(geo)
+    # print('Coords:  ', coords)

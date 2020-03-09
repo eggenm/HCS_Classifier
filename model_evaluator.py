@@ -1,3 +1,5 @@
+from builtins import dict
+
 import data_helper as helper
 import data.hcs_database as db
 import dirfuncs
@@ -7,6 +9,8 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier as rfc
 import sklearn.metrics
 from sklearn.metrics import f1_score
+from copy import deepcopy
+import itertools
 
 #############   SETUP  PARAMS    ######################
 training_sample_rate = 0.003
@@ -24,7 +28,8 @@ sites = [#'gar_pgm',
       # 'crgl_stal'
     ]
 base_dir = dirfuncs.guess_data_dir()
-band_set ={#1:['bands_radar'],
+band_set ={ 1: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI']
+    #1:['bands_radar'],
        #    2: ['bands_base'],
      #       3: ['bands_median'],
       #      4: ['bands_base','bands_radar'],
@@ -33,8 +38,8 @@ band_set ={#1:['bands_radar'],
       #      7:['bands_evi2_separate'],
     #        8:['bands_evi2'],
        #     9:['bands_evi2','bands_radar'],
-           10:[ helper.bands_base, helper.bands_radar,
-                helper.band_evi2 ],
+          # 10:[ helper.bands_base, helper.bands_radar,
+         #       helper.band_evi2 ],
       #      11:['bands_base','bands_median','bands_radar','evi2_only']
            }
 
@@ -61,10 +66,10 @@ def train_model(X_train, y_train):
               class_weight='balanced')
     if doGridSearch:
         print(" ############  IN GRID SEARCH  ############# ")
-        param_grid = [{'max_depth': [4, 6, 8, 10, 13 ],
-                    #   'max_leaf_nodes': [6, 10, 14, 18 ],
-                       'max_features': [.1, .2, .4, .65,
-                                        .8, .92 ],
+        param_grid = [{'max_depth': [ 6, 8, 10, 13 ],
+                       'max_leaf_nodes': [6, 10 ],
+                       'max_features': [ .2, .4, .65,
+                                        .8 ],
                        'n_estimators': [100, 250, 375, 500, 750]}]
         grid_search = GridSearchCV(clf, param_grid, cv = 5, scoring = 'f1_macro',
                                    return_train_score = True, refit = True)
@@ -121,10 +126,26 @@ class model_performance_logger:
 
 def evaluate_model():
 
+    for concession in sites:
+        for key, bands in band_set.items():
+            data_scoring = helper.get_input_data(bands, island, year, [concession], False)
+            data_scoring = helper.trim_data2(data_scoring)
+            data_scoring = helper.drop_no_data(data_scoring)
+            X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
+            X_scaled_score = helper.scale_data(X_score)
+            new_key = str(key) + str(concession)
+            scaled_x_data[new_key] = deepcopy(X_scaled_score)
+            y_score_all = data_scoring['clas'].values
+            actual_data[concession] = deepcopy(y_score_all)
+    X_scaled_score = False
+    X_score = False
+    y_score_all = False
+
+
     for scoreConcession in sites:
         print(scoreConcession)
         trainConcessions = list(sites)
-        trainConcessions.remove(scoreConcession)
+        #trainConcessions.remove(scoreConcession)
 
         result = pd.DataFrame(columns=['concession', 'bands', 'score_type', 'class_scheme', 'score', 'score_weighted',
                                        'two_class_score', 'two_class_score_weighted', 'training_concessions',
@@ -132,38 +153,47 @@ def evaluate_model():
                                        'max_leaf_nodes', 'max_features', 'n_estimators', 'training_sample_rate', 'resolution'])
         x = range(3, 18, 3)
         for key, bands in band_set.items():
+
+
             i = 0
 
-
             print(key, '....',bands)
-            data = pd.DataFrame()
+
+            #all_bands = list(itertools.chain(*bands))
+            # all_bands = band_groups.flatt
+            #print('ALL_BANDS:', all_bands)
+            #data = pd.DataFrame()
             #data_scoring = helper.get_concession_data(bands, scoreConcession)
-            data_scoring = helper.get_input_data(bands, island, year, [scoreConcession], False )
-            data_scoring = helper.trim_data2(data_scoring)
-            data_scoring = helper.drop_no_data(data_scoring)
-            X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
-            X_scaled_score = helper.scale_data(X_score)
-            print('ACTUAL:  ', data_scoring['clas'].value_counts())
-            y_score_all = data_scoring['clas'].values
+            #data_scoring = helper.get_input_data(bands, island, year, [scoreConcession], False )
+            #data_scoring = helper.trim_data2(data_scoring)
+            #data_scoring = helper.drop_no_data(data_scoring)
+            #X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
+            #X_scaled_score = helper.scale_data(X_score)
+            X_scaled_score = get_predictor_data(key,[scoreConcession])
+            #print('ACTUAL:  ', data_scoring['clas'].value_counts())
+            #y_score_all = data_scoring['clas'].values
+            y_score_all = get_landcover_data([scoreConcession])
 
             #data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
-            data = helper.trim_data2(helper.get_input_data(bands, island, year, trainConcessions, False ))
-            data=helper.drop_no_data(data)
-            X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
-            X_scaled = helper.scale_data(X)
-            landcover = data['clas'].values
-            for y in range(5, 80, 20):
+            #data = helper.trim_data2(helper.get_input_data(bands, island, year, trainConcessions, False ))
+            #data=helper.drop_no_data(data)
+            #X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
+            #X_scaled = helper.scale_data(X)
+            X_scaled = get_predictor_data(key, trainConcessions)
+            #landcover = data['clas'].values
+            landcover = get_landcover_data(trainConcessions)
+            for y in range(5, 30, 10):
                 training_sample_rate = y / 10000
                 X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.1,
                         random_state=16)
 
                 ##########################################################
                 #####     MODEL WITH ALL CLASSES     #########
-                model = train_model(X_train, y_train)
+                model = train_model(X_train, y_train.values.ravel())
                 yhat = model.predict(X_scaled_score)
                 print('PREDICTED:  ', pd.Series(yhat).value_counts())
-                score_all, score_all_weighted = score_model(helper.map_to_3class(y_score_all), helper.map_to_3class(yhat))
-                score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_to_2class(yhat))
+                score_all, score_all_weighted = score_model(helper.map_to_3class(y_score_all.values.ravel()), helper.map_to_3class(yhat))
+                score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all.values.ravel()), helper.map_to_2class(yhat))
                 result.loc[i] = [scoreConcession, str(bands), 'F1', 'ALL', score_all, score_all_weighted, score_two, score_two_weighted, str(trainConcessions),
                                  model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'], training_sample_rate, resolution ]
                 print(result.loc[i])
@@ -171,10 +201,10 @@ def evaluate_model():
 
                 ##########################################################
                 #####     MODEL WITH 3 CLASSES     #########
-                model = train_model(X_train, helper.map_to_3class(y_train))
+                model = train_model(X_train, helper.map_to_3class(y_train.values.ravel()))
                 yhat = model.predict(X_scaled_score)
-                score_3, score_3_weighted = score_model(helper.map_to_3class(y_score_all), yhat)
-                score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all), helper.map_3_to_2class(yhat))
+                score_3, score_3_weighted = score_model(helper.map_to_3class(y_score_all.values.ravel()), yhat)
+                score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all.values.ravel()), helper.map_3_to_2class(yhat))
                 result.loc[i] = [scoreConcession, str(bands), 'F1' , '3CLASS', score_3, score_3_weighted, score_two, score_two_weighted, str(trainConcessions),
                                  model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'], model.get_params()['n_estimators'], training_sample_rate, resolution ]
                 print(result.loc[i])
@@ -185,10 +215,31 @@ def evaluate_model():
     #result.to_csv(resultfile, index=False)
     print(db.get_all_model_performance())
 
+def get_predictor_data(band_id, concessions):
+    data = pd.DataFrame()
+    for concession in concessions:
+        new_key = str(band_id)+concession
+        if data.empty:
+            data = pd.DataFrame(scaled_x_data[new_key])
+        else:
+            data = pd.concat([data, pd.DataFrame(scaled_x_data[new_key])], ignore_index=True)
+    return data
+
+def get_landcover_data(concessions):
+    data = pd.DataFrame()
+    for concession in concessions:
+        if data.empty:
+            data = pd.DataFrame(actual_data[concession])
+        else:
+            data = pd.concat([data, pd.DataFrame(actual_data[concession])], ignore_index=True)
+    return data
+
 if __name__ == "__main__":
+    scaled_x_data = dict()
+    actual_data = dict()
     evaluate_model()
-    #resultfile = base_dir + 'result.02182020.csv'
-    #db.get_all_model_performance().to_csv(resultfile, index=False)
+    resultfile = base_dir + 'result.03072020.csv'
+    db.get_all_model_performance().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)
     # x = helper.gen_windows(array, pixel_window_size)

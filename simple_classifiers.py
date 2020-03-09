@@ -359,6 +359,7 @@ X_scaled=0
 X_scaled_class=0
 if iterations>1:
     temp = pd.DataFrame(pd.DataFrame(predictions).mode(axis=0)[0])
+    print('temp.shape', temp.shape)
 else:
     temp=predictions
 

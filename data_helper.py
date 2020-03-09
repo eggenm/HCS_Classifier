@@ -31,6 +31,7 @@ pixel_window_size = 1
 stackData = True
 write_input_data = False
 
+
 #classes = {1: "HCSA",
      #      0: "NA"}
 sites = ['gar_pgm',
@@ -94,7 +95,20 @@ classes = {
 21:	'TP'
 }
 
+class imagery_cache:
 
+    def __init__(self):
+        self.island_data_table = {}
+
+    def get_band_by_island_year(self, band, island, year ):
+        key = island+str(year)+band
+        try:
+            self.island_data_table[key]
+        except KeyError:
+            tif = os.path.join(base_dir, island, 'out', str(year), band + '.tif')
+            file = glob.glob(tif)
+            self.island_data_table[key] = rx.open_rasterio(file[0])
+        return self.island_data_table[key]
 
 # =============================================================================
 # FUNCTIONS:  Read and prep raster data
@@ -195,18 +209,7 @@ def get_landcover_class_image(concession):
     allclass_file = base_dir + concession + '/' + concession + '_all_class.remapped.tif'
     print("**get_landcover_class_image:  allclass_file:  ", allclass_file)
     return allclass_file
-    #print(three_class_file)
-    #file_list = sorted(glob.glob(three_class_file))
-    ## Read classification labels
-    #with rio.open(file_list[0]) as clas_src:
-        #three_class = clas_src.read()
-    print(allclass_file)
-    file_list = sorted(glob.glob(allclass_file))
-    #if(write_input_data):
-    #    write_data_array(file_list[0],concession,'class',)
-    with rio.open(file_list[0]) as clas_src:
-        all_class = clas_src.read()
-    return  all_class
+
 
 
 def get_classes(classImage, name):
@@ -252,19 +255,20 @@ def mask_water(an_img, concession):
 
 def get_input_band(band, island, year):
     print(band)
-    return(os.path.join(base_dir, island,'out', year,  band + '.tif'))
+    image = input_data_cache.get_band_by_island_year(band, island, year)
+    return image
 
 def trim_input_band_by_shape(input_raster, boundary):
     out_img, out_transform = mask(input_raster, shapes=boundary, crop=True)
     return out_img, out_transform
 
-def reproject_match_input_band(input_raster, bounding_raster, band):
-    image2 = rx.open_rasterio(bounding_raster)
+def reproject_match_input_band(band, island, year, bounding_raster):
+    image2 = bounding_raster # rx.open_rasterio(bounding_raster)
     print('dtype2:  ', image2.dtype)
     # plt.figure()
     # image2.plot()
     # plt.show()
-    image3 = rx.open_rasterio(input_raster)
+    image3 = get_input_band(band, island, year)
     print('dtype3 a:  ', image3.dtype)
     if(image3.dtype=='float64'):
         image3.data  = np.float32(image3)
@@ -326,11 +330,8 @@ def get_feature_inputs(band_groups, bounding_box, island, year):
     array = [0 for x in range(len(band_groups))]
     print('len(array):  ', len(array))
     for i, band in enumerate(band_groups):
-        outtif=get_input_band(band, island, year)
-        outtif=os.path.join(outtif)
-        print(outtif)
-        file = glob.glob(outtif)
-        out_img = reproject_match_input_band(file[0], bounding_box, band)
+
+        out_img = reproject_match_input_band(band, island, year, bounding_box)
         #out_img = trim_input_band_by_raster(file[0], bounding_box, band)
         if (write_input_data):
             print('TODO - check input image, out_img shape: ', out_img.shape)
@@ -376,7 +377,7 @@ def write_data_array(file, concession, band, boundary):
     dst.close()
     print('TEST')
 
-def get_concession_bands(bands, island, year, bounding_box, concession):
+def get_concession_bands(bands, island, year, bounding_box):
     img = get_feature_inputs(bands, bounding_box, island, year)
     #array = np.asarray(img[0])
     x = gen_windows(img, pixel_window_size)
@@ -394,14 +395,14 @@ def get_input_data(bands, island, year, concessions, isClass=False):
         class_file = sorted(glob.glob(all_class_image))[0]
         # if(write_input_data):
         #    write_data_array(file_list[0],concession,'class',)
-        with rio.open(class_file) as clas_src:
-            all_class = clas_src.read()
+
+        all_class = rx.open_rasterio(class_file)
         if(write_input_data):
             print('TODO - check class image, shape: ', all_class.shape)
            # write_data_array(class_file, 'Class'+concession)
-        y = get_classes(all_class, 'clas')
+        y = get_classes(all_class.data, 'clas')
         box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])
-        x = get_concession_bands(bands, island, year, class_file, concession)
+        x = get_concession_bands(bands, island, year, all_class)
         if data.empty:
             data = combine_input_landcover(x, y, isClass)
         else:
@@ -410,6 +411,22 @@ def get_input_data(bands, island, year, concessions, isClass=False):
     x=False
     y=False
     return data
+
+def get_large_area_input_data(study_area_base_raster, bands, island, year):
+    data = pd.DataFrame()
+    x = get_concession_bands(bands, island, year, study_area_base_raster)
+    X_scaled_class = scale_data(x)
+    print('X_scaled_class.shape:  ', X_scaled_class.shape)
+    x=False
+    return X_scaled_class
+
+
+def get_reference_raster_from_shape(shapefile, island, year):
+    bounding = shapefilehelp.get_bounding_box_polygon(db.shapefiles[shapefile])
+    outtif = get_input_band('blue_max', island, '2015')
+    out_img =outtif.rio.clip(bounding, outtif.rio.crs)
+    return out_img
+
 
 # def get_concession_data(bands, concessions, isClass=False):
 #     data = pd.DataFrame()
@@ -501,10 +518,16 @@ def drop_no_data(data):
     data[data == 255] = np.nan
     return data.dropna()
 
+input_data_cache = imagery_cache()
 #print(landcoverClassMap)
 if __name__ == "__main__":
-    write_input_data=True
-    get_input_data([ 'swir1_max', 'EVI'],'Sumatra', str(2015), ['app_oki'],False )
+    input_data_cache = imagery_cache()
+    #write_input_data=True
+    #get_input_data([ 'swir1_max', 'EVI'],'Sumatra', str(2015), ['app_oki'],False )
+    #ref = get_reference_raster_from_shape('app_muba', 'Sumatra')
+    band = get_input_band('swir1_max', 'Sumatra', 2015)
+    band2 = get_input_band('blue_max', 'Sumatra', 2015)
+    band3 = get_input_band('swir1_max', 'Sumatra', 2015)
     # for site in sites:
     #     stack_image_input_data(site, bands_base, 'bands_base')
     #     stack_image_input_data(site, bands_radar, 'bands_radar')

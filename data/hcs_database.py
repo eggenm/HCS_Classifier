@@ -156,6 +156,6 @@ if __name__ == "__main__":
     conn = sqlite3.connect('hcs_database.db')
 #    init_database()
     #delete_model_performance()
-#    print(get_all_model_performance().tail())
-  #  conn.close()
+    print(get_all_model_performance().tail())
+    conn.close()
     #print(all_bands)
