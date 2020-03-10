@@ -1,9 +1,12 @@
 import numpy as np
 import pandas as pd
 import rasterio as rio
-import train_classsifier as trainer
+import data.hcs_database as db
+from sklearn.model_selection import train_test_split, GridSearchCV
 import data_helper as helper
 import dirfuncs
+import timer
+import train_classsifier as trainer
 
 base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
@@ -14,7 +17,9 @@ sites = [
 'app_oki',
 'app_jambi'
     ]
-bands = ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI']
+bands = [#'blue_max',
+          'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH']
+         #    , 'VV', 'EVI']
 
 # =============================================================================
 # Blockwise predicted map (could be useful for larger maps)
@@ -71,29 +76,26 @@ class classify_block:
 
 
 
-def get_large_area_input_data():
-    df_class = helper.get_input_data_by_shape(bands, island, year, shapefile, True)
-    X_class = df_class[[col for col in df_class.columns if (col != 'clas')]]
-    X_scaled_class = helper.scale_data(X_class)
-    print('X_scaled_class.shape:  ', X_scaled_class.shape)
 
-    X_class = 0
+def predict(X_scaled_class, rfmodel):
 
-
-def predict(X_scaled_class, model):
-    end = X_scaled_class.shape[0]
-    step = 1000000
-    for i in range(0, end, step):
-        y = min(i + step, end)
-        print(i, y)
-        block = X_scaled_class[i:y, :]
-        print('block.shape: ', block.shape)
-        if (model.scheme == 'ALL'):
-            predictions[i:y] = predictions[i:y] + helper.map_to_2class(model.predict(block))
-            # test= helper.map_to_2class(randomforest_fitted_clf.predict(block))
-        else:
-            predictions[i:y] = predictions[i:y] + helper.map_3_to_2class(model.predict(block))
-    return  predictions
+        try:
+            with timer.Timer() as t:
+                end = X_scaled_class.shape[0]
+                step = 1000000
+                for i in range(0, end, step):
+                    y = min(i + step, end)
+                    print(i, y)
+                    block = X_scaled_class[i:y, :]
+                    print('block.shape: ', block.shape)
+                    if (rfmodel.scheme == 'ALL'):
+                        predictions[i:y] =  helper.map_to_2class(rfmodel.model.predict(block))
+                        # test= helper.map_to_2class(randomforest_fitted_clf.predict(block))
+                    else:
+                        predictions[i:y] =  helper.map_3_to_2class(rfmodel.model.predict(block))
+        finally:
+            print('Block Predict Request took %.03f sec.' % t.interval)
+        return  predictions
 
 def write_map(predicted, reference, name):
     outclas_file = base_dir + name + '/sklearn_test/classified_by_ensemble_rf.tif'
@@ -122,11 +124,47 @@ def write_map(predicted, reference, name):
     clas_dst.close()
     src.close()
 
+def get_trained_model(scoreConcession, trainConcessions, seed):
+
+        doGridSearch = False
+        scheme = db.get_best_scheme([scoreConcession])
+        estimators = db.get_best_number_estimators([scoreConcession])
+        max_features = db.get_best_max_features([scoreConcession])
+        depth = db.get_best_max_depth([scoreConcession])
+        leaf_nodes = db.get_best_max_leaf_nodes([scoreConcession])
+        island = 'Sumatra'
+        year = str(2015)
+        bands = db.get_best_bands([scoreConcession])
+        bands = ['red_max', 'nir_max', 'swir1_max', 'swir2_max',
+                 'VH']  # TODO take this out, just for a local test!!!!
+        print(bands)
+        sample_rate = db.get_best_training_sample_rate([scoreConcession])
+
+        try:
+            with timer.Timer() as t:
+                rf_trainer = trainer.random_forest_trainer(estimators, depth, max_features, leaf_nodes, bands, scheme)
+                X_train, X_test, y_train, y_test = get_training_data(trainConcessions, bands, year, sample_rate, island,
+                                                                     seed)
+                rf_trainer.train_model(X_train, y_train, seed)
+        finally:
+            print('Train Model Request took %.03f sec.' % t.interval)
+        return rf_trainer
+
+
+def get_training_data(sites, bands, year, sample_rate, island, seed):
+    train_df = helper.trim_data2(helper.get_input_data(bands, island, year, sites, False))
+    train_df = helper.drop_no_data(train_df)
+    X = train_df[[col for col in train_df.columns if (col != 'clas')]]
+    X_scaled = helper.scale_data(X)
+    landcover = train_df['clas'].values
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=sample_rate, test_size=0.1,
+                                                        random_state=13 * seed)
+    return X_train, X_test, y_train, y_test
 
 if __name__ == "__main__":
     name = 'app_muba'
     ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
-    X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, year)
+    X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, year) #TODO this relies on hardcoded bands where below pulls from database
     number_predictions = 2 * len(sites)
     predictions = np.zeros(( X_scaled_class.shape[0]))
     i=1
@@ -134,11 +172,15 @@ if __name__ == "__main__":
         print(scoreConcession)
         trainConcessions = list(sites)
         trainConcessions.remove(scoreConcession)
-        trained_model = trainer.get_trained_model(scoreConcession,trainConcessions, i)
-        i=i+1
-        predictions = predict(X_scaled_class, trained_model)
-        trained_model = trainer.get_trained_model(scoreConcession, sites, i)
-        i=i+1
-        predictions = predict(X_scaled_class, trained_model)
+        trained_model = get_trained_model(scoreConcession,trainConcessions, i)
+        if i==1 :
+            predictions = predict(X_scaled_class, trained_model)
+        else:
+            predictions = predictions + predict(X_scaled_class, trained_model)
+        i = i + 1
+        trained_model = get_trained_model(scoreConcession, sites, i)
+
+        predictions = predictions + predict(X_scaled_class, trained_model)
+        i = i + 1
     predictions = int(round(float(predictions)/number_predictions, 0))
     write_map(predictions, ref_study_area, name)

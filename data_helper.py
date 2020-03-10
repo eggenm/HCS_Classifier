@@ -20,6 +20,8 @@ from rasterio.mask import mask
 from rasterio import Affine as A
 from rasterio.warp import reproject, Resampling
 import rioxarray as rx
+import timer
+import imagery_data
 from rioxarray import merge as rxmerge
 import matplotlib.pyplot as plt
 
@@ -253,10 +255,18 @@ def mask_water(an_img, concession):
     an_img = an_img * watermask
     return an_img
 
-def get_input_band(band, island, year):
-    print(band)
-    image = input_data_cache.get_band_by_island_year(band, island, year)
+def get_input_band(band, name, year):
+    try:
+        with timer.Timer() as t:
+            print(band)
+            image_cache = imagery_data.Imagery_Cache.getInstance()
+            print('IMAGE CACHE SINGLETON: ',image_cache)
+            image = image_cache.get_band_by_island_year(band, name, year)
+    finally:
+        print('Get' , band , ' Request took %.03f sec.' % t.interval)
     return image
+
+
 
 def trim_input_band_by_shape(input_raster, boundary):
     out_img, out_transform = mask(input_raster, shapes=boundary, crop=True)
@@ -378,11 +388,15 @@ def write_data_array(file, concession, band, boundary):
     print('TEST')
 
 def get_concession_bands(bands, island, year, bounding_box):
-    img = get_feature_inputs(bands, bounding_box, island, year)
-    #array = np.asarray(img[0])
-    x = gen_windows(img, pixel_window_size)
-    array=False
-    img=False
+    try:
+        with timer.Timer() as t:
+            img = get_feature_inputs(bands, bounding_box, island, year)
+            #array = np.asarray(img[0])
+            x = gen_windows(img, pixel_window_size)
+    finally:
+        array=False
+        img=False
+        print('get_concession_bands Request took %.03f sec.' % t.interval)
     return x
 
 
@@ -413,17 +427,20 @@ def get_input_data(bands, island, year, concessions, isClass=False):
     return data
 
 def get_large_area_input_data(study_area_base_raster, bands, island, year):
-    data = pd.DataFrame()
-    x = get_concession_bands(bands, island, year, study_area_base_raster)
-    X_scaled_class = scale_data(x)
-    print('X_scaled_class.shape:  ', X_scaled_class.shape)
-    x=False
-    return X_scaled_class
+        try:
+            with timer.Timer() as t:
+                x = get_concession_bands(bands, island, year, study_area_base_raster)
+                X_scaled_class = scale_data(x)
+                print('X_scaled_class.shape:  ', X_scaled_class.shape)
+        finally:
+            x = False
+            print('Get Input Data Request took %.03f sec.' % t.interval)
+            return X_scaled_class
 
 
 def get_reference_raster_from_shape(shapefile, island, year):
     bounding = shapefilehelp.get_bounding_box_polygon(db.shapefiles[shapefile])
-    outtif = get_input_band('blue_max', island, '2015')
+    outtif = get_input_band('blue_max', island, year)
     out_img =outtif.rio.clip(bounding, outtif.rio.crs)
     return out_img
 
@@ -521,7 +538,6 @@ def drop_no_data(data):
 input_data_cache = imagery_cache()
 #print(landcoverClassMap)
 if __name__ == "__main__":
-    input_data_cache = imagery_cache()
     #write_input_data=True
     #get_input_data([ 'swir1_max', 'EVI'],'Sumatra', str(2015), ['app_oki'],False )
     #ref = get_reference_raster_from_shape('app_muba', 'Sumatra')
