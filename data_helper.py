@@ -22,6 +22,7 @@ from rasterio.warp import reproject, Resampling
 import rioxarray as rx
 import timer
 import imagery_data
+import itertools as it
 from rioxarray import merge as rxmerge
 import matplotlib.pyplot as plt
 
@@ -157,20 +158,44 @@ def gen_windows(array, n):
         df with ixj rows, with one column for every pixel values in nxn window
         of pixel i,j
     """
-    shape = array.shape
-    print('SHAPE:  ',shape)
-    start = int((n - 1) / 2)
-    end_i = shape[1] - start
-    end_j = shape[2] - start
-    win_dict = {}
-    for i in range(start, end_i):
-        for j in range(start, end_j):
-            win_dict[(i, j)] = return_window(array, i, j, n)
-    windows = pd.Series(win_dict)
-    windows.index.names = ['i', 'j']
-    index = windows.index
-    windows = pd.DataFrame(windows.apply(lambda x: x.flatten()).values.tolist(), index=index)
-    return (windows)
+    try:
+        with timer.Timer() as t:
+            shape = array.shape
+            print('SHAPE:  ',shape)
+            start = int((n - 1) / 2)
+            end_i = shape[1] - start
+            end_j = shape[2] - start
+            win_dict = {}
+            for i in range(start, end_i):
+                for j in range(start, end_j):
+                    win_dict[(i, j)] = return_window(array, i, j, n)
+            windows = pd.Series(win_dict)
+            windows.index.names = ['i', 'j']
+            index = windows.index
+            windows = pd.DataFrame(windows.apply(lambda x: x.flatten()).values.tolist(), index=index)
+    finally:
+        print('gen_windows original request took %.03f sec.' % t.interval)
+    return windows
+
+
+def gen_windows2(array):
+    try:
+        with timer.Timer() as t:
+            x=range(0, array.shape[1])
+            y=range(0, array.shape[2])
+            tuples = list(it.product(x, y))
+            myfunc = lambda a: a.flatten()
+            aList = [myfunc(array[i, :, :]) for i in range(0, array.shape[0])]
+            full_index = pd.MultiIndex.from_product([x, y], names=['i', 'j'])
+            i = 0
+            windows = pd.DataFrame({i: aList[0]}, index=full_index)
+            for i in range(1, len(aList)):
+                temp = pd.DataFrame({i: aList[i]}, index=full_index)
+                windows = windows.merge(temp, left_index=True, right_index=True, how='left')
+            windows.index.names = ['i', 'j']
+    finally:
+        print('gen_windows2 request took %.03f sec.' % t.interval)
+    return windows
 
 
 def stack_image_input_data(concession, bands, name):
@@ -212,6 +237,19 @@ def get_landcover_class_image(concession):
     print("**get_landcover_class_image:  allclass_file:  ", allclass_file)
     return allclass_file
 
+
+def get_classes2(classImage, name):
+    try:
+        with timer.Timer() as t:
+            x = range(0, classImage.shape[1])
+            y = range(0, classImage.shape[2])
+            full_index = pd.MultiIndex.from_product([x, y], names=['i', 'j'])
+            myfunc = lambda a: a.flatten()
+            aList = [myfunc(classImage[i, :, :]) for i in range(0, classImage.shape[0])]
+            classes = pd.DataFrame({name: aList[0]}, index=full_index)
+    finally:
+        print('get_classes2 Request took %.03f sec.' % t.interval)
+    return classes
 
 
 def get_classes(classImage, name):
@@ -380,7 +418,7 @@ def write_data_array(file, concession, band, boundary):
     # Update meta to reflect the number of layers
     outtif = base_dir + concession + '/out/input_' + concession + band  + '.tif'
     with rasterio.open(outtif, 'w', driver = 'GTiff',
-                  height = img.shape[0], width = img.shape[1],
+     #this is wrong, i think height and width mixed up             height = img.shape[0], width = img.shape[1],
                   crs = crs, dtype = img.dtype,
                   count = 1, transform = trans) as dst:
                 dst.write_band(1, img)
@@ -392,7 +430,8 @@ def get_concession_bands(bands, island, year, bounding_box):
         with timer.Timer() as t:
             img = get_feature_inputs(bands, bounding_box, island, year)
             #array = np.asarray(img[0])
-            x = gen_windows(img, pixel_window_size)
+            x = gen_windows2(img)
+            #x = gen_windows(img, pixel_window_size)
     finally:
         array=False
         img=False
@@ -414,7 +453,7 @@ def get_input_data(bands, island, year, concessions, isClass=False):
         if(write_input_data):
             print('TODO - check class image, shape: ', all_class.shape)
            # write_data_array(class_file, 'Class'+concession)
-        y = get_classes(all_class.data, 'clas')
+        y = get_classes2(all_class.data, 'clas')
         box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])
         x = get_concession_bands(bands, island, year, all_class)
         if data.empty:

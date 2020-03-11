@@ -10,16 +10,20 @@ import train_classsifier as trainer
 
 base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
-island='Sumatra'
-year=str(2015)
+island = 'Sumatra'
+year = str(2015)
 sites = [
-'app_riau',
-'app_oki',
-'app_jambi'
-    ]
-bands = [#'blue_max',
-          'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH']
-         #    , 'VV', 'EVI']
+    'app_riau',
+    'app_oki',
+    'app_jambi'
+]
+bands = [  # 'blue_max',
+    #  'red_max', 'nir_max',
+    'swir1_max',  # 'swir2_max',
+    'VH']
+
+
+#    , 'VV', 'EVI']
 
 # =============================================================================
 # Blockwise predicted map (could be useful for larger maps)
@@ -75,80 +79,81 @@ class classify_block:
         return probabilities
 
 
+def predict(X_scaled_class, rfmodel, predictions):
+    try:
+        with timer.Timer() as t:
+            end = X_scaled_class.shape[0]
+            step = 1000000
+            for i in range(0, end, step):
+                y = min(i + step, end)
+                print(i, y)
+                block = X_scaled_class[i:y, :]
+                print('block.shape: ', block.shape)
+                if (rfmodel.scheme == 'ALL'):
+                    predictions[i:y] = predictions[i:y] + helper.map_to_2class(rfmodel.model.predict(block))
+                    # test= helper.map_to_2class(randomforest_fitted_clf.predict(block))
+                else:
+                    predictions[i:y] = predictions[i:y] + helper.map_3_to_2class(rfmodel.model.predict(block))
+    finally:
+        print('Block Predict Request took %.03f sec.' % t.interval)
+    return predictions
 
-
-def predict(X_scaled_class, rfmodel):
-
-        try:
-            with timer.Timer() as t:
-                end = X_scaled_class.shape[0]
-                step = 1000000
-                for i in range(0, end, step):
-                    y = min(i + step, end)
-                    print(i, y)
-                    block = X_scaled_class[i:y, :]
-                    print('block.shape: ', block.shape)
-                    if (rfmodel.scheme == 'ALL'):
-                        predictions[i:y] =  helper.map_to_2class(rfmodel.model.predict(block))
-                        # test= helper.map_to_2class(randomforest_fitted_clf.predict(block))
-                    else:
-                        predictions[i:y] =  helper.map_3_to_2class(rfmodel.model.predict(block))
-        finally:
-            print('Block Predict Request took %.03f sec.' % t.interval)
-        return  predictions
 
 def write_map(predicted, reference, name):
-    outclas_file = base_dir + name + '/sklearn_test/classified_by_ensemble_rf.tif'
-    with rio.open(reference) as src:
-        height = src.height
-        width = src.width
-        shape = src.shape
-        crs = src.crs
-        transform = src.transform
-        dtype = rio.int16
-        count = 1
-        full_index = pd.MultiIndex.from_product([range(shape[0]), range(shape[1])], names=['i', 'j'])
-        predicted = predicted.set_index(full_index)
-        predicted = predicted.values.reshape(shape[0], shape[1])
-        predicted = predicted[np.newaxis, :, :].astype(rio.int16)
-        clas_dst = rio.open(outclas_file, 'w', driver='GTiff',
-                            height=height, width=width,
-                            crs=crs, dtype=dtype,
-                            count=count, transform=transform)
-        for ji, window in predicted.block_windows(1):  #or ref file here
-            print('ji:  ', ji)
-            print('window:  ', window)
-            block = X_scaled_class.read(window=window)
-            if sum(sum(sum(~np.isnan(block)))) > 0:
-                clas_dst.write(predicted, window=window)
+    outclas_file = base_dir + name + '/sklearn_test/' +name+'_classified_by_ensemble_rf.tif'
+    src = reference
+    #with rio.open(reference) as src:
+    height = src.rio.height
+    width = src.rio.width
+    shape = src.rio.shape
+    crs = src.rio.crs
+    trans = src.transform
+    count = 1
+    full_index = pd.MultiIndex.from_product([range(shape[0]), range(shape[1])], names=['i', 'j'])
+    predicted = pd.DataFrame(predicted, index=full_index)
+    #predicted = predicted.set_index(full_index)
+    predicted = predicted.values.reshape(shape[0], shape[1])
+    predicted = predicted[np.newaxis, :, :].astype(rio.int16)
+    clas_dst = rio.open(outclas_file, 'w', driver='GTiff',
+                        height=height, width=width,
+                        crs=crs, dtype=rio.int16,
+                        count=count, transform=trans)
+    # for ji, window in src.block_windows(1):  # or ref file here
+    #     print('ji:  ', ji)
+    #     print('window:  ', window)
+    #     block = predicted.read(window=window)
+    #     if sum(sum(sum(~np.isnan(block)))) > 0:
+    clas_dst.write(predicted)#, window=window)
     clas_dst.close()
-    src.close()
+    #src.close()
+
 
 def get_trained_model(scoreConcession, trainConcessions, seed):
+    doGridSearch = False
+    scheme = db.get_best_scheme([scoreConcession])
+    estimators = db.get_best_number_estimators([scoreConcession])
+    max_features = db.get_best_max_features([scoreConcession])
+    depth = db.get_best_max_depth([scoreConcession])
+    leaf_nodes = db.get_best_max_leaf_nodes([scoreConcession])
+    island = 'Sumatra'
+    year = str(2015)
+    bands = db.get_best_bands([scoreConcession])
+    bands = ['swir1_max',
+             'VH']  # TODO take this out, just for a local test!!!!
+    print(bands)
+    sample_rate = db.get_best_training_sample_rate([scoreConcession])
 
-        doGridSearch = False
-        scheme = db.get_best_scheme([scoreConcession])
-        estimators = db.get_best_number_estimators([scoreConcession])
-        max_features = db.get_best_max_features([scoreConcession])
-        depth = db.get_best_max_depth([scoreConcession])
-        leaf_nodes = db.get_best_max_leaf_nodes([scoreConcession])
-        island = 'Sumatra'
-        year = str(2015)
-        bands = db.get_best_bands([scoreConcession])
-        bands = ['red_max', 'nir_max', 'swir1_max', 'swir2_max',
-                 'VH']  # TODO take this out, just for a local test!!!!
-        print(bands)
-        sample_rate = db.get_best_training_sample_rate([scoreConcession])
-
-        try:
-            with timer.Timer() as t:
-                rf_trainer = trainer.random_forest_trainer(estimators, depth, max_features, leaf_nodes, bands, scheme)
-                X_train, X_test, y_train, y_test = get_training_data(trainConcessions, bands, year, sample_rate, island,
-                                                                     seed)
-                rf_trainer.train_model(X_train, y_train, seed)
-        finally:
-            print('Train Model Request took %.03f sec.' % t.interval)
-        return rf_trainer
+    try:
+        with timer.Timer() as t:
+            rf_trainer = trainer.random_forest_trainer(estimators, depth, max_features, leaf_nodes, bands, scheme)
+            X_train, X_test, y_train, y_test = get_training_data(trainConcessions, bands, year, sample_rate, island,
+                                                                 seed)
+            if scheme == '3CLASS':
+                y_train = helper.map_to_3class(y_train)
+            rf_trainer.train_model(X_train, y_train, seed)
+    finally:
+        print('Train Model Request took %.03f sec.' % t.interval)
+    return rf_trainer
 
 
 def get_training_data(sites, bands, year, sample_rate, island, seed):
@@ -161,26 +166,30 @@ def get_training_data(sites, bands, year, sample_rate, island, seed):
                                                         random_state=13 * seed)
     return X_train, X_test, y_train, y_test
 
+
 if __name__ == "__main__":
     name = 'app_muba'
     ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
-    X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, year) #TODO this relies on hardcoded bands where below pulls from database
+    X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island,
+                                                      year)  # TODO this relies on hardcoded bands where below pulls from database
     number_predictions = 2 * len(sites)
-    predictions = np.zeros(( X_scaled_class.shape[0]))
-    i=1
+    predictions = np.zeros((X_scaled_class.shape[0]))
+
+    i = 1
     for scoreConcession in sites:
         print(scoreConcession)
         trainConcessions = list(sites)
         trainConcessions.remove(scoreConcession)
-        trained_model = get_trained_model(scoreConcession,trainConcessions, i)
-        if i==1 :
-            predictions = predict(X_scaled_class, trained_model)
-        else:
-            predictions = predictions + predict(X_scaled_class, trained_model)
+        trained_model = get_trained_model(scoreConcession, trainConcessions, i)
+        predictions = predict(X_scaled_class, trained_model, predictions)
         i = i + 1
         trained_model = get_trained_model(scoreConcession, sites, i)
 
-        predictions = predictions + predict(X_scaled_class, trained_model)
+        predictions =  predict(X_scaled_class, trained_model, predictions)
         i = i + 1
-    predictions = int(round(float(predictions)/number_predictions, 0))
+    predictions = predictions / number_predictions
+    predictions = np.around(predictions)
+    print(predictions)
+    predictions = predictions.astype(int)
+    print(predictions)
     write_map(predictions, ref_study_area, name)
