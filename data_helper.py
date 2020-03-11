@@ -474,7 +474,7 @@ def get_large_area_input_data(study_area_base_raster, bands, island, year):
         finally:
             x = False
             print('Get Input Data Request took %.03f sec.' % t.interval)
-            return X_scaled_class
+        return X_scaled_class
 
 
 def get_reference_raster_from_shape(shapefile, island, year):
