@@ -17,7 +17,7 @@ sites = [
     'app_oki',
     'app_jambi'
 ]
-bands = [   'blue_max', 'green_max'
+bands = [   'blue_max', 'green_max',
       'red_max', 'nir_max',
     'swir1_max',   'swir2_max',
     'VH','VV', 'EVI']
