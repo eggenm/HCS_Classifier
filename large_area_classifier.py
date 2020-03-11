@@ -17,10 +17,10 @@ sites = [
     'app_oki',
     'app_jambi'
 ]
-bands = [  # 'blue_max',
-    #  'red_max', 'nir_max',
-    'swir1_max',  # 'swir2_max',
-    'VH']
+bands = [   'blue_max', 'green_max'
+      'red_max', 'nir_max',
+    'swir1_max',   'swir2_max',
+    'VH','VV', 'EVI']
 
 
 #    , 'VV', 'EVI']
@@ -138,8 +138,8 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
     island = 'Sumatra'
     year = str(2015)
     bands = db.get_best_bands([scoreConcession])
-    bands = ['swir1_max',
-             'VH']  # TODO take this out, just for a local test!!!!
+    #bands = ['swir1_max',
+       #      'VH']  # TODO take this out, just for a local test!!!!
     print(bands)
     sample_rate = db.get_best_training_sample_rate([scoreConcession])
 
@@ -169,27 +169,31 @@ def get_training_data(sites, bands, year, sample_rate, island, seed):
 
 if __name__ == "__main__":
     name = 'app_muba'
-    ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
-    X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island,
-                                                      year)  # TODO this relies on hardcoded bands where below pulls from database
-    number_predictions = 2 * len(sites)
-    predictions = np.zeros((X_scaled_class.shape[0]))
+    try:
+        with timer.Timer() as t:
+            ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
+            X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island,
+                                                              year)  # TODO this relies on hardcoded bands where below pulls from database
+            number_predictions = 2 * len(sites)
+            predictions = np.zeros((X_scaled_class.shape[0]))
 
-    i = 1
-    for scoreConcession in sites:
-        print(scoreConcession)
-        trainConcessions = list(sites)
-        trainConcessions.remove(scoreConcession)
-        trained_model = get_trained_model(scoreConcession, trainConcessions, i)
-        predictions = predict(X_scaled_class, trained_model, predictions)
-        i = i + 1
-        trained_model = get_trained_model(scoreConcession, sites, i)
+            i = 1
+            for scoreConcession in sites:
+                print(scoreConcession)
+                trainConcessions = list(sites)
+                trainConcessions.remove(scoreConcession)
+                trained_model = get_trained_model(scoreConcession, trainConcessions, i)
+                predictions = predict(X_scaled_class, trained_model, predictions)
+                i = i + 1
+                trained_model = get_trained_model(scoreConcession, sites, i)
 
-        predictions =  predict(X_scaled_class, trained_model, predictions)
-        i = i + 1
-    predictions = predictions / number_predictions
-    predictions = np.around(predictions)
-    print(predictions)
-    predictions = predictions.astype(int)
-    print(predictions)
-    write_map(predictions, ref_study_area, name)
+                predictions =  predict(X_scaled_class, trained_model, predictions)
+                i = i + 1
+            predictions = predictions / number_predictions
+            predictions = np.around(predictions)
+            print(predictions)
+            predictions = predictions.astype(int)
+            print(predictions)
+            write_map(predictions, ref_study_area, name)
+    finally:
+        print('LARGE_AREA CLASSIFICATION of : ' , name , '  took %.03f sec.' % t.interval)

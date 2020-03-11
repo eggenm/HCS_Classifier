@@ -26,7 +26,7 @@ band_set ={
 }
 
 pixel_window_size=1
-doGridSearch=False
+doGridSearch=True
 
 
 class random_forest_trainer:
