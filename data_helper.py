@@ -312,20 +312,20 @@ def trim_input_band_by_shape(input_raster, boundary):
 
 def reproject_match_input_band(band, island, year, bounding_raster):
     image2 = bounding_raster # rx.open_rasterio(bounding_raster)
-    print('dtype2:  ', image2.dtype)
+    print('image2.shape:  ', image2.shape)
     # plt.figure()
     # image2.plot()
     # plt.show()
     image3 = get_input_band(band, island, year)
-    print('dtype3 a:  ', image3.dtype)
+    print('image3.shape:  ', image3.shape)
     if(image3.dtype=='float64'):
         image3.data  = np.float32(image3)
-        print('dtype3 b:  ', image3.dtype)
     # plt.figure()
     # image3.plot()
     # plt.show()
     image3 = image3.rio.reproject_match(image2)
-    print('dtype3 c:  ', image3.dtype)
+    print('image2.shape:  ', image2.shape)
+    print('image3.shape:  ', image3.shape)
    # plt.figure()
    # destination.plot(robust=True)
   #  plt.show()
@@ -453,7 +453,7 @@ def get_input_data(bands, island, year, concessions, isClass=False):
         if(write_input_data):
             print('TODO - check class image, shape: ', all_class.shape)
            # write_data_array(class_file, 'Class'+concession)
-        y = get_classes2(all_class.data, 'clas')
+        y = get_classes(all_class.data, 'clas')
         box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])
         x = get_concession_bands(bands, island, year, all_class)
         if data.empty:

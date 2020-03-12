@@ -50,6 +50,7 @@ study_areas = {'app_muba': {"type":"Polygon","coordinates":[[[102.9583740234375,
 
 gee_dir = 'users/rheilmayr/indonesia/'
 shapefile_base = dirfuncs.guess_data_dir() + 'stratified_shapefiles/'
+province_shapfile_dir = dirfuncs.guess_data_dir() + 'province_shapefiles/'
 app_rasters = {'app_kalbar': gee_dir + 'Kalbar_DTK_Stratification',
                'app_jambi': gee_dir + 'Jambi_WKS_Stratification',
                'app_kaltim': gee_dir + 'Kaltim_KHL_Stratification',
@@ -64,6 +65,7 @@ shapefiles = {'app_kalbar': shapefile_base + 'Kalbar_DTK_Stratification.shp',
                'app_muba': shapefile_base + 'Muba_BPP2_Stratification.shp',
                'app_riau': shapefile_base + 'Riau_MSK_SK_Stratification.shp',
                'app_oki': shapefile_base + 'OKI_BMH_Stratification.shp',
+               'Jambi': province_shapfile_dir + 'Jambi_Province.shp',
                'app_all': shapefile_base + 'app_all'}
 
 rasters = {'app_kalbar': gee_dir + 'Kalbar_DTK_Stratification',

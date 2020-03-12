@@ -17,10 +17,11 @@ sites = [
     'app_oki',
     'app_jambi'
 ]
-bands = [   'blue_max', 'green_max',
-      'red_max', 'nir_max',
-    'swir1_max',   'swir2_max',
-    'VH','VV', 'EVI']
+bands = ['blue_max',
+         'green_max',
+     'red_max', 'nir_max','swir2_max',
+     'swir1_max',
+     'VH','VV', 'EVI']
 
 
 #    , 'VV', 'EVI']
@@ -99,31 +100,35 @@ def predict(X_scaled_class, rfmodel, predictions):
     return predictions
 
 
-def write_map(predicted, reference, name):
-    outclas_file = base_dir + name + '/sklearn_test/' +name+'_classified_by_ensemble_rf.tif'
+def write_map(predicted, reference, name,i):
+    outclas_file = base_dir + name + '/sklearn_test/' +name + str(i)+'_classified_by_ensemble_rf.tif'
     src = reference
     #with rio.open(reference) as src:
     height = src.rio.height
     width = src.rio.width
-    shape = src.rio.shape
+    shape = src.shape
     crs = src.rio.crs
     trans = src.transform
     count = 1
-    full_index = pd.MultiIndex.from_product([range(shape[0]), range(shape[1])], names=['i', 'j'])
-    predicted = pd.DataFrame(predicted, index=full_index)
+    full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
     #predicted = predicted.set_index(full_index)
-    predicted = predicted.values.reshape(shape[0], shape[1])
-    predicted = predicted[np.newaxis, :, :].astype(rio.int16)
-    clas_dst = rio.open(outclas_file, 'w', driver='GTiff',
+    predicted = pd.DataFrame(predicted, index=full_index)
+    clas_df = pd.DataFrame(index=full_index)
+    classified = clas_df.merge(predicted, left_index=True, right_index=True, how='left').sort_index()
+
+    classified = classified.values.reshape(shape[1], shape[2])
+
+    classified = classified[np.newaxis, :, :].astype(rio.int16)
+    with rio.open(outclas_file, 'w', driver='GTiff',
                         height=height, width=width,
                         crs=crs, dtype=rio.int16,
-                        count=count, transform=trans)
+                        count=count, transform=trans) as clas_dst:
     # for ji, window in src.block_windows(1):  # or ref file here
     #     print('ji:  ', ji)
     #     print('window:  ', window)
     #     block = predicted.read(window=window)
     #     if sum(sum(sum(~np.isnan(block)))) > 0:
-    clas_dst.write(predicted)#, window=window)
+        clas_dst.write(classified)#, window=window)
     clas_dst.close()
     #src.close()
 
@@ -138,8 +143,7 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
     island = 'Sumatra'
     year = str(2015)
     bands = db.get_best_bands([scoreConcession])
-    #bands = ['swir1_max',
-       #      'VH']  # TODO take this out, just for a local test!!!!
+    # TODO take this out, just for a local test!!!!
     print(bands)
     sample_rate = db.get_best_training_sample_rate([scoreConcession])
 
@@ -168,15 +172,15 @@ def get_training_data(sites, bands, year, sample_rate, island, seed):
 
 
 if __name__ == "__main__":
-    name = 'app_muba'
+    name = 'Jambi'
     try:
         with timer.Timer() as t:
             ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
             X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island,
                                                               year)  # TODO this relies on hardcoded bands where below pulls from database
             number_predictions = 2 * len(sites)
+            number_predictions = len(sites)
             predictions = np.zeros((X_scaled_class.shape[0]))
-
             i = 1
             for scoreConcession in sites:
                 print(scoreConcession)
@@ -184,6 +188,7 @@ if __name__ == "__main__":
                 trainConcessions.remove(scoreConcession)
                 trained_model = get_trained_model(scoreConcession, trainConcessions, i)
                 predictions = predict(X_scaled_class, trained_model, predictions)
+                #write_map(predictions, ref_study_area, name, i)
                 i = i + 1
                 trained_model = get_trained_model(scoreConcession, sites, i)
 
@@ -194,6 +199,6 @@ if __name__ == "__main__":
             print(predictions)
             predictions = predictions.astype(int)
             print(predictions)
-            write_map(predictions, ref_study_area, name)
+            write_map(predictions, ref_study_area, name,99)
     finally:
         print('LARGE_AREA CLASSIFICATION of : ' , name , '  took %.03f sec.' % t.interval)
