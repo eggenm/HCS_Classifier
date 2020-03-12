@@ -21,7 +21,9 @@ bands = ['blue_max',
          'green_max',
      'red_max', 'nir_max','swir2_max',
      'swir1_max',
-     'VH','VV', 'EVI']
+     'VH',
+    'VV','EVI'
+]
 
 
 #    , 'VV', 'EVI']
@@ -143,6 +145,13 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
     island = 'Sumatra'
     year = str(2015)
     bands = db.get_best_bands([scoreConcession])
+    bands = ['blue_max',
+         'green_max',
+     'red_max', 'nir_max','swir2_max',
+     'swir1_max',
+     'VH',
+    'VV','EVI'
+    ]
     # TODO take this out, just for a local test!!!!
     print(bands)
     sample_rate = db.get_best_training_sample_rate([scoreConcession])
@@ -179,7 +188,6 @@ if __name__ == "__main__":
             X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island,
                                                               year)  # TODO this relies on hardcoded bands where below pulls from database
             number_predictions = 2 * len(sites)
-            number_predictions = len(sites)
             predictions = np.zeros((X_scaled_class.shape[0]))
             i = 1
             for scoreConcession in sites:
@@ -188,11 +196,12 @@ if __name__ == "__main__":
                 trainConcessions.remove(scoreConcession)
                 trained_model = get_trained_model(scoreConcession, trainConcessions, i)
                 predictions = predict(X_scaled_class, trained_model, predictions)
-                #write_map(predictions, ref_study_area, name, i)
+                write_map(predictions, ref_study_area, name, i)
                 i = i + 1
                 trained_model = get_trained_model(scoreConcession, sites, i)
 
                 predictions =  predict(X_scaled_class, trained_model, predictions)
+                write_map(predictions, ref_study_area, name, i)
                 i = i + 1
             predictions = predictions / number_predictions
             predictions = np.around(predictions)
