@@ -17,12 +17,12 @@ sites = [
     'app_oki',
     'app_jambi'
 ]
-bands = ['blue_max',
+bands = [#'blue_max',
          'green_max',
      'red_max', 'nir_max','swir2_max',
      'swir1_max',
-     'VH',
-    'VV','EVI'
+     'VH'
+  #  ,'VV','EVI'
 ]
 
 
@@ -145,12 +145,13 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
     island = 'Sumatra'
     year = str(2015)
     bands = db.get_best_bands([scoreConcession])
-    bands = ['blue_max',
+    bands = [#'blue_max',
          'green_max',
      'red_max', 'nir_max','swir2_max',
      'swir1_max',
-     'VH',
-    'VV','EVI'
+     'VH'
+        #,
+  #  'VV','EVI'
     ]
     # TODO take this out, just for a local test!!!!
     print(bands)
@@ -181,7 +182,7 @@ def get_training_data(sites, bands, year, sample_rate, island, seed):
 
 
 if __name__ == "__main__":
-    name = 'Jambi'
+    name = 'app_muba'
     try:
         with timer.Timer() as t:
             ref_study_area = helper.get_reference_raster_from_shape(name, island, year)

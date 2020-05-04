@@ -20,17 +20,15 @@ import pandas as pd
 #================================================================================
 #A shape file - study area
 #Get a bounding box
-# lon_start=110#108
-# # lon_edge=2
-# # lon_end=116#120
-# # lat_start = -2
-# # lat_end = 2
-# # lat_edge = 2
-# # site = 'Kalimantan'
-year = 2015
+# lon_start=107
 lon_edge=1
+# lon_end=119
+# lat_start = -5
+# lat_end = 5
 lat_edge = 1
-site = 'Sumatra'
+# site = 'Kalimantan'
+year = 2015
+site = 'Kalimantan'
 out_path = dirfuncs.guess_data_dir()
 #Take a set of years
 #Take a set of bands
@@ -70,7 +68,7 @@ def download_data(polygons,i):
 
     images = {
         #  '_greenest': sentinel,
-      #  '_radar': radar,  # 'class': strata_img,
+        '_radar': radar,  # 'class': strata_img,
         '_greenest': l8,
        # '_watermask': water_mask
 
@@ -116,7 +114,7 @@ if __name__ == "__main__":
     # download_data(polygons, 1)
     # cleanup_files()
 
-    polygons = get_grid_polygons(98, 106, -6,2)
-    download_data(polygons, 2)
+    polygons = get_grid_polygons(107, 119, -5,5)
+    download_data(polygons, 1)
     cleanup_files()
 
