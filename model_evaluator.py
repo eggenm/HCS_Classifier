@@ -238,7 +238,7 @@ if __name__ == "__main__":
     scaled_x_data = dict()
     actual_data = dict()
     evaluate_model()
-    resultfile = base_dir + 'result.03072020.csv'
+    resultfile = base_dir + 'result.05042020.csv'
     db.get_all_model_performance().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)
