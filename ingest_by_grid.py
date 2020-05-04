@@ -21,7 +21,7 @@ import pandas as pd
 #A shape file - study area
 #Get a bounding box
 # lon_start=107
-lon_edge=2
+lon_edge=1
 # lon_end=119
 # lat_start = -5
 # lat_end = 5
