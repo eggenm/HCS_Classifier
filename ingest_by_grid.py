@@ -117,12 +117,12 @@ if __name__ == "__main__":
     # cleanup_files()
 
     polygons = get_grid_polygons(95, 98, 2, 6)
-    download_data(polygons, 1)
+    download_data(polygons, 11)
     cleanup_files()
     polygons = get_grid_polygons(98, 99, 4, 5)
-    download_data(polygons, 1)
+    download_data(polygons, 12)
     cleanup_files()
     polygons = get_grid_polygons(106, 109, -4, 1)
-    download_data(polygons, 1)
+    download_data(polygons, 13)
     cleanup_files()
 
