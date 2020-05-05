@@ -116,7 +116,7 @@ if __name__ == "__main__":
     # download_data(polygons, 1)
     # cleanup_files()
 
-    polygons = get_grid_polygons(98, 102, -6,4)
+    polygons = get_grid_polygons(102, 106, -6, 2)
     download_data(polygons, 1)
     cleanup_files()
 
