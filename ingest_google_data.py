@@ -151,9 +151,9 @@ def getYearlyNdvi_L8():
 def getDEM(all_study_area):
     dem = ee.Image("USGS/SRTMGL1_003").clip(all_study_area)
     elevation = dem.select('elevation');
-    dem = ee.Image(elevation.addBands(ee.Terrain.slope(elevation).rename('slope')));
-    dem = ee.Image(elevation.addBands(ee.Terrain.aspect(elevation).rename('aspect')));
-    return dem
+    #dem = ee.Image(elevation.addBands());
+  #  dem = ee.Image(dem.addBands(ee.Terrain.aspect(elevation).rename('aspect')));
+    return ee.Terrain.slope(elevation).rename('slope')
 # =============================================================================
 # Prep landsat data
 # =============================================================================

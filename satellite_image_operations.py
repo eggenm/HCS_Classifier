@@ -62,6 +62,13 @@ s1_band_dict = {'VH': 'VH',
         #      'VH/VV': 'ratio_VH_VV'
       }
 
+dem_band_dict = {
+    'elevation':'elevation',
+    'slope': 'slope',
+    'aspect':'aspect'
+
+}
+
 def maskCloudsLandsat8(image):
     # Bits 3 and 5 are cloud shadow and cloud, respectively.
     cloudShadowBitMask = (1 << 3)
