@@ -454,7 +454,7 @@ def get_input_data(bands, island, year, concessions, isClass=False):
             print('TODO - check class image, shape: ', all_class.shape)
            # write_data_array(class_file, 'Class'+concession)
         y = get_classes(all_class.data, 'clas')
-        box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])
+        #box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])
         x = get_concession_bands(bands, island, year, all_class)
         if data.empty:
             data = combine_input_landcover(x, y, isClass)
@@ -578,7 +578,7 @@ input_data_cache = imagery_cache()
 #print(landcoverClassMap)
 if __name__ == "__main__":
     #write_input_data=True
-    #get_input_data([ 'swir1_max', 'EVI'],'Sumatra', str(2015), ['app_oki'],False )
+    x = get_input_data([ 'swir1_max', 'EVI', 'aspect'],'Kalimantan', str(2015), ['Bumitama_PTDamaiAgroSejahtera'],False )
     #ref = get_reference_raster_from_shape('app_muba', 'Sumatra')
     band = get_input_band('swir1_max', 'Sumatra', 2015)
     band2 = get_input_band('blue_max', 'Sumatra', 2015)
