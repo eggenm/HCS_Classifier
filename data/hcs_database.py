@@ -3,6 +3,8 @@ import pandas as pd
 import dirfuncs
 import itertools
 conn = sqlite3.connect('data/hcs_database.db')
+#conn = sqlite3.connect('hcs_database.db')
+
 
 maps_dict = {'app_jambi': 'ft:1bgkWL4VgYSgfAupZmVGcnXJJqMmvyBtl3_VgfyVV',
              'app_kalbar': 'ft:16yV7XDfeb1fGhH-N68CIetxd0FW8OvsTHdB7I4ka',
@@ -57,6 +59,7 @@ app_rasters = {'app_kalbar': gee_dir + 'Kalbar_DTK_Stratification',
                'app_muba': gee_dir + 'Muba_BPP2_Stratification',
                'app_riau': gee_dir + 'Riau_MSK_SK_Stratification',
                'app_oki': gee_dir + 'OKI_BMH_Stratification',
+               ''
                'app_all': gee_dir + 'app_all'}
 
 shapefiles = {'app_kalbar': shapefile_base + 'Kalbar_DTK_Stratification.shp',
@@ -112,18 +115,20 @@ def save_model_performance(rows):
 
 def delete_model_performance():
     c = conn.cursor()
-    c.execute('DELETE FROM model_performance_log where resolution=30 ')
+    c.execute('DELETE FROM model_performance_log where length(training_concessions) = 116 ')
     conn.commit()
 
 def get_all_model_performance():
     df = pd.read_sql_query("SELECT * FROM model_performance_log", conn)
+    #df = pd.read_sql_query("SELECT max(length(training_concessions)) FROM model_performance_log", conn)
+    print('ROWS:  ', len(df))
     return df
 
 def get_max_model_run(concession):
     c = conn.cursor()
     c.execute("SELECT * FROM model_performance_log where two_class_score_weighted = ( SELECT max(two_class_score_weighted) from model_performance_log where max_leaf_nodes < 13 and max_features <.75 and concession = ? )" ,  concession )
     rows = c.fetchall()
-
+    print('ROWS:  ', len(rows))
     for row in rows:
         row_dict = dict(zip(model_performance_columns,row))
     return row_dict
@@ -155,9 +160,10 @@ def get_best_scheme(concession):
 
 if __name__ == "__main__":
     print('in main')
+    print(get_all_model_performance())
     conn = sqlite3.connect('hcs_database.db')
 #    init_database()
     #delete_model_performance()
-    print(get_all_model_performance().tail())
+    print(get_all_model_performance())
     conn.close()
     #print(all_bands)

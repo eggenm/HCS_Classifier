@@ -17,23 +17,26 @@ training_sample_rate = 0.003
 resolution = 30
 
 year=str(2015)
-#sites = [#'gar_pgm',
-# 'app_riau',
- #  'app_kalbar',
- #        'app_kaltim',
+sites = [
+ 'app_riau',
+#   'app_kalbar',
+   #     'app_kaltim',
 ## 'app_oki',
-#    'app_jambi' #,
-      # 'crgl_stal'
- #   ]
-island='Kalimantan'
-sites = [#'gar_pgm','app_kalbar','app_kaltim','crgl_stal',
-         'Bumitama_PTDamaiAgroSejahtera','Bumitama_PTGemilangMakmurSubur',  'Bumitama_PTHungarindoPersada','PTAgroAndalan',
-      #  'PTMitraNusaSarana'
+#    'app_jambi' #,'crgl_stal',
+   ]
+island='Sumatra'
+#sites = [#'gar_pgm',
+#'app_kalbar','app_kaltim',
+      #   'Bumitama_PTDamaiAgroSejahtera',
+      #   'Bumitama_PTGemilangMakmurSubur' #,
+  #   'Bumitama_PTHungarindoPersada',
+    # 'PTAgroAndalan',
+#      'PTMitraNusaSarana'
 
-    ]
+#    ]
 base_dir = dirfuncs.guess_data_dir()
 band_set ={ 1: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI'],
-            2:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'elevation', 'slope', 'aspect']
+            2:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'slope']#'elevation', , 'aspect']
     #1:['bands_radar'],
        #    2: ['bands_base'],
      #       3: ['bands_median'],
@@ -156,7 +159,7 @@ def evaluate_model():
                                        'two_class_score', 'two_class_score_weighted', 'training_concessions',
                                        'max_depth',
                                        'max_leaf_nodes', 'max_features', 'n_estimators', 'training_sample_rate', 'resolution'])
-        x = range(3, 18, 3)
+        x = range(4, 11, 2)
         for key, bands in band_set.items():
 
 
@@ -187,9 +190,10 @@ def evaluate_model():
             X_scaled = get_predictor_data(key, trainConcessions)
             #landcover = data['clas'].values
             landcover = get_landcover_data(trainConcessions)
-            for y in range(5, 30, 10):
+            for y in range(4, 5, 2):
                 training_sample_rate = y / 10000
-                X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.1,
+                training_sample_rate = 400
+                X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.25,
                         random_state=16)
                 print('****  training_sample_rate  *****', training_sample_rate)
                 print('****  X_train size *****', len(X_train))
@@ -244,7 +248,7 @@ if __name__ == "__main__":
     scaled_x_data = dict()
     actual_data = dict()
     evaluate_model()
-    resultfile = base_dir + 'result.05042020.csv'
+    resultfile = base_dir + 'result.05112020.csv'
     db.get_all_model_performance().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)

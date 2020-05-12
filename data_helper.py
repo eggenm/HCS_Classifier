@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 base_dir = dirfuncs.guess_data_dir()
 pixel_window_size = 1
 stackData = True
-write_input_data = False
+write_input_data = True
 
 
 #classes = {1: "HCSA",
@@ -334,43 +334,26 @@ def reproject_match_input_band(band, island, year, bounding_raster):
     #image3=False
     return image3
 
-def trim_input_band_by_raster(input_raster, bounding_raster, band):
+def write_concession_band(data_src, bounding_raster,  outtif):
 
-    with rasterio.open(bounding_raster) as image:
-        meta = image.meta
-        height = image.height
-        width = image.width
-        shape = image.shape
-        crs = image.crs
+    with bounding_raster as image:
+        height = image.rio.height
+        width = image.rio.width
+        shape = image.rio.shape
+        crs = image.rio.crs
         trans = image.transform
-
-        data_src = rasterio.open(input_raster)
-        destination = np.zeros(shape, np.float)
-        reproject(
-
-            source=rasterio.band(data_src,1),
-            destination=destination,
-            src_transform=data_src.transform,
-            src_crs=data_src.crs,
-            dst_transform=trans,
-            dst_crs=crs ,
-            resampling=Resampling.nearest)
-    if(write_input_data):
-        outtif = base_dir + 'app_oki' + '/out/input_' + 'app_oki' + band + '.tif'
         with rasterio.open(outtif, 'w', driver = 'GTiff',
                       height = height, width = width,
-                      crs = crs, dtype = rio.float64,
+                      crs = crs, dtype = data_src[0].dtype,
                       count = 1, transform = trans) as dst:
-                    dst.write_band(1, destination)
+                    dst.write_band(1, data_src[0])
         dst.close()
 
-    #dst.close()
-    return destination #, out_transform
 
 
-def get_feature_inputs(band_groups, bounding_box, island, year):
+def get_feature_inputs(band_groups, bounding_box, island, year, concession=None):
     srcs_to_mosaic=[]
-    outtif=''
+    tif=''
     print('Band_Groups:  ',band_groups)
     #all_bands = list(itertools.chain(*band_groups))
     #all_bands = band_groups.flatt
@@ -378,11 +361,22 @@ def get_feature_inputs(band_groups, bounding_box, island, year):
     array = [0 for x in range(len(band_groups))]
     print('len(array):  ', len(array))
     for i, band in enumerate(band_groups):
+        if(concession):
+            tif = base_dir + concession + '/out/' +year+ '/input_' + concession +'_'+ band + '.tif'
+            try:
+                file_list = sorted(glob.glob(tif))
+                out_img =  rx.open_rasterio(file_list[0])
+            except:
+                print('except: ', band , concession, island)
+                out_img = reproject_match_input_band(band, island, year, bounding_box)
+                if (write_input_data):
+                    write_concession_band(out_img, bounding_box,  tif)
+        else:
+            out_img = reproject_match_input_band(band, island, year, bounding_box)
 
-        out_img = reproject_match_input_band(band, island, year, bounding_box)
+
         #out_img = trim_input_band_by_raster(file[0], bounding_box, band)
-        if (write_input_data):
-            print('TODO - check input image, out_img shape: ', out_img.shape)
+
             # write_data_array(file, 'app_oki', band, bounding_box)
         #srcs_to_mosaic.append(out_img)
         #print(srcs_to_mosaic)
@@ -425,10 +419,11 @@ def write_data_array(file, concession, band, boundary):
     dst.close()
     print('TEST')
 
-def get_concession_bands(bands, island, year, bounding_box):
+def get_concession_bands(bands, island, year, bounding_box, concession=None):
     try:
+        x=False
         with timer.Timer() as t:
-            img = get_feature_inputs(bands, bounding_box, island, year)
+            img = get_feature_inputs(bands, bounding_box, island, year, concession)
             #array = np.asarray(img[0])
             x = gen_windows2(img)
             #x = gen_windows(img, pixel_window_size)
@@ -455,7 +450,7 @@ def get_input_data(bands, island, year, concessions, isClass=False):
            # write_data_array(class_file, 'Class'+concession)
         y = get_classes(all_class.data, 'clas')
         #box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])
-        x = get_concession_bands(bands, island, year, all_class)
+        x = get_concession_bands(bands, island, year, all_class, concession)
         if data.empty:
             data = combine_input_landcover(x, y, isClass)
         else:
@@ -578,11 +573,12 @@ input_data_cache = imagery_cache()
 #print(landcoverClassMap)
 if __name__ == "__main__":
     #write_input_data=True
-    x = get_input_data([ 'swir1_max', 'EVI', 'aspect'],'Kalimantan', str(2015), ['Bumitama_PTDamaiAgroSejahtera'],False )
+    #x = get_input_data(['aspect', 'VH', 'blue_max', 'EVI'],'Kalimantan', str(2015), ['app_kalbar'], False)
+    x = get_input_data([ 'blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI'],'Sumatra', str(2015), ['app_jambi','app_oki','app_riau', 'app_muba'],False )
     #ref = get_reference_raster_from_shape('app_muba', 'Sumatra')
-    band = get_input_band('swir1_max', 'Sumatra', 2015)
-    band2 = get_input_band('blue_max', 'Sumatra', 2015)
-    band3 = get_input_band('swir1_max', 'Sumatra', 2015)
+   # band = get_input_band('swir1_max', 'Sumatra', 2015)
+  #  band2 = get_input_band('blue_max', 'Sumatra', 2015)
+  #  band3 = get_input_band('swir1_max', 'Sumatra', 2015)
     # for site in sites:
     #     stack_image_input_data(site, bands_base, 'bands_base')
     #     stack_image_input_data(site, bands_radar, 'bands_radar')
