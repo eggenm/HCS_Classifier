@@ -26,9 +26,9 @@ lon_edge=1
 # lat_start = -5
 # lat_end = 5
 lat_edge = 1
-site = 'Kalimantan'
+#site = 'Kalimantan'
 year = 2015
-#site = 'Sumatra'
+site = 'Sumatra'
 out_path = dirfuncs.guess_data_dir()
 #Take a set of years
 #Take a set of bands
@@ -114,13 +114,15 @@ def cleanup_files():
 
 if __name__ == "__main__":
     ## KALIMANTAN
-     polygons = get_grid_polygons(107, 119, -5,5)
-     download_data(polygons, 1)
-     cleanup_files()
+   ##  polygons = get_grid_polygons(107, 119, -5,5)
+   ##  download_data(polygons, 1)
+   ##  cleanup_files()
 
-    # polygons = get_grid_polygons(98, 102, 2,4)
-    # download_data(polygons, 1)
-    # cleanup_files()
+
+##SUMATRA
+    polygons = get_grid_polygons(95, 107, -6,6)
+    download_data(polygons, 1)
+    cleanup_files()
 #something
    # polygons = get_grid_polygons(98, 102, -6, 4)
    # download_data(polygons, 22 )
