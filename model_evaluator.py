@@ -22,11 +22,11 @@ sites = { #'app_muba':'Sumatra',
 #'app_oki' : 'Sumatra',
    #   'app_jambi' : 'Sumatra',#,
    #        'crgl_stal' : 'Sumatra',
- #'gar_pgm':'Kalimantan',
+ 'gar_pgm':'Kalimantan',
 #'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
      #    'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
          'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
-     'Bumitama_PTHungarindoPersada':'Kalimantan',
+   #  'Bumitama_PTHungarindoPersada':'Kalimantan',
      'PTAgroAndalan':'Kalimantan',
       'PTMitraNusaSarana':'Kalimantan'
           }
@@ -36,7 +36,8 @@ sites = { #'app_muba':'Sumatra',
 base_dir = dirfuncs.guess_data_dir()
 band_set ={ 1: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI'],
             2:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'grtgroup' ] , #'elevation', , 'aspect']
-            3:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'grtgroup' , 'slope']
+            3:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'slope'],
+            4:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'grtgroup' , 'slope']
 
            }
 

@@ -575,7 +575,7 @@ input_data_cache = imagery_cache()
 if __name__ == "__main__":
     #write_input_data=True
     #x = get_input_data(['aspect', 'VH', 'blue_max', 'EVI'],'Kalimantan', str(2015), ['app_kalbar'], False)
-    x = get_input_data(['grtgroup'],  str(2015), [ 'Bumitama_PTGemilangMakmurSubur','Bumitama_PTHungarindoPersada','PTAgroAndalan','PTMitraNusaSarana', 'app_riau', 'app_jambi', 'app_oki', 'gar_pgm', 'crgl_stal','app_kalbar','app_kaltim', 'Bumitama_PTDamaiAgroSejahtera', 'app_muba' ], False)
+    x = get_input_data(['grtgroup'],  str(2015), [ 'gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'crgl_stal','app_kalbar','app_kaltim', 'Bumitama_PTDamaiAgroSejahtera', 'app_muba' ], False)
    # x = get_input_data([ 'blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'aspect', 'elevation', 'slope'],'Sumatra', str(2015), ['crgl_stal'],False )
     #ref = get_reference_raster_from_shape('app_muba', 'Sumatra')
    # band = get_input_band('swir1_max', 'Sumatra', 2015)
