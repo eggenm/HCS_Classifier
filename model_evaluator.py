@@ -18,11 +18,11 @@ resolution = 30
 
 year=str(2015)
 sites = { #'app_muba':'Sumatra',
-'app_riau': 'Sumatra',
-'app_oki' : 'Sumatra',
-      'app_jambi' : 'Sumatra',#,
-           'crgl_stal' : 'Sumatra',
- 'gar_pgm':'Kalimantan',
+#'app_riau': 'Sumatra',
+#'app_oki' : 'Sumatra',
+   #   'app_jambi' : 'Sumatra',#,
+   #        'crgl_stal' : 'Sumatra',
+ #'gar_pgm':'Kalimantan',
 #'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
      #    'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
          'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
@@ -35,19 +35,9 @@ sites = { #'app_muba':'Sumatra',
 #    ]
 base_dir = dirfuncs.guess_data_dir()
 band_set ={ 1: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI'],
-            2:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'slope']#'elevation', , 'aspect']
-    #1:['bands_radar'],
-       #    2: ['bands_base'],
-     #       3: ['bands_median'],
-      #      4: ['bands_base','bands_radar'],
-      #  #    5: ['bands_base','bands_radar','bands_dem']#,
-      # #     6: ['bands_radar','bands_dem']
-      #      7:['bands_evi2_separate'],
-    #        8:['bands_evi2'],
-       #     9:['bands_evi2','bands_radar'],
-          # 10:[ helper.bands_base, helper.bands_radar,
-         #       helper.band_evi2 ],
-      #      11:['bands_base','bands_median','bands_radar','evi2_only']
+            2:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'grtgroup' ] , #'elevation', , 'aspect']
+            3:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'grtgroup' , 'slope']
+
            }
 
 pixel_window_size=1
