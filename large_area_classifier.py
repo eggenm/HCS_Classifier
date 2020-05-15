@@ -10,7 +10,6 @@ import train_classsifier as trainer
 
 base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
-island = 'Sumatra'
 year = str(2015)
 sites = [
     'app_riau',
@@ -142,7 +141,6 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
     max_features = db.get_best_max_features([scoreConcession])
     depth = db.get_best_max_depth([scoreConcession])
     leaf_nodes = db.get_best_max_leaf_nodes([scoreConcession])
-    island = 'Sumatra'
     year = str(2015)
     bands = db.get_best_bands([scoreConcession])
     bands = [#'blue_max',
@@ -160,7 +158,7 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
     try:
         with timer.Timer() as t:
             rf_trainer = trainer.random_forest_trainer(estimators, depth, max_features, leaf_nodes, bands, scheme)
-            X_train, X_test, y_train, y_test = get_training_data(trainConcessions, bands, year, sample_rate, island,
+            X_train, X_test, y_train, y_test = get_training_data(trainConcessions, bands, year, sample_rate,
                                                                  seed)
             if scheme == '3CLASS':
                 y_train = helper.map_to_3class(y_train)
@@ -170,8 +168,8 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
     return rf_trainer
 
 
-def get_training_data(sites, bands, year, sample_rate, island, seed):
-    train_df = helper.trim_data2(helper.get_input_data(bands, island, year, sites, False))
+def get_training_data(sites, bands, year, sample_rate,  seed):
+    train_df = helper.trim_data2(helper.get_input_data(bands, year, sites, False))
     train_df = helper.drop_no_data(train_df)
     X = train_df[[col for col in train_df.columns if (col != 'clas')]]
     X_scaled = helper.scale_data(X)
@@ -185,6 +183,7 @@ if __name__ == "__main__":
     name = 'app_muba'
     try:
         with timer.Timer() as t:
+            island = db.conncession_island_dict[name]
             ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
             X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island,
                                                               year)  # TODO this relies on hardcoded bands where below pulls from database

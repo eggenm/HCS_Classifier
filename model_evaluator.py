@@ -17,21 +17,20 @@ training_sample_rate = 0.003
 resolution = 30
 
 year=str(2015)
-sites = [
- 'app_riau',
-#   'app_kalbar',
-   #     'app_kaltim',
-## 'app_oki',
-#    'app_jambi' #,'crgl_stal',
-   ]
-island='Sumatra'
-#sites = [#'gar_pgm',
-#'app_kalbar','app_kaltim',
-      #   'Bumitama_PTDamaiAgroSejahtera',
-      #   'Bumitama_PTGemilangMakmurSubur' #,
-  #   'Bumitama_PTHungarindoPersada',
-    # 'PTAgroAndalan',
-#      'PTMitraNusaSarana'
+sites = { #'app_muba':'Sumatra',
+'app_riau': 'Sumatra',
+'app_oki' : 'Sumatra',
+      'app_jambi' : 'Sumatra',#,
+           'crgl_stal' : 'Sumatra',
+ 'gar_pgm':'Kalimantan',
+#'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
+     #    'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
+         'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
+     'Bumitama_PTHungarindoPersada':'Kalimantan',
+     'PTAgroAndalan':'Kalimantan',
+      'PTMitraNusaSarana':'Kalimantan'
+          }
+#sites = [
 
 #    ]
 base_dir = dirfuncs.guess_data_dir()
@@ -134,9 +133,9 @@ class model_performance_logger:
 
 def evaluate_model():
 
-    for concession in sites:
+    for concession, island in sites.items():
         for key, bands in band_set.items():
-            data_scoring = helper.get_input_data(bands, island, year, [concession], False)
+            data_scoring = helper.get_input_data(bands, year, [concession], False)
             data_scoring = helper.trim_data2(data_scoring)
             data_scoring = helper.drop_no_data(data_scoring)
             X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
@@ -153,7 +152,7 @@ def evaluate_model():
     for scoreConcession in sites:
         print(scoreConcession)
         trainConcessions = list(sites)
-        #trainConcessions.remove(scoreConcession)
+        trainConcessions.remove(scoreConcession)
 
         result = pd.DataFrame(columns=['concession', 'bands', 'score_type', 'class_scheme', 'score', 'score_weighted',
                                        'two_class_score', 'two_class_score_weighted', 'training_concessions',
@@ -190,24 +189,23 @@ def evaluate_model():
             X_scaled = get_predictor_data(key, trainConcessions)
             #landcover = data['clas'].values
             landcover = get_landcover_data(trainConcessions)
-            for y in range(4, 5, 2):
-                training_sample_rate = y / 10000
-                training_sample_rate = 400
+            for y in range(400, 900, 200):
+                training_sample_rate = y
                 X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.25,
                         random_state=16)
                 print('****  training_sample_rate  *****', training_sample_rate)
                 print('****  X_train size *****', len(X_train))
                 ##########################################################
                 #####     MODEL WITH ALL CLASSES     #########
-                model = train_model(X_train, y_train.values.ravel())
-                yhat = model.predict(X_scaled_score)
-                print('PREDICTED:  ', pd.Series(yhat).value_counts())
-                score_all, score_all_weighted = score_model(helper.map_to_3class(y_score_all.values.ravel()), helper.map_to_3class(yhat))
-                score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all.values.ravel()), helper.map_to_2class(yhat))
-                result.loc[i] = [scoreConcession, str(bands), 'F1', 'ALL', score_all, score_all_weighted, score_two, score_two_weighted, str(trainConcessions),
-                                 model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'], training_sample_rate, resolution ]
-                print(result.loc[i])
-                i+=1
+                # model = train_model(X_train, y_train.values.ravel())
+                # yhat = model.predict(X_scaled_score)
+                # print('PREDICTED:  ', pd.Series(yhat).value_counts())
+                # score_all, score_all_weighted = score_model(helper.map_to_3class(y_score_all.values.ravel()), helper.map_to_3class(yhat))
+                # score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all.values.ravel()), helper.map_to_2class(yhat))
+                # result.loc[i] = [scoreConcession, str(bands), 'F1', 'ALL', score_all, score_all_weighted, score_two, score_two_weighted, str(trainConcessions),
+                #                  model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'],model.get_params()['n_estimators'], training_sample_rate, resolution ]
+                # print(result.loc[i])
+                # i+=1
 
                 ##########################################################
                 #####     MODEL WITH 3 CLASSES     #########
@@ -248,7 +246,7 @@ if __name__ == "__main__":
     scaled_x_data = dict()
     actual_data = dict()
     evaluate_model()
-    resultfile = base_dir + 'result.05112020.csv'
+    resultfile = base_dir + 'result.05142020.csv'
     db.get_all_model_performance().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)

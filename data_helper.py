@@ -434,10 +434,11 @@ def get_concession_bands(bands, island, year, bounding_box, concession=None):
     return x
 
 
-def get_input_data(bands, island, year, concessions, isClass=False):
+def get_input_data(bands, year, concessions, isClass=False):
     data = pd.DataFrame()
     for concession in concessions:
         print(concession)
+        island = db.conncession_island_dict[concession]
         all_class_image = get_landcover_class_image(concession)
         print(all_class_image)
         class_file = sorted(glob.glob(all_class_image))[0]

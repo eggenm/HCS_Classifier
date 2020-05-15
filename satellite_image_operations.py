@@ -68,7 +68,9 @@ dem_band_dict = {
     'aspect':'aspect'
 
 }
-
+soil_band_dict = {
+    'grtgroup':'great_group'
+}
 def maskCloudsLandsat8(image):
     # Bits 3 and 5 are cloud shadow and cloud, respectively.
     cloudShadowBitMask = (1 << 3)

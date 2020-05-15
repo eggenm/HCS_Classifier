@@ -22,6 +22,21 @@ plots_dict = {'crgl_stal': '',
               'wilm_cal': '',
               'gar_pgm': ''}
 
+conncession_island_dict =  { 'app_muba':'Sumatra',
+'app_riau': 'Sumatra',
+'app_oki' : 'Sumatra',
+      'app_jambi' : 'Sumatra',
+           'crgl_stal' : 'Sumatra',
+ 'gar_pgm':'Kalimantan',
+'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
+         'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
+         'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
+     'Bumitama_PTHungarindoPersada':'Kalimantan',
+     'PTAgroAndalan':'Kalimantan',
+      'PTMitraNusaSarana':'Kalimantan'
+          }
+
+
 model_performance_columns = ['concession' , 'bands' , 'score_type'  , 'class_scheme' , 'score' , 'score_weighted' ,
                                    'two_class_score' , 'two_class_score_weighted' , 'training_concessions' , 'max_depth',
                                    'max_leaf_nodes' , 'max_features' , 'n_estimators' , 'training_sample_rate' , 'resolution' ]

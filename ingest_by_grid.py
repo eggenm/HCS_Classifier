@@ -26,9 +26,9 @@ lon_edge=1
 # lat_start = -5
 # lat_end = 5
 lat_edge = 1
-# site = 'Kalimantan'
+site = 'Kalimantan'
 year = 2015
-site = 'Sumatra'
+#site = 'Sumatra'
 out_path = dirfuncs.guess_data_dir()
 #Take a set of years
 #Take a set of bands
@@ -64,14 +64,16 @@ def download_data(polygons,i):
     #radar = ingest.assemble_radar_data(all_study_area, year)
     # sentinel = ingest.assemble_sentinel_data(all_study_area, year)
   #  l8 = ingest.assemble_l8(all_study_area, year)
-    dem = ingest.getDEM(all_study_area)
+  #  dem = ingest.getDEM(all_study_area)
+    soil = ingest.getSoil(all_study_area)
     water_mask = ingest.get_water_mask(all_study_area)
 
     images = {
         #  '_greenest': sentinel,
     #    '_radar': radar,  # 'class': strata_img,
    #     '_greenest': l8,
-        '_dem':dem
+    #    '_dem':dem
+        '_soil': soil
        # '_watermask': water_mask
 
     }
@@ -111,14 +113,18 @@ def cleanup_files():
 
 
 if __name__ == "__main__":
+    ## KALIMANTAN
+     polygons = get_grid_polygons(107, 119, -5,5)
+     download_data(polygons, 1)
+     cleanup_files()
 
     # polygons = get_grid_polygons(98, 102, 2,4)
     # download_data(polygons, 1)
     # cleanup_files()
 #something
-    polygons = get_grid_polygons(98, 102, -6, 4)
-    download_data(polygons, 22 )
-    cleanup_files()
+   # polygons = get_grid_polygons(98, 102, -6, 4)
+   # download_data(polygons, 22 )
+  #  cleanup_files()
     # polygons = get_grid_polygons(98, 99, 4, 5)
     # download_data(polygons, 12)
     # cleanup_files()

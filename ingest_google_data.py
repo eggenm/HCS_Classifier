@@ -156,6 +156,15 @@ def getDEM(all_study_area):
   #  return dem
     return ee.Terrain.aspect(elevation).rename('aspect')
 # =============================================================================
+# Soil Great Groups
+# =============================================================================
+
+def getSoil(all_study_area):
+    soil = ee.Image("OpenLandMap/SOL/SOL_GRTGROUP_USDA-SOILTAX_C/v01").clip(all_study_area)
+    return soil
+
+
+# =============================================================================
 # Prep landsat data
 # =============================================================================
 
