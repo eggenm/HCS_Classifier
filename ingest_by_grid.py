@@ -114,10 +114,10 @@ def cleanup_files():
 
 if __name__ == "__main__":
     ## KALIMANTAN
-       site = 'Kalimantan'
-       polygons = get_grid_polygons(107, 119, -5,5)
-       download_data(polygons, 33)
-       cleanup_files()
+     #  site = 'Kalimantan'
+     #  polygons = get_grid_polygons(107, 119, -5,5)
+     #  download_data(polygons, 33)
+     #  cleanup_files()
 
 
 ##SUMATRA
