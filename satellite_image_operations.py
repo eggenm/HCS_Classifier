@@ -58,9 +58,9 @@ s2_band_dict_median = {
 
 s1_band_dict = {#'VH': 'VH',
              # 'VV': 'VV',
-            'VH_0': 'VH_0',
-              'VV_0': 'VV_0',
-         #   'VH_2': 'VH_2',
+          #  'VH_0': 'VH_0',
+         #     'VV_0': 'VV_0',
+           'VH_0': 'VH_0',
          #     'VV_2': 'VV_2',
            #   'VH-VV':'diff_VH_VV',
         #      'VH/VV': 'ratio_VH_VV'
@@ -134,12 +134,12 @@ def prep_ls8(img):
 def prep_sar(image_collection):
     composite = ee.Image.cat([
         image_collection.select('VH').mean().rename('VH_0'),
-        image_collection.select('VV').mean().rename('VV_0')#,
+      #  image_collection.select('VV').mean().rename('VV_2')#,
         #(image_collection.select('VH').subtract(image_collection.select('VV'))).mean(),
      #   (image_collection.select('VH').divide(image_collection.select('VV'))).mean()
         #  sentinel1.select('VH').reduce(ee.Reducer.stdDev()).rename('VH_vari'), There are string artifacts with this operation
         # sentinel1.select('VV').reduce(ee.Reducer.stdDev()).rename('VV_vari')
-    ])#.focal_median();
+    ])#.focal_median(3);
     #composite = composite.set('year', year)
     return composite
 
