@@ -28,7 +28,7 @@ lon_edge=1
 lat_edge = 1
 #site = 'Kalimantan'
 year = 2015
-site = 'Sumatra'
+site = 'None'
 out_path = dirfuncs.guess_data_dir()
 #Take a set of years
 #Take a set of bands
@@ -61,19 +61,19 @@ def get_grid_polygons(lon_start, lon_end, lat_start,lat_end):
 def download_data(polygons,i):
     fc = ee.FeatureCollection(polygons)
     all_study_area = fc.geometry().bounds()
-    #radar = ingest.assemble_radar_data(all_study_area, year)
+    radar = ingest.assemble_radar_data(all_study_area, year)
     # sentinel = ingest.assemble_sentinel_data(all_study_area, year)
   #  l8 = ingest.assemble_l8(all_study_area, year)
   #  dem = ingest.getDEM(all_study_area)
-    soil = ingest.getSoil(all_study_area)
-    water_mask = ingest.get_water_mask(all_study_area)
+  #  soil = ingest.getSoil(all_study_area)
+  #  water_mask = ingest.get_water_mask(all_study_area)
 
     images = {
         #  '_greenest': sentinel,
-    #    '_radar': radar,  # 'class': strata_img,
+        '_radar': radar,  # 'class': strata_img,
    #     '_greenest': l8,
     #    '_dem':dem
-        '_soil': soil
+     #   '_soil': soil
        # '_watermask': water_mask
 
     }
@@ -114,15 +114,17 @@ def cleanup_files():
 
 if __name__ == "__main__":
     ## KALIMANTAN
-   ##  polygons = get_grid_polygons(107, 119, -5,5)
-   ##  download_data(polygons, 1)
-   ##  cleanup_files()
+       site = 'Kalimantan'
+       polygons = get_grid_polygons(107, 119, -5,5)
+       download_data(polygons, 33)
+       cleanup_files()
 
 
 ##SUMATRA
-    polygons = get_grid_polygons(95, 107, -6,6)
-    download_data(polygons, 1)
-    cleanup_files()
+       site = 'Sumatra'
+       polygons = get_grid_polygons(95, 107, -6,6)
+       download_data(polygons, 44)
+       cleanup_files()
 #something
    # polygons = get_grid_polygons(98, 102, -6, 4)
    # download_data(polygons, 22 )

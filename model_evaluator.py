@@ -18,17 +18,17 @@ resolution = 30
 
 year=str(2015)
 sites = { #'app_muba':'Sumatra',
-#'app_riau': 'Sumatra',
-#'app_oki' : 'Sumatra',
-   #   'app_jambi' : 'Sumatra',#,
-   #        'crgl_stal' : 'Sumatra',
- 'gar_pgm':'Kalimantan',
+'app_riau': 'Sumatra',
+'app_oki' : 'Sumatra',
+     'app_jambi' : 'Sumatra',#,
+           'crgl_stal' : 'Sumatra',
+ #'gar_pgm':'Kalimantan',
 #'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
      #    'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
-         'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
+ #        'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
    #  'Bumitama_PTHungarindoPersada':'Kalimantan',
-     'PTAgroAndalan':'Kalimantan',
-      'PTMitraNusaSarana':'Kalimantan'
+ ##   'PTAgroAndalan':'Kalimantan',
+ #     'PTMitraNusaSarana':'Kalimantan'
           }
 #sites = [
 
@@ -134,7 +134,7 @@ def evaluate_model():
             new_key = str(key) + str(concession)
             scaled_x_data[new_key] = deepcopy(X_scaled_score)
             y_score_all = data_scoring['clas'].values
-            actual_data[concession] = deepcopy(y_score_all)
+            actual_data[new_key] = deepcopy(y_score_all)
     X_scaled_score = False
     X_score = False
     y_score_all = False
@@ -170,7 +170,7 @@ def evaluate_model():
             X_scaled_score = get_predictor_data(key,[scoreConcession])
             #print('ACTUAL:  ', data_scoring['clas'].value_counts())
             #y_score_all = data_scoring['clas'].values
-            y_score_all = get_landcover_data([scoreConcession])
+            y_score_all = get_landcover_data(key,[scoreConcession])
 
             #data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
             #data = helper.trim_data2(helper.get_input_data(bands, island, year, trainConcessions, False ))
@@ -179,10 +179,10 @@ def evaluate_model():
             #X_scaled = helper.scale_data(X)
             X_scaled = get_predictor_data(key, trainConcessions)
             #landcover = data['clas'].values
-            landcover = get_landcover_data(trainConcessions)
-            for y in range(400, 900, 200):
+            landcover = get_landcover_data(key,trainConcessions)
+            for y in range(400, 750, 150):
                 training_sample_rate = y
-                X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.25,
+                X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.20,
                         random_state=16)
                 print('****  training_sample_rate  *****', training_sample_rate)
                 print('****  X_train size *****', len(X_train))
@@ -224,20 +224,21 @@ def get_predictor_data(band_id, concessions):
             data = pd.concat([data, pd.DataFrame(scaled_x_data[new_key])], ignore_index=True)
     return data
 
-def get_landcover_data(concessions):
+def get_landcover_data(band_id, concessions):
     data = pd.DataFrame()
     for concession in concessions:
+        new_key = str(band_id) + concession
         if data.empty:
-            data = pd.DataFrame(actual_data[concession])
+            data = pd.DataFrame(actual_data[new_key])
         else:
-            data = pd.concat([data, pd.DataFrame(actual_data[concession])], ignore_index=True)
+            data = pd.concat([data, pd.DataFrame(actual_data[new_key])], ignore_index=True)
     return data
 
 if __name__ == "__main__":
     scaled_x_data = dict()
     actual_data = dict()
     evaluate_model()
-    resultfile = base_dir + 'result.05142020.csv'
+    resultfile = base_dir + 'result.05162020.csv'
     db.get_all_model_performance().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)
