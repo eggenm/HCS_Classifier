@@ -60,8 +60,8 @@ s1_band_dict = {#'VH': 'VH',
              # 'VV': 'VV',
             'VH_0': 'VH_0',
              'VV_0': 'VV_0',
-       #    'VH_2': 'VH_2',
-        #      'VV_2': 'VV_2',
+           'VH_2': 'VH_2',
+              'VV_2': 'VV_2',
            #   'VH-VV':'diff_VH_VV',
         #      'VH/VV': 'ratio_VH_VV'
       }

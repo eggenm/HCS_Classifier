@@ -18,10 +18,10 @@ resolution = 30
 
 year=str(2015)
 sites = { #'app_muba':'Sumatra',
-'app_riau': 'Sumatra',
-'app_oki' : 'Sumatra',
-     'app_jambi' : 'Sumatra',#,
-           'crgl_stal' : 'Sumatra',
+#'app_riau': 'Sumatra',
+#'app_oki' : 'Sumatra',
+##     'app_jambi' : 'Sumatra',#,
+      #     'crgl_stal' : 'Sumatra',
  'gar_pgm':'Kalimantan',
 #'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
      #    'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
@@ -57,6 +57,8 @@ def show_results(y_test, y_hat):
     #                           header=True)
     confMatrix = sklearn.metrics.confusion_matrix(y_test, y_hat)
     print(confMatrix)
+    kappa  = sklearn.metrics.cohen_kappa_score(y_test, y_hat)
+    print('KAPPA:  ', kappa)
 
 
 def train_model(X_train, y_train):
@@ -242,7 +244,7 @@ if __name__ == "__main__":
     scaled_x_data = dict()
     actual_data = dict()
     evaluate_model()
-    resultfile = base_dir + 'result.05162020.csv'
+    resultfile = base_dir + 'result.05192020.csv'
     db.get_all_model_performance().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)
