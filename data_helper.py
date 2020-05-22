@@ -465,6 +465,7 @@ def get_large_area_input_data(study_area_base_raster, bands, island, year):
         try:
             with timer.Timer() as t:
                 x = get_concession_bands(bands, island, year, study_area_base_raster)
+                x = drop_no_data(x)
                 X_scaled_class = scale_data(x)
                 print('X_scaled_class.shape:  ', X_scaled_class.shape)
         finally:
@@ -476,6 +477,7 @@ def get_large_area_input_data(study_area_base_raster, bands, island, year):
 def get_reference_raster_from_shape(shapefile, island, year):
     bounding = shapefilehelp.get_bounding_box_polygon(db.shapefiles[shapefile])
     outtif = get_input_band('blue_max', island, year)
+    #out_img = reproject_match_input_band(outtif)
     out_img =outtif.rio.clip(bounding, outtif.rio.crs)
     return out_img
 

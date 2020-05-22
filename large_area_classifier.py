@@ -16,6 +16,13 @@ sites = [
     'app_oki',
     'app_jambi'
 ]
+sites = [
+    'Bumitama_PTGemilangMakmurSubur',
+    'Bumitama_PTHungarindoPersada',
+    'PTAgroAndalan',
+    'PTMitraNusaSarana',
+
+]
 bands = [#'blue_max',
          'green_max',
      'red_max', 'nir_max','swir2_max',
@@ -153,7 +160,7 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
     ]
     # TODO take this out, just for a local test!!!!
     print(bands)
-    sample_rate = db.get_best_training_sample_rate([scoreConcession])
+    sample_rate = 500#db.get_best_training_sample_rate([scoreConcession])
 
     try:
         with timer.Timer() as t:
@@ -175,7 +182,7 @@ def get_training_data(sites, bands, year, sample_rate,  seed):
     X_scaled = helper.scale_data(X)
     landcover = train_df['clas'].values
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=sample_rate, test_size=0.1,
-                                                        random_state=13 * seed)
+                                                        random_state=seed)
     return X_train, X_test, y_train, y_test
 
 
@@ -190,24 +197,28 @@ if __name__ == "__main__":
             number_predictions = 2 * len(sites)
             predictions = np.zeros((X_scaled_class.shape[0]))
             i = 1
-            for scoreConcession in sites:
+            for i, scoreConcession in enumerate(sites):
                 print(scoreConcession)
                 trainConcessions = list(sites)
                 trainConcessions.remove(scoreConcession)
-                trained_model = get_trained_model(scoreConcession, trainConcessions, i)
-                predictions = predict(X_scaled_class, trained_model, predictions)
-                write_map(predictions, ref_study_area, name, i)
+                #trained_model = get_trained_model(scoreConcession, trainConcessions, i)
+                #predictions = predict(X_scaled_class, trained_model, predictions)
+                #write_map(predictions, ref_study_area, name, i)
                 i = i + 1
-                trained_model = get_trained_model(scoreConcession, sites, i)
+                for j in range(7*i, 7*i+3):
+                    trained_model = get_trained_model(scoreConcession, sites, j)
 
-                predictions =  predict(X_scaled_class, trained_model, predictions)
-                write_map(predictions, ref_study_area, name, i)
-                i = i + 1
-            predictions = predictions / number_predictions
-            predictions = np.around(predictions)
-            print(predictions)
-            predictions = predictions.astype(int)
-            print(predictions)
+                    predictions =  predict(X_scaled_class, trained_model, predictions)
+                    write_map(predictions, ref_study_area, name, j)
+                #i = i + 1
+            #predictions = predictions / number_predictions
+            #predictions = np.around(predictions)
+            print('predictions.shape', predictions.shape)
+            temp = pd.DataFrame(pd.DataFrame(predictions).mode(axis=0)[0])
+            print('temp.shape', temp.shape)
+            #print(predictions)
+            predictions = temp.astype(int)
+            #print(predictions)
             write_map(predictions, ref_study_area, name,99)
     finally:
         print('LARGE_AREA CLASSIFICATION of : ' , name , '  took %.03f sec.' % t.interval)

@@ -33,7 +33,23 @@ conncession_island_dict =  { 'app_muba':'Sumatra',
          'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
      'Bumitama_PTHungarindoPersada':'Kalimantan',
      'PTAgroAndalan':'Kalimantan',
-      'PTMitraNusaSarana':'Kalimantan'
+      'PTMitraNusaSarana':'Kalimantan',
+
+                             'West_Kalimantan': 'Kalimantan',
+                             'East_Kalimantan': 'Kalimantan',
+                             'South_Kalimantan': 'Kalimantan',
+                             'Central_Kalimantan': 'Kalimantan',
+
+                             'Jambi': 'Sumatra',
+                             'Lampung':'Sumatra',
+                             'Riau':'Sumatra',
+                             'West_Sumatra': 'Sumatra',
+                             'South_Sumatra': 'Sumatra',
+                             'Bengkulu': 'Sumatra',
+                             'North_Sumatra': 'Sumatra',
+                             'Aceh': 'Sumatra',
+
+                             'Papua': 'Papua',
           }
 
 
@@ -83,7 +99,23 @@ shapefiles = {'app_kalbar': shapefile_base + 'Kalbar_DTK_Stratification.shp',
                'app_muba': shapefile_base + 'Muba_BPP2_Stratification.shp',
                'app_riau': shapefile_base + 'Riau_MSK_SK_Stratification.shp',
                'app_oki': shapefile_base + 'OKI_BMH_Stratification.shp',
-               'Jambi': province_shapfile_dir + 'Jambi_Province.shp',
+                'crgl_stal': shapefile_base + 'crgl_stal.shp',
+
+                'West_Kalimantan': province_shapfile_dir + 'Kalimantan_Barat.shp',
+              'East_Kalimantan': province_shapfile_dir + 'Kalimantan_Timur.shp',
+              'South_Kalimantan': province_shapfile_dir + 'Kalimantan_Selatan.shp',
+              'Central_Kalimantan': province_shapfile_dir + 'Kalimantan_Tengah.shp',
+
+                'Jambi': province_shapfile_dir + 'Jambi_Province.shp',
+                'Lampung': province_shapfile_dir + 'Lampung.shp',
+                'Riau': province_shapfile_dir + 'Riau.shp',
+                'West_Sumatra': province_shapfile_dir + 'Sumatera_Barat.shp',
+                'South_Sumatra': province_shapfile_dir + 'Sumatera_Selatan.shp',
+                'Bengkulu': province_shapfile_dir + 'Bengkulu.shp',
+                'North_Sumatra': province_shapfile_dir + 'Sumatera_Utara.shp',
+                'Aceh': province_shapfile_dir + 'Aceh.shp',
+
+                'Papua': province_shapfile_dir + 'Papua.shp',
                'app_all': shapefile_base + 'app_all'}
 
 rasters = {'app_kalbar': gee_dir + 'Kalbar_DTK_Stratification',

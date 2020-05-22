@@ -18,17 +18,18 @@ resolution = 30
 
 year=str(2015)
 sites = { #'app_muba':'Sumatra',
-#'app_riau': 'Sumatra',
-#'app_oki' : 'Sumatra',
-##     'app_jambi' : 'Sumatra',#,
-      #     'crgl_stal' : 'Sumatra',
- 'gar_pgm':'Kalimantan',
+'app_riau': 'Sumatra',
+'app_oki' : 'Sumatra',
+     'app_jambi' : 'Sumatra',#,
+          'crgl_stal' : 'Sumatra',
+
 #'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
      #    'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
-        'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
+ #       'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
    #  'Bumitama_PTHungarindoPersada':'Kalimantan',
-    'PTAgroAndalan':'Kalimantan',
-      'PTMitraNusaSarana':'Kalimantan'
+#    'PTAgroAndalan':'Kalimantan',
+ #     'PTMitraNusaSarana':'Kalimantan',
+ #  'gar_pgm':'Kalimantan'
           }
 #sites = [
 
@@ -42,7 +43,9 @@ band_set ={ 1: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swi
             6:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_2', 'VV_2', 'EVI' ],
             7:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI' ],
             8: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0',
-                'VH_2', 'VV_2', 'EVI', 'slope']
+                'VH_2', 'VV_2', 'EVI', 'slope'],
+            9: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max',  'VH_0', 'VV_0',
+                 'EVI', 'slope']
             }
 
 pixel_window_size=1
@@ -244,7 +247,7 @@ if __name__ == "__main__":
     scaled_x_data = dict()
     actual_data = dict()
     evaluate_model()
-    resultfile = base_dir + 'result.05192020.csv'
+    resultfile = base_dir + 'result.05212020.csv'
     db.get_all_model_performance().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)
