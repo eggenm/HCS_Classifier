@@ -3,10 +3,13 @@ import pandas as pd
 import rasterio as rio
 import data.hcs_database as db
 from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn import metrics
 import data_helper as helper
 import dirfuncs
 import timer
 import train_classsifier as trainer
+import scipy.stats as stat
+import csv
 
 base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
@@ -19,17 +22,13 @@ sites = [
 sites = [
     'Bumitama_PTGemilangMakmurSubur',
     'Bumitama_PTHungarindoPersada',
-    'PTAgroAndalan',
-    'PTMitraNusaSarana',
+    'PTAgroAndalan', 'gar_pgm',
+    #'Bumitama_PTDamaiAgroSejahtera'
+    #'PTMitraNusaSarana',
 
 ]
-bands = [#'blue_max',
-         'green_max',
-     'red_max', 'nir_max','swir2_max',
-     'swir1_max',
-     'VH'
-  #  ,'VV','EVI'
-]
+bands = ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope']
+
 
 
 #    , 'VV', 'EVI']
@@ -88,8 +87,9 @@ class classify_block:
         return probabilities
 
 
-def predict(X_scaled_class, rfmodel, predictions):
+def predict(X_scaled_class, rfmodel):#, predictions):
     try:
+        predictions = np.zeros(X_scaled_class.shape[0])
         with timer.Timer() as t:
             end = X_scaled_class.shape[0]
             step = 1000000
@@ -107,9 +107,12 @@ def predict(X_scaled_class, rfmodel, predictions):
         print('Block Predict Request took %.03f sec.' % t.interval)
     return predictions
 
+def get_map_file_name(name, id):
+    outclas_file = base_dir + name + '/sklearn_test/' + name + str(id) + '_classified_by_ensemble_rf.tif'
+    return outclas_file
 
 def write_map(predicted, reference, name,i):
-    outclas_file = base_dir + name + '/sklearn_test/' +name + str(i)+'_classified_by_ensemble_rf.tif'
+    outclas_file = get_map_file_name(name, i)
     src = reference
     #with rio.open(reference) as src:
     height = src.rio.height
@@ -119,8 +122,12 @@ def write_map(predicted, reference, name,i):
     trans = src.transform
     count = 1
     full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
-    #predicted = predicted.set_index(full_index)
-    predicted = pd.DataFrame(predicted, index=full_index)
+    print(type(predicted))
+    if (isinstance(predicted,(np.ndarray, pd.Series))):
+        predicted = pd.DataFrame(predicted, index=full_index)
+    else:
+        predicted = predicted.set_index(full_index)
+
     clas_df = pd.DataFrame(index=full_index)
     classified = clas_df.merge(predicted, left_index=True, right_index=True, how='left').sort_index()
 
@@ -143,24 +150,18 @@ def write_map(predicted, reference, name,i):
 
 def get_trained_model(scoreConcession, trainConcessions, seed):
     doGridSearch = False
-    scheme = db.get_best_scheme([scoreConcession])
-    estimators = db.get_best_number_estimators([scoreConcession])
-    max_features = db.get_best_max_features([scoreConcession])
-    depth = db.get_best_max_depth([scoreConcession])
-    leaf_nodes = db.get_best_max_leaf_nodes([scoreConcession])
+    scheme = '3CLASS'#db.get_best_scheme([scoreConcession])
+    band_string = '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'
+    estimators = db.get_best_number_estimators([scoreConcession], band_string)
+    max_features = db.get_best_max_features([scoreConcession], band_string)
+    depth = db.get_best_max_depth([scoreConcession], band_string)
+    leaf_nodes = db.get_best_max_leaf_nodes([scoreConcession], band_string)
     year = str(2015)
-    bands = db.get_best_bands([scoreConcession])
-    bands = [#'blue_max',
-         'green_max',
-     'red_max', 'nir_max','swir2_max',
-     'swir1_max',
-     'VH'
-        #,
-  #  'VV','EVI'
-    ]
+    #bands = db.get_best_bands([scoreConcession])
+   #
     # TODO take this out, just for a local test!!!!
-    print(bands)
-    sample_rate = 500#db.get_best_training_sample_rate([scoreConcession])
+    #print(bands)
+    sample_rate = db.get_best_training_sample_rate([scoreConcession], band_string)
 
     try:
         with timer.Timer() as t:
@@ -170,9 +171,14 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
             if scheme == '3CLASS':
                 y_train = helper.map_to_3class(y_train)
             rf_trainer.train_model(X_train, y_train, seed)
+            X_train, X_test, y_train, y_test = get_training_data([scoreConcession], bands, year, sample_rate,
+                                                                 seed)
+            yhat = predict(X_test, rf_trainer)
+            y_test = helper.map_to_2class(y_test)
+            result = score_model(y_test, yhat)
     finally:
         print('Train Model Request took %.03f sec.' % t.interval)
-    return rf_trainer
+    return rf_trainer, result
 
 
 def get_training_data(sites, bands, year, sample_rate,  seed):
@@ -181,22 +187,47 @@ def get_training_data(sites, bands, year, sample_rate,  seed):
     X = train_df[[col for col in train_df.columns if (col != 'clas')]]
     X_scaled = helper.scale_data(X)
     landcover = train_df['clas'].values
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=sample_rate, test_size=0.1,
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=sample_rate, test_size=0.35,
                                                         random_state=seed)
     return X_train, X_test, y_train, y_test
 
+def score_model(y_test, yhat):
+    f1 = metrics.f1_score(y_test, yhat, average='macro')
+    f1_weighted = metrics.f1_score(y_test, yhat, average='weighted')
+    kappa = metrics.cohen_kappa_score(y_test, yhat)
+    balanced_accuracy = metrics.balanced_accuracy_score(y_test, yhat)
+    roc_auc = metrics.roc_auc_score(y_test, yhat, average='weighted')
+    accuracy = metrics.accuracy_score(y_test, yhat)
+    return {'f1_macro':f1,'f1_weighted': f1_weighted, 'kappa': kappa, 'balanced_accuracy': balanced_accuracy,  'accuracy': accuracy, 'roc_auc_weighted': roc_auc}
+
+def log_accuracy(result, name, id):
+    csv_file = get_map_file_name(name, id) + '.csv'
+    try:
+        with open(csv_file, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=result[0].keys())
+            writer.writeheader()
+            for data in result:
+                writer.writerow(data)
+    except IOError:
+        print("I/O error")
+
 
 if __name__ == "__main__":
-    name = 'app_muba'
+    name = 'West_Kalimantan'
     try:
         with timer.Timer() as t:
             island = db.conncession_island_dict[name]
             ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
             X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island,
                                                               year)  # TODO this relies on hardcoded bands where below pulls from database
-            number_predictions = 2 * len(sites)
-            predictions = np.zeros((X_scaled_class.shape[0]))
-            i = 1
+
+            iterations_per_site = 3
+            total_predictions = iterations_per_site * len(sites)
+            predictions = np.zeros((total_predictions, X_scaled_class.shape[0]))
+
+
+            k=0
+            result = []
             for i, scoreConcession in enumerate(sites):
                 print(scoreConcession)
                 trainConcessions = list(sites)
@@ -204,21 +235,29 @@ if __name__ == "__main__":
                 #trained_model = get_trained_model(scoreConcession, trainConcessions, i)
                 #predictions = predict(X_scaled_class, trained_model, predictions)
                 #write_map(predictions, ref_study_area, name, i)
-                i = i + 1
-                for j in range(7*i, 7*i+3):
-                    trained_model = get_trained_model(scoreConcession, sites, j)
 
-                    predictions =  predict(X_scaled_class, trained_model, predictions)
-                    write_map(predictions, ref_study_area, name, j)
+
+                for j in range(7*i, 7*i+iterations_per_site):
+                    trained_model, scores = get_trained_model(scoreConcession, trainConcessions, j)
+                    scores['oob_concessions'] = scoreConcession
+                    scores['train_concessions'] = trainConcessions
+                    result.append(scores)
+                    log_accuracy(result,name, j)
+                    predictions[k] =  predict(X_scaled_class, trained_model)#, predictions)
+                  #  write_map(predictions[k], ref_study_area, name, j)
+                    k=k+1
                 #i = i + 1
             #predictions = predictions / number_predictions
             #predictions = np.around(predictions)
+            mapId='FINAL'
+            log_accuracy(result, name, mapId)
             print('predictions.shape', predictions.shape)
-            temp = pd.DataFrame(pd.DataFrame(predictions).mode(axis=0)[0])
-            print('temp.shape', temp.shape)
+            myFrame = pd.DataFrame(predictions)
+            temp1 = (pd.DataFrame(myFrame.T.mode(axis=1))[0]).astype(int)
+            print('temp1.shape', temp1.shape)
             #print(predictions)
-            predictions = temp.astype(int)
+            #predictions = temp0.astype(int)
             #print(predictions)
-            write_map(predictions, ref_study_area, name,99)
+            write_map(temp1.values, ref_study_area, name,mapId)
     finally:
         print('LARGE_AREA CLASSIFICATION of : ' , name , '  took %.03f sec.' % t.interval)

@@ -27,7 +27,7 @@ class Imagery_Cache:
         try:
             self.island_data_table[key]
         except KeyError:
-            tif = os.path.join(self.base_dir, island, 'out', str(year), band + '.tif')
+            tif = os.path.join(self.base_dir, island, 'out', str(year), '*' + band + '.tif')
             file = glob.glob(tif)
             self.island_data_table[key] = rx.open_rasterio(file[0])
             #return rx.open_rasterio(file[0])

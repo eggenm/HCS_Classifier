@@ -5,6 +5,7 @@ import glob
 import rioxarray as rx
 import data_helper as dh
 import timer
+import scipy.stats as stat
 
 
 def return_window(img, i, j, n):
@@ -118,17 +119,52 @@ def gen_windows(array, n):
     windows = pd.DataFrame(windows.apply(lambda x: x.flatten()).values.tolist(), index=index)
     return (windows)
 
-concession = 'app_oki'
-print(concession)
-all_class_image = dh.get_landcover_class_image(concession)
-print(all_class_image)
-class_file = sorted(glob.glob(all_class_image))[0]
-# if(write_input_data):
-#    write_data_array(file_list[0],concession,'class',)
+# concession = 'app_oki'
+# print(concession)
+# all_class_image = dh.get_landcover_class_image(concession)
+# print(all_class_image)
+# class_file = sorted(glob.glob(all_class_image))[0]
+# # if(write_input_data):
+# #    write_data_array(file_list[0],concession,'class',)
+#
+# all_class = rx.open_rasterio(class_file)
+# # write_data_array(class_file, 'Class'+concession)
+# y1 = get_classes(all_class.data, 'clas')
+# y2 = get_classes2(all_class.data, 'clas')
+# print(y1)
+# print(y2)
 
-all_class = rx.open_rasterio(class_file)
-# write_data_array(class_file, 'Class'+concession)
-y1 = get_classes(all_class.data, 'clas')
-y2 = get_classes2(all_class.data, 'clas')
-print(y1)
-print(y2)
+a = np.zeros((5,3))
+print(a)
+a[0,1]=5
+a[0,2]=5
+a[2,2]=3
+a[2,1]=3
+a[3,2]=3
+a[4,2]=3
+print(a)
+myFrame = pd.DataFrame(a)
+#print('myframe.T.shape:'  , myFrame.mode(axis=0)[:,0])
+print('myframe.T:'  , myFrame.T)
+print(myFrame)
+print(stat.mode(np.transpose(a)))
+print(stat.mode(np.transpose(a), axis=0))
+print(stat.mode(np.transpose(a), axis=1))
+
+temp0  = pd.DataFrame(myFrame.mode(axis=0))
+print('temp0.shape: ', temp0.shape)
+print('temp0: ', temp0)
+temp1 = (pd.DataFrame(myFrame.T.mode(axis=1))[0])#.astype(int)
+if (isinstance(temp1,(np.ndarray))):
+    print('ndarray')
+if (isinstance(temp1,(pd.Series))):
+    print('Series')
+if (isinstance(temp1,(pd.DataFrame))):
+    print('DATAFRAME')
+print('temp1.shape: ', temp1.shape)
+print('temp1: ', temp1)
+x = temp1.astype(int)
+print(x)
+print(x.shape)
+#for i in range(5):
+    #a = np.append(a, i)

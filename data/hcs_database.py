@@ -171,9 +171,9 @@ def get_all_model_performance():
     print('ROWS:  ', len(df))
     return df
 
-def get_max_model_run(concession):
+def get_max_model_run(concession, bands):
     c = conn.cursor()
-    c.execute("SELECT * FROM model_performance_log where two_class_score_weighted = ( SELECT max(two_class_score_weighted) from model_performance_log where max_leaf_nodes < 13 and max_features <.75 and concession = ? )" ,  concession )
+    c.execute("SELECT * FROM model_performance_log where two_class_score_weighted = ( SELECT max(two_class_score_weighted) from model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ? and bands = ?)" ,  (concession, bands) )
     rows = c.fetchall()
     print('ROWS:  ', len(rows))
     for row in rows:
@@ -181,21 +181,21 @@ def get_max_model_run(concession):
     return row_dict
 
 
-def get_best_training_sample_rate(concession):
-    return get_max_model_run(concession)['training_sample_rate']
+def get_best_training_sample_rate(concession, bands):
+    return get_max_model_run(concession, bands)['training_sample_rate']
 
 
-def get_best_max_features(concession):
-    return get_max_model_run(concession)['max_features']
+def get_best_max_features(concession, bands):
+    return get_max_model_run(concession, bands)['max_features']
 
-def get_best_max_leaf_nodes(concession):
-    return get_max_model_run(concession)['max_leaf_nodes']
+def get_best_max_leaf_nodes(concession, bands):
+    return get_max_model_run(concession, bands)['max_leaf_nodes']
 
-def get_best_number_estimators(concession):
-    return get_max_model_run(concession)['n_estimators']
+def get_best_number_estimators(concession, bands):
+    return get_max_model_run(concession, bands)['n_estimators']
 
-def get_best_max_depth(concession):
-    return get_max_model_run(concession)['max_depth']
+def get_best_max_depth(concession, bands):
+    return get_max_model_run(concession, bands)['max_depth']
 
 def get_best_bands(concession):
     x= get_max_model_run(concession)['bands']
@@ -209,6 +209,7 @@ if __name__ == "__main__":
     print('in main')
     print(get_all_model_performance())
     conn = sqlite3.connect('hcs_database.db')
+    print(get_best_max_leaf_nodes('PTAgroAndalan', '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'))
 #    init_database()
     #delete_model_performance()
     print(get_all_model_performance())
