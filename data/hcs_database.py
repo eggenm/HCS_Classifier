@@ -209,7 +209,8 @@ if __name__ == "__main__":
     print('in main')
     print(get_all_model_performance())
     conn = sqlite3.connect('hcs_database.db')
-    print(get_best_max_leaf_nodes('PTAgroAndalan', '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'))
+
+    print(get_best_max_leaf_nodes('Bumitama_PTGemilangMakmurSubur', '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'))
 #    init_database()
     #delete_model_performance()
     print(get_all_model_performance())

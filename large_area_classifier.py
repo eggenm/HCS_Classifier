@@ -27,7 +27,10 @@ sites = [
     #'PTMitraNusaSarana',
 
 ]
-bands = ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope']
+bands = ['blue_max', 'green_max', 'red_max',
+         'nir_max',
+         'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
+ ]
 
 
 
@@ -89,7 +92,7 @@ class classify_block:
 
 def predict(X_scaled_class, rfmodel):#, predictions):
     try:
-        predictions = np.zeros(X_scaled_class.shape[0])
+        predictions = np.zeros(X_scaled_class.shape[0], dtype=np.int8)
         with timer.Timer() as t:
             end = X_scaled_class.shape[0]
             step = 1000000
@@ -124,13 +127,13 @@ def write_map(predicted, reference, name,i):
     full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
     print(type(predicted))
     if (isinstance(predicted,(np.ndarray, pd.Series))):
-        predicted = pd.DataFrame(predicted, index=full_index)
+        predicted = pd.DataFrame(predicted, index=full_index, dtype=np.int8)
     else:
-        predicted = predicted.set_index(full_index)
+        predicted = predicted.set_index(full_index).astype(dtype=np.int8,copy=False)
 
-    clas_df = pd.DataFrame(index=full_index)
+    clas_df = pd.DataFrame(index=full_index, dtype=np.int8)
     classified = clas_df.merge(predicted, left_index=True, right_index=True, how='left').sort_index()
-
+    predicted, clas_df=False
     classified = classified.values.reshape(shape[1], shape[2])
 
     classified = classified[np.newaxis, :, :].astype(rio.int16)
@@ -138,12 +141,20 @@ def write_map(predicted, reference, name,i):
                         height=height, width=width,
                         crs=crs, dtype=rio.int16,
                         count=count, transform=trans) as clas_dst:
+        for ji, window in clas_dst.block_windows(1):  # or ref file here
+            print('ji:  ', ji)
+            print('window:  ', window)
+            #  print('window.shape:  ', window.shape)
+            block = classified[window.col_off:window.col_off + width,
+                    window.row_off:window.row_off + height]  # .read(window=window)
+            #     if sum(sum(sum(~np.isnan(block)))) > 0:
+            clas_dst.write(block, window=window)
     # for ji, window in src.block_windows(1):  # or ref file here
     #     print('ji:  ', ji)
     #     print('window:  ', window)
     #     block = predicted.read(window=window)
     #     if sum(sum(sum(~np.isnan(block)))) > 0:
-        clas_dst.write(classified)#, window=window)
+        #clas_dst.write(classified)#, window=window)
     clas_dst.close()
     #src.close()
 
@@ -152,16 +163,16 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
     doGridSearch = False
     scheme = '3CLASS'#db.get_best_scheme([scoreConcession])
     band_string = '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'
-    estimators = db.get_best_number_estimators([scoreConcession], band_string)
-    max_features = db.get_best_max_features([scoreConcession], band_string)
-    depth = db.get_best_max_depth([scoreConcession], band_string)
-    leaf_nodes = db.get_best_max_leaf_nodes([scoreConcession], band_string)
+    estimators = db.get_best_number_estimators(scoreConcession, band_string)
+    max_features = db.get_best_max_features(scoreConcession, band_string)
+    depth = db.get_best_max_depth(scoreConcession, band_string)
+    leaf_nodes = db.get_best_max_leaf_nodes(scoreConcession, band_string)
     year = str(2015)
     #bands = db.get_best_bands([scoreConcession])
    #
     # TODO take this out, just for a local test!!!!
     #print(bands)
-    sample_rate = db.get_best_training_sample_rate([scoreConcession], band_string)
+    sample_rate = int(db.get_best_training_sample_rate(scoreConcession, band_string))
 
     try:
         with timer.Timer() as t:
@@ -176,6 +187,12 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
             yhat = predict(X_test, rf_trainer)
             y_test = helper.map_to_2class(y_test)
             result = score_model(y_test, yhat)
+            result['max_depth'] = rf_trainer.model.get_params()['max_depth']
+            result['max_leaf_nodes']= rf_trainer.model.get_params()['max_leaf_nodes']
+            result['max_features']= rf_trainer.model.get_params()['max_features']
+            result['n_estimators']= rf_trainer.model.get_params()['n_estimators']
+            result['samples'] = sample_rate
+            result['scheme'] = scheme
     finally:
         print('Train Model Request took %.03f sec.' % t.interval)
     return rf_trainer, result
@@ -223,7 +240,7 @@ if __name__ == "__main__":
 
             iterations_per_site = 3
             total_predictions = iterations_per_site * len(sites)
-            predictions = np.zeros((total_predictions, X_scaled_class.shape[0]))
+            predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
 
 
             k=0
@@ -244,7 +261,8 @@ if __name__ == "__main__":
                     result.append(scores)
                     log_accuracy(result,name, j)
                     predictions[k] =  predict(X_scaled_class, trained_model)#, predictions)
-                  #  write_map(predictions[k], ref_study_area, name, j)
+                    if k%3==0:
+                        write_map(predictions[k], ref_study_area, name, j)
                     k=k+1
                 #i = i + 1
             #predictions = predictions / number_predictions
