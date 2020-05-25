@@ -580,8 +580,10 @@ if __name__ == "__main__":
     #x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTHungarindoPersada', 'app_kalbar','app_kaltim', 'Bumitama_PTDamaiAgroSejahtera'] , False )#,
 
     ref_study_area = get_reference_raster_from_shape('West_Kalimantan' , 'Kalimantan' , 2015)
-    x = get_large_area_input_data(ref_study_area, ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'], 'Kalimantan',  str(2015),  'West_Kalimantan' )
-   # x = get_input_data([ 'blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'aspect', 'elevation', 'slope'],'Sumatra', str(2015), ['crgl_stal'],False )
+    x = get_large_area_input_data(ref_study_area, [  'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max', 'red_max','slope'], 'Kalimantan',  str(2015),  'app_kalbar' )
+    #x = get_large_area_input_data(ref_study_area,['blue_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','EVI', 'slope'], 'Kalimantan', str(2015),'West_Kalimantan')
+
+# x = get_input_data([ 'blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'aspect', 'elevation', 'slope'],'Sumatra', str(2015), ['crgl_stal'],False )
     #ref = get_reference_raster_from_shape('app_muba', 'Sumatra')
    # band = get_input_band('swir1_max', 'Sumatra', 2015)
   #  band2 = get_input_band('blue_max', 'Sumatra', 2015)
