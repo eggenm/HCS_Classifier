@@ -219,7 +219,7 @@ if __name__ == "__main__":
             island = db.conncession_island_dict[name]
             ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
             X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island,
-                                                              year)  # TODO this relies on hardcoded bands where below pulls from database
+                                                              year, name)  # TODO this relies on hardcoded bands where below pulls from database
 
             iterations_per_site = 3
             total_predictions = iterations_per_site * len(sites)
