@@ -590,7 +590,8 @@ if __name__ == "__main__":
 
     ref_study_area = get_reference_raster_from_shape('West_Kalimantan' , 'Kalimantan' , 2015)
     #x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
-    x = get_large_area_input_data(ref_study_area, [ 'red_max', 'swir2_max', 'VH', 'VV','EVI',], 'Kalimantan',  str(2015),  'West_Kalimantan' )
+    x = get_large_area_input_data(ref_study_area, [ 'blue_max'], 'Kalimantan',  str(2015),  'West_Kalimantan' )
+       # , 'swir2_max', 'VH', 'VV','EVI',], 'Kalimantan',  str(2015),  'West_Kalimantan' )
     #x = get_large_area_input_data(ref_study_area,['blue_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','EVI', 'slope'], 'Kalimantan', str(2015),'West_Kalimantan')
 
 # x = get_input_data([ 'blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'aspect', 'elevation', 'slope'],'Sumatra', str(2015), ['crgl_stal'],False )
