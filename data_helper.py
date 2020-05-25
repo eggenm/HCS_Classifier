@@ -579,7 +579,7 @@ if __name__ == "__main__":
     #x = get_input_data(['aspect', 'VH', 'blue_max', 'EVI'],'Kalimantan', str(2015), ['app_kalbar'], False)
     #x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTHungarindoPersada', 'app_kalbar','app_kaltim', 'Bumitama_PTDamaiAgroSejahtera'] , False )#,
 
-    ref_study_area = get_reference_raster_from_shape('West_Kalimantan' , 'Kalimantan' , 2015)
+    ref_study_area = get_reference_raster_from_shape('app_kalbar' , 'Kalimantan' , 2015)
     x = get_large_area_input_data(ref_study_area, [  'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max', 'red_max','slope'], 'Kalimantan',  str(2015),  'app_kalbar' )
     #x = get_large_area_input_data(ref_study_area,['blue_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','EVI', 'slope'], 'Kalimantan', str(2015),'West_Kalimantan')
 
