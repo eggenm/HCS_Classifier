@@ -346,7 +346,14 @@ def write_concession_band(data_src, bounding_raster,  outtif):
                       height = height, width = width,
                       crs = crs, dtype = data_src[0].dtype,
                       count = 1, transform = trans) as dst:
-                    dst.write_band(1, data_src[0])
+                   # dst.write_band(1, data_src[0])
+            for ji, window in dst.block_windows(1):  # or ref file here
+                 print('ji:  ', ji)
+                 print('window:  ', window)
+               #  print('window.shape:  ', window.shape)
+                 block = data_src[window.col_off:window.col_off+width,window.row_off:window.row_off+height ]#.read(window=window)
+            #     if sum(sum(sum(~np.isnan(block)))) > 0:
+                 dst.write(block , window=window)
         dst.close()
 
 
@@ -580,7 +587,7 @@ if __name__ == "__main__":
     #x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTHungarindoPersada', 'app_kalbar','app_kaltim', 'Bumitama_PTDamaiAgroSejahtera'] , False )#,
 
     ref_study_area = get_reference_raster_from_shape('West_Kalimantan' , 'Kalimantan' , 2015)
-    x = get_large_area_input_data(ref_study_area, [ 'slope', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max', 'red_max'], 'Kalimantan',  str(2015),  'West_Kalimantan' )
+    x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max', 'red_max', 'swir2_max', 'VH', 'VV','EVI',], 'Kalimantan',  str(2015),  'West_Kalimantan' )
     #x = get_large_area_input_data(ref_study_area,['blue_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','EVI', 'slope'], 'Kalimantan', str(2015),'West_Kalimantan')
 
 # x = get_input_data([ 'blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'aspect', 'elevation', 'slope'],'Sumatra', str(2015), ['crgl_stal'],False )
