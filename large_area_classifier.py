@@ -27,9 +27,9 @@ sites = [
     #'PTMitraNusaSarana',
 
 ]
-bands = [#'blue_max', 'green_max', 'red_max',
-         #'nir_max',
-         'swir1_max'#,'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
+bands = ['blue_max', 'green_max', 'red_max',
+         'nir_max',
+         'swir1_max','swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
  ]
 
 
