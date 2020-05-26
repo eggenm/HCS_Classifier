@@ -488,6 +488,7 @@ def get_reference_raster_from_shape(shapefile, island, year):
     outtif = get_input_band('blue_max', island, year)
     #out_img = reproject_match_input_band(outtif)
     out_img =outtif.rio.clip(bounding, outtif.rio.crs)
+    outtif = False
     return out_img
 
 

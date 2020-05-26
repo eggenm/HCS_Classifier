@@ -27,9 +27,9 @@ sites = [
     #'PTMitraNusaSarana',
 
 ]
-bands = ['blue_max', 'green_max', 'red_max',
-         'nir_max',
-         'swir1_max','swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
+bands = [#'blue_max', 'green_max', 'red_max',
+         #'nir_max',
+         'swir1_max'#,'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
  ]
 
 
@@ -92,6 +92,7 @@ class classify_block:
 
 def predict(X_scaled_class, rfmodel):#, predictions):
     try:
+
         predictions = np.zeros(X_scaled_class.shape[0], dtype=np.int8)
         with timer.Timer() as t:
             end = X_scaled_class.shape[0]
@@ -236,11 +237,12 @@ if __name__ == "__main__":
             island = db.conncession_island_dict[name]
             ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
             # TODO this relies on hardcoded bands where below pulls from database
-            X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island,
-                                                              year, name)
+            X_scaled_class = helper.get_large_area_input_data(ref_study_area, [bands[0]], island,
+                                                              year, name) # this just inits the output array here so bands[o] is enough
             iterations_per_site = 3
             total_predictions = iterations_per_site * len(sites)
-            predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
+            #predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
+            predictions = np.zeros(X_scaled_class.shape[0], dtype=np.int8)
             X_scaled_class = False
 
 
@@ -263,14 +265,15 @@ if __name__ == "__main__":
                     log_accuracy(result,name, j)
                     X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island,
                                                                       year, name)
-                    predictions[k] =  predict(X_scaled_class, trained_model)#, predictions)
+                    predictions  =  predictions + predict(X_scaled_class, trained_model)#, predictions)
                     X_scaled_class = False
                     if k%3==0:
-                        write_map(predictions[k], ref_study_area, name, j)
+                        write_map((np.around(predictions/(k+1))).astype(np.int8), ref_study_area, name, j)
                     k=k+1
                 #i = i + 1
-            #predictions = predictions / number_predictions
-            #predictions = np.around(predictions)
+            predictions = predictions.astype(np.float32)
+            predictions = predictions / k
+            predictions = np.around(predictions).astype(np.int8)
             mapId='FINAL'
             log_accuracy(result, name, mapId)
             print('predictions.shape', predictions.shape)
