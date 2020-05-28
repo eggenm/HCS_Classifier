@@ -56,7 +56,7 @@ class random_forest_trainer:
 
             param_grid = [{  # 'max_depth': [14, 16, 18, 20],
                 #  'max_leaf_nodes': [14,15,16],
-                'max_features': [self.max_features - 0.2, self.max_features - 0.1, self.max_features, self.max_features + .1],
+                'max_features': [self.max_features - 0.1, self.max_features, self.max_features + .1],
                 'n_estimators': [  # 400,
                     self.estimators - 25, self.estimators, self.estimators + 50, self.estimators + 100]
             }]
