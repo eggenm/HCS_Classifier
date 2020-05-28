@@ -28,15 +28,20 @@ band_set ={
 pixel_window_size=1
 doGridSearch=True
 
+metrics = {
+    'F1':'f1_macro',
+    'roc_auc_ovo':'roc_auc_ovo'
+}
 
 class random_forest_trainer:
-    def __init__(self, estimators, depth, max_features, leaf_nodes, bands, scheme):
+    def __init__(self, estimators, depth, max_features, leaf_nodes, bands, scheme, metric):
         self.estimators = estimators
         self.depth = depth
         self.max_features = max_features
         self.leaf_nodes = leaf_nodes
         self.bands = bands
         self.scheme = scheme
+        self.metric = metric
         self.model = False
 
     def train_model(self, X_train, y_train, seed):
@@ -55,8 +60,8 @@ class random_forest_trainer:
                 'n_estimators': [  # 400,
                     self.estimators - 25, self.estimators, self.estimators + 50, self.estimators + 100]
             }]
-
-            grid_search = GridSearchCV(clf, param_grid, cv=5, scoring='f1_macro',
+            print("%%%%  Metric  :  ", metrics[self.metric])
+            grid_search = GridSearchCV(clf, param_grid, cv=5, scoring=metrics[self.metric],
                                        return_train_score=True, refit=True)
 
             grid_search.fit(X_train, y_train)

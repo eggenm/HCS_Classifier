@@ -275,15 +275,13 @@ def combine_input_landcover(input, landcover_all, isClass):
 
 
 def scale_data(x):
-    # print('x min:  ', x.min())
-    # print('mean ', x.mean())
-    # print('xmax:  ', x.max())
-    scaler = StandardScaler()
-    x_scaled = scaler.fit_transform(x.astype(np.float64))
-    # print('x_scaled min:  ', x_scaled.min())
-    # print('x scaled mean ', x.mean())
-    # print('x_scaled max:  ', x_scaled.max())
-    return x_scaled
+    try:
+        with timer.Timer() as t:
+            scaler = StandardScaler()
+            x_scaled = scaler.fit_transform(x.astype(np.float64))
+            return x_scaled
+    finally:
+        print('ScaleData Request took %.03f sec.' % t.interval)
 
 
 def mask_water(an_img, concession):
@@ -476,11 +474,11 @@ def get_large_area_input_data(study_area_base_raster, bands, island, year, name=
                 x = get_concession_bands(bands, island, year, study_area_base_raster, name)
                 x = drop_no_data(x)
                 X_scaled_class = scale_data(x)
-                print('X_scaled_class.shape:  ', X_scaled_class.shape)
+                return X_scaled_class
+               # print('X_scaled_class.shape:  ', X_scaled_class.shape)
         finally:
             x = False
             print('Get Input Data Request took %.03f sec.' % t.interval)
-        return X_scaled_class
 
 
 def get_reference_raster_from_shape(shapefile, island, year):
@@ -578,9 +576,13 @@ def show_results(y_test, y_hat):
     print(confMatrix)
 
 def drop_no_data(data):
-    data[data <= -999] = np.nan
-    data[data == 255] = np.nan
-    return data.dropna()
+    try:
+        with timer.Timer() as t:
+            data[data <= -999] = np.nan
+            data[data == 255] = np.nan
+            return data.dropna()
+    finally:
+        print('Drop NoData Request took %.03f sec.' % t.interval)
 
 input_data_cache = imagery_cache()
 #print(landcoverClassMap)

@@ -28,7 +28,8 @@ conncession_island_dict =  { 'app_muba':'Sumatra',
       'app_jambi' : 'Sumatra',
            'crgl_stal' : 'Sumatra',
  'gar_pgm':'Kalimantan',
-'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
+'app_kalbar':'Kalimantan',
+            'app_kaltim':'Kalimantan',
          'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
          'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
      'Bumitama_PTHungarindoPersada':'Kalimantan',
@@ -55,7 +56,7 @@ conncession_island_dict =  { 'app_muba':'Sumatra',
 
 model_performance_columns = ['concession' , 'bands' , 'score_type'  , 'class_scheme' , 'score' , 'score_weighted' ,
                                    'two_class_score' , 'two_class_score_weighted' , 'training_concessions' , 'max_depth',
-                                   'max_leaf_nodes' , 'max_features' , 'n_estimators' , 'training_sample_rate' , 'resolution' ]
+                                   'max_leaf_nodes' , 'max_features' , 'n_estimators' , 'training_sample_rate' , 'resolution' , 'kappa', 'kappa_3']
 study_areas = {'app_muba': {"type":"Polygon","coordinates":[[[102.9583740234375,-2.269723057075878],
                                                              [102.9693603515625,-2.533163135991036],
                                                              [103.4857177734375,-2.533163135991036],
@@ -138,14 +139,14 @@ def init_database():
   #  c.execute(update)
 
    ## Create table
-    c.execute('DROP TABLE model_performance_log')
-    c.execute('''CREATE TABLE model_performance_log
-                 (concession text, bands text, score_type text , class_scheme text, score real, score_weighted real,
-                                   two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
-                                   max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
+   # c.execute('DROP TABLE model_performance_log')
+   # c.execute('''CREATE TABLE model_performance_log
+   #              (concession text, bands text, score_type text , class_scheme text, score real, score_weighted real,
+    #                               two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
+   #                                max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
 
-    addColumn = "ALTER TABLE model_performance_log ADD COLUMN resolution int"
-
+   # addColumn = "ALTER TABLE model_performance_log ADD COLUMN resolution int"
+    addColumn = "ALTER TABLE model_performance_log ADD COLUMN kappa_3 real"
     c.execute(addColumn)
     # Save (commit) the changes
     conn.commit()
@@ -180,39 +181,73 @@ def get_max_model_run(concession, bands):
         row_dict = dict(zip(model_performance_columns,row))
     return row_dict
 
+def get_max_model_run(concession):
+    c = conn.cursor()
+    #c.execute("SELECT * FROM model_performance_log where two_class_score_weighted = ( SELECT max(two_class_score_weighted) from model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ?)" ,  (concession) )
+    c.execute(
+        "SELECT * FROM model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ? order by kappa desc, two_class_score_weighted desc",
+        (concession))
 
-def get_best_training_sample_rate(concession, bands):
-    return get_max_model_run(concession, bands)['training_sample_rate']
+    rows = c.fetchone()
+    row_dict = dict(zip(model_performance_columns,list(rows)))
+
+    return row_dict
+
+def get_best_training_sample_rate(concession):
+    return get_max_model_run(concession)['training_sample_rate']
 
 
-def get_best_max_features(concession, bands):
-    return get_max_model_run(concession, bands)['max_features']
+def get_best_max_features(concession):
+    return get_max_model_run(concession)['max_features']
 
-def get_best_max_leaf_nodes(concession, bands):
-    return get_max_model_run(concession, bands)['max_leaf_nodes']
+def get_best_max_leaf_nodes(concession):
+    return get_max_model_run(concession)['max_leaf_nodes']
 
-def get_best_number_estimators(concession, bands):
-    return get_max_model_run(concession, bands)['n_estimators']
+def get_best_number_estimators(concession):
+    return get_max_model_run(concession)['n_estimators']
 
-def get_best_max_depth(concession, bands):
-    return get_max_model_run(concession, bands)['max_depth']
+def get_best_max_depth(concession):
+    return get_max_model_run(concession)['max_depth']
 
 def get_best_bands(concession):
     x= get_max_model_run(concession)['bands']
     bands = x.replace('[', '').replace(']','').replace('\'','')
     return bands.split(', ');
 
+
+
+def get_best_training_sample_rate_byBand(concession, bands):
+    return get_max_model_run(concession, bands)['training_sample_rate']
+
+
+def get_best_max_features_byBand(concession, bands):
+    return get_max_model_run(concession, bands)['max_features']
+
+def get_best_max_leaf_nodes_byBand(concession, bands):
+    return get_max_model_run(concession, bands)['max_leaf_nodes']
+
+def get_best_number_estimators_byBand(concession, bands):
+    return get_max_model_run(concession, bands)['n_estimators']
+
+def get_best_max_depth_byBand(concession, bands):
+    return get_max_model_run(concession, bands)['max_depth']
+
+def get_best_metric(concession):
+    return get_max_model_run(concession)['score_type']
+
 def get_best_scheme(concession):
     return get_max_model_run(concession)['class_scheme']
 
 if __name__ == "__main__":
     print('in main')
-    print(get_all_model_performance())
+    #print(get_all_model_performance())
     conn = sqlite3.connect('hcs_database.db')
-
-    print(get_best_max_leaf_nodes('Bumitama_PTGemilangMakmurSubur', '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'))
-#    init_database()
+   # base_dir = dirfuncs.guess_data_dir()
+   # resultfile = base_dir + 'result.test2.csv'
+   # get_all_model_performance().to_csv(resultfile, index=False)
+    print(get_best_max_leaf_nodes(['app_riau']))
+   # init_database()
     #delete_model_performance()
-    print(get_all_model_performance())
+   # print(get_all_model_performance())
     conn.close()
     #print(all_bands)

@@ -10,6 +10,8 @@ import timer
 import train_classsifier as trainer
 import scipy.stats as stat
 import csv
+import glob
+import rioxarray as rx
 
 base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
@@ -22,14 +24,15 @@ sites = [
 sites = [
     'Bumitama_PTGemilangMakmurSubur',
     'Bumitama_PTHungarindoPersada',
-    'PTAgroAndalan', 'gar_pgm',
+    'PTAgroAndalan',
+    'gar_pgm',
     #'Bumitama_PTDamaiAgroSejahtera'
-    #'PTMitraNusaSarana',
+    'PTMitraNusaSarana',
 
 ]
-bands = ['blue_max', 'green_max', 'red_max',
-         'nir_max',
-         'swir1_max','swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
+bands = [#'blue_max', 'green_max', 'red_max',
+        # 'nir_max',
+        'swir1_max',# 'VH_2', 'VV_2', 'EVI'#,'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
  ]
 
 
@@ -93,7 +96,7 @@ class classify_block:
 def predict(X_scaled_class, rfmodel):#, predictions):
     try:
 
-        predictions = np.zeros(X_scaled_class.shape[0], dtype=np.int8)
+        predictions = np.zeros(X_scaled_class.shape[0], dtype=rio.int16)
         with timer.Timer() as t:
             end = X_scaled_class.shape[0]
             step = 1000000
@@ -125,31 +128,31 @@ def write_map(predicted, reference, name,i):
     crs = src.rio.crs
     trans = src.transform
     count = 1
+    dtype = rio.int16
     full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
-    print(type(predicted))
-    if (isinstance(predicted,(np.ndarray, pd.Series))):
-        predicted = pd.DataFrame(predicted, index=full_index, dtype=np.int8)
-    else:
-        predicted = predicted.set_index(full_index).astype(dtype=np.int8,copy=False)
-
-    clas_df = pd.DataFrame(index=full_index, dtype=np.int8)
+    # predicted = predicted.set_index(full_index)
+    predicted = pd.DataFrame(predicted, index=full_index)
+    clas_df = pd.DataFrame(index=full_index)
     classified = clas_df.merge(predicted, left_index=True, right_index=True, how='left').sort_index()
-    predicted, clas_df=False
-    classified = classified.values.reshape(shape[1], shape[2])
 
+    classified = classified.values.reshape(shape[1], shape[2])
+    #classified = classified.T.values.reshape(shape[1], shape[2])
+    #classified = classified.T.values.reshape( shape[2], shape[1])
+    #classified = classified.values.reshape(shape[2], shape[1])
     classified = classified[np.newaxis, :, :].astype(rio.int16)
     with rio.open(outclas_file, 'w', driver='GTiff',
-                        height=height, width=width,
-                        crs=crs, dtype=rio.int16,
-                        count=count, transform=trans) as clas_dst:
+                  height=height, width=width,
+                  crs=crs, dtype=dtype,
+                  count=count, transform=trans) as clas_dst:
         for ji, window in clas_dst.block_windows(1):  # or ref file here
             print('ji:  ', ji)
             print('window:  ', window)
             #  print('window.shape:  ', window.shape)
-            block = classified[window.col_off:window.col_off + width,
-                    window.row_off:window.row_off + height]  # .read(window=window)
+            block = classified[window.col_off:window.col_off + window.width,
+                    window.row_off:window.row_off + window.height]  # .read(window=window)
             #     if sum(sum(sum(~np.isnan(block)))) > 0:
             clas_dst.write(block, window=window)
+        #clas_dst.write(classified)
     # for ji, window in src.block_windows(1):  # or ref file here
     #     print('ji:  ', ji)
     #     print('window:  ', window)
@@ -160,24 +163,26 @@ def write_map(predicted, reference, name,i):
     #src.close()
 
 
-def get_trained_model(scoreConcession, trainConcessions, seed):
+def get_trained_model(scoreConcession, trainConcessions, seed, override_bands = None):
     doGridSearch = False
     scheme = '3CLASS'#db.get_best_scheme([scoreConcession])
-    band_string = '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'
-    estimators = db.get_best_number_estimators(scoreConcession, band_string)
-    max_features = db.get_best_max_features(scoreConcession, band_string)
-    depth = db.get_best_max_depth(scoreConcession, band_string)
-    leaf_nodes = db.get_best_max_leaf_nodes(scoreConcession, band_string)
+    #band_string = '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'
+    estimators = db.get_best_number_estimators([scoreConcession])
+    max_features = db.get_best_max_features([scoreConcession])
+    depth = db.get_best_max_depth([scoreConcession])
+    leaf_nodes = db.get_best_max_leaf_nodes([scoreConcession])
+    metric = db.get_best_metric([scoreConcession])
     year = str(2015)
-    #bands = db.get_best_bands([scoreConcession])
-   #
-    # TODO take this out, just for a local test!!!!
-    #print(bands)
-    sample_rate = int(db.get_best_training_sample_rate(scoreConcession, band_string))
+    if(not override_bands):
+        bands = db.get_best_bands([scoreConcession])
+    else:
+        bands = override_bands
+    print(bands)
+    sample_rate = int(db.get_best_training_sample_rate([scoreConcession]))
 
     try:
         with timer.Timer() as t:
-            rf_trainer = trainer.random_forest_trainer(estimators, depth, max_features, leaf_nodes, bands, scheme)
+            rf_trainer = trainer.random_forest_trainer(estimators, depth, max_features, leaf_nodes, bands, scheme, metric)
             X_train, X_test, y_train, y_test = get_training_data(trainConcessions, bands, year, sample_rate,
                                                                  seed)
             if scheme == '3CLASS':
@@ -194,6 +199,8 @@ def get_trained_model(scoreConcession, trainConcessions, seed):
             result['n_estimators']= rf_trainer.model.get_params()['n_estimators']
             result['samples'] = sample_rate
             result['scheme'] = scheme
+            result['calibration_metric'] = metric
+            result['bands'] = bands
     finally:
         print('Train Model Request took %.03f sec.' % t.interval)
     return rf_trainer, result
@@ -235,15 +242,21 @@ if __name__ == "__main__":
     try:
         with timer.Timer() as t:
             island = db.conncession_island_dict[name]
-            ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
+            tif = base_dir + name + '/out/' + year + '/input_' + name + '_' + bands[0] + '.tif'
+            try:
+                 file_list = sorted(glob.glob(tif))
+                 ref_study_area = rx.open_rasterio(file_list[0])
+            except:
+                ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
             # TODO this relies on hardcoded bands where below pulls from database
-            X_scaled_class = helper.get_large_area_input_data(ref_study_area, [bands[0]], island,
-                                                              year, name) # this just inits the output array here so bands[o] is enough
+            X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, year, name)
             iterations_per_site = 3
             total_predictions = iterations_per_site * len(sites)
             #predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
-            predictions = np.zeros(X_scaled_class.shape[0], dtype=np.int8)
-            X_scaled_class = False
+            predictions = np.zeros(X_scaled_class.shape[0])
+            #write_map(predictions, ref_study_area, name, "SWIRTEST")
+
+            #x = False
 
 
             k=0
@@ -261,28 +274,45 @@ if __name__ == "__main__":
                     trained_model, scores = get_trained_model(scoreConcession, trainConcessions, j)
                     scores['oob_concessions'] = scoreConcession
                     scores['train_concessions'] = trainConcessions
+
                     result.append(scores)
                     log_accuracy(result,name, j)
-                    X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island,
+                    print('**********  BANDS:  ', scores['bands'], '   ************')
+                    X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
                                                                       year, name)
                     predictions  =  predictions + predict(X_scaled_class, trained_model)#, predictions)
-                    X_scaled_class = False
-                    if k%3==0:
-                        write_map((np.around(predictions/(k+1))).astype(np.int8), ref_study_area, name, j)
+                    if k%4==0:
+                        write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j)
                     k=k+1
+                    if('slope' not in scores['bands']):
+                        bands = scores['bands'].append('slope')
+                        print('**********  BANDS with slope:  ', scores['bands'], '   ************')
+                        trained_model, scores = get_trained_model(scoreConcession, trainConcessions, j+100, bands)
+                        scores['oob_concessions'] = scoreConcession
+                        scores['train_concessions'] = trainConcessions
+                        result.append(scores)
+                        log_accuracy(result, name, j+100)
+                        print('**********  BANDS - slope:  ', scores['bands'], '   ************')
+                        X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
+                                                                          year, name)
+                        predictions = predictions + predict(X_scaled_class, trained_model)  # , predictions)
+                        if k % 6 == 0:
+                            write_map((np.around(predictions / (k + 1))).astype(rio.int16), ref_study_area, name, j+100)
+                        k = k + 1
+
                 #i = i + 1
             predictions = predictions.astype(np.float32)
             predictions = predictions / k
-            predictions = np.around(predictions).astype(np.int8)
+            predictions = np.around(predictions).astype(rio.int16)
             mapId='FINAL'
             log_accuracy(result, name, mapId)
             print('predictions.shape', predictions.shape)
-            myFrame = pd.DataFrame(predictions)
-            temp1 = (pd.DataFrame(myFrame.T.mode(axis=1))[0]).astype(int)
-            print('temp1.shape', temp1.shape)
+            #myFrame = pd.DataFrame(predictions)
+            #temp1 = (pd.DataFrame(myFrame.T.mode(axis=1))[0]).astype(int)
+            #print('temp1.shape', temp1.shape)
             #print(predictions)
             #predictions = temp0.astype(int)
             #print(predictions)
-            write_map(temp1.values, ref_study_area, name,mapId)
+            write_map(predictions, ref_study_area, name,mapId)
     finally:
         print('LARGE_AREA CLASSIFICATION of : ' , name , '  took %.03f sec.' % t.interval)

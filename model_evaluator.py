@@ -18,34 +18,38 @@ resolution = 30
 
 year=str(2015)
 sites = { #'app_muba':'Sumatra',
-'app_riau': 'Sumatra',
-'app_oki' : 'Sumatra',
-     'app_jambi' : 'Sumatra',#,
-          'crgl_stal' : 'Sumatra',
+#'app_riau': 'Sumatra',
+#'app_oki' : 'Sumatra',
+#     'app_jambi' : 'Sumatra',#,
+ #         'crgl_stal' : 'Sumatra',
 
 #'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
      #    'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
- #       'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
-   #  'Bumitama_PTHungarindoPersada':'Kalimantan',
-#    'PTAgroAndalan':'Kalimantan',
- #     'PTMitraNusaSarana':'Kalimantan',
- #  'gar_pgm':'Kalimantan'
+
+    'PTAgroAndalan':'Kalimantan',
+      'PTMitraNusaSarana':'Kalimantan',
+   'gar_pgm':'Kalimantan',
+'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
+     'Bumitama_PTHungarindoPersada':'Kalimantan',
           }
 #sites = [
 
 #    ]
 base_dir = dirfuncs.guess_data_dir()
-band_set ={ 1: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'EVI'],
-            2:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV' ] , #'elevation', , 'aspect']
-            3:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH_0', 'VV_0', 'EVI' ],
-            4:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH_2', 'VV_2', 'EVI' ],
-            5:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'EVI' ],
-            6:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_2', 'VV_2', 'EVI' ],
-            7:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI' ],
+band_set ={ 0: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'EVI' ],
+            1: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'EVI', 'slope'],
+            2:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV' ,'EVI', 'slope'] , #'elevation', , 'aspect']
+            3:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH_0', 'VV_0', 'EVI' , 'slope'],
+            4:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH_2', 'VV_2', 'EVI', 'slope'],
+          #  5:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'EVI' ],
+          #  6:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_2', 'VV_2', 'EVI' ],
+         #   7:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI' ],
             8: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0',
                 'VH_2', 'VV_2', 'EVI', 'slope'],
-            9: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max',  'VH_0', 'VV_0',
-                 'EVI', 'slope']
+            9: ['swir1_max',  'VH_0'],
+            10: ['swir1_max', 'EVI', 'VH_0'],
+            11: ['swir1_max', 'slope', 'VH_0']
+             #    'EVI', 'slope']
             }
 
 pixel_window_size=1
@@ -64,7 +68,7 @@ def show_results(y_test, y_hat):
     print('KAPPA:  ', kappa)
 
 
-def train_model(X_train, y_train):
+def train_model(X_train, y_train, score_stat):
     #print('Training:  ', pd.Series(y_train).value_counts())
     #print(X_train[:7])
     clf = rfc(n_estimators=40, max_depth=6, max_features=.3, max_leaf_nodes=18,
@@ -78,7 +82,7 @@ def train_model(X_train, y_train):
                        'max_features': [ .2, .4, .65,
                                         .8 ],
                        'n_estimators': [100, 250, 375, 500, 750]}]
-        grid_search = GridSearchCV(clf, param_grid, cv = 5, scoring = 'f1_macro',
+        grid_search = GridSearchCV(clf, param_grid, cv = 5, scoring = score_stat,
                                    return_train_score = True, refit = True)
 
         grid_search.fit(X_train, y_train)
@@ -97,7 +101,8 @@ def score_model(y_test, yhat):
     show_results(y_test, yhat)
     f1 = f1_score(y_test, yhat, average='macro')
     f1_weighted = f1_score(y_test, yhat, average='weighted')
-    return f1,f1_weighted
+    kappa = sklearn.metrics.cohen_kappa_score(y_test, yhat)
+    return f1,f1_weighted, kappa
 
 class model_performance_logger:
     def __init__(self, model, concession, bands, training_concessions):
@@ -157,7 +162,7 @@ def evaluate_model():
         result = pd.DataFrame(columns=['concession', 'bands', 'score_type', 'class_scheme', 'score', 'score_weighted',
                                        'two_class_score', 'two_class_score_weighted', 'training_concessions',
                                        'max_depth',
-                                       'max_leaf_nodes', 'max_features', 'n_estimators', 'training_sample_rate', 'resolution'])
+                                       'max_leaf_nodes', 'max_features', 'n_estimators', 'training_sample_rate', 'resolution', 'kappa', 'kappa_3'])
         x = range(4, 11, 2)
         for key, bands in band_set.items():
 
@@ -209,12 +214,30 @@ def evaluate_model():
 
                 ##########################################################
                 #####     MODEL WITH 3 CLASSES     #########
-                model = train_model(X_train, helper.map_to_3class(y_train.values.ravel()))
+
+                ###########   USE ROC_AUC  ###################
+
+                model = train_model(X_train, helper.map_to_3class(y_train.values.ravel()), 'roc_auc_ovo')
                 yhat = model.predict(X_scaled_score)
-                score_3, score_3_weighted = score_model(helper.map_to_3class(y_score_all.values.ravel()), yhat)
-                score_two, score_two_weighted = score_model(helper.map_to_2class(y_score_all.values.ravel()), helper.map_3_to_2class(yhat))
+                score_3, score_3_weighted, kappa3 = score_model(helper.map_to_3class(y_score_all.values.ravel()), yhat)
+                score_two, score_two_weighted, kappa2 = score_model(helper.map_to_2class(y_score_all.values.ravel()),
+                                                            helper.map_3_to_2class(yhat))
+                result.loc[i] = [scoreConcession, str(bands), 'roc_auc_ovo', '3CLASS', score_3, score_3_weighted, score_two,
+                                 score_two_weighted, str(trainConcessions),
+                                 model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'],
+                                 model.get_params()['max_features'], model.get_params()['n_estimators'],
+                                 training_sample_rate, resolution, kappa2, kappa3]
+                print(result.loc[i])
+                i += 1
+
+                ###########   USE F1  ###################
+
+                model = train_model(X_train, helper.map_to_3class(y_train.values.ravel()), 'f1_macro')
+                yhat = model.predict(X_scaled_score)
+                score_3, score_3_weighted, kappa3 = score_model(helper.map_to_3class(y_score_all.values.ravel()), yhat)
+                score_two, score_two_weighted, kappa2 = score_model(helper.map_to_2class(y_score_all.values.ravel()), helper.map_3_to_2class(yhat))
                 result.loc[i] = [scoreConcession, str(bands), 'F1' , '3CLASS', score_3, score_3_weighted, score_two, score_two_weighted, str(trainConcessions),
-                                 model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'], model.get_params()['n_estimators'], training_sample_rate, resolution ]
+                                 model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'], model.get_params()['n_estimators'], training_sample_rate, resolution, kappa2, kappa3]
                 print(result.loc[i])
                 i += 1
             db.save_model_performance(result)
@@ -247,7 +270,7 @@ if __name__ == "__main__":
     scaled_x_data = dict()
     actual_data = dict()
     evaluate_model()
-    resultfile = base_dir + 'result.05212020.csv'
+    resultfile = base_dir + 'result.05262020.csv'
     db.get_all_model_performance().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)
