@@ -4,13 +4,13 @@ import satellite_image_operations as sat_ops
 import glob
 import os
 
-dirpath = r'/home/eggen/data/concession/Sumatra/in/2015'
-out_fp = r'/home/eggen/data/concession/Sumatra/out/2015/'
+dirpath = r'/home/eggen/data/concession/Kalimantan/in/2015'
+out_fp = r'/home/eggen/data/concession/Kalimantan/out/2015/'
 
 #my_dict = sat_ops.l8_band_dict.copy()
 #my_dict = sat_ops.soil_band_dict.copy()
 my_dict=sat_ops.s1_band_dict.copy()
-#my_dict.update(sat_ops.dem_band_dict)
+my_dict.update(sat_ops.dem_band_dict)
 print('BANDS:  ',my_dict.values())
 for band in my_dict.values():
     search_criteria='*'+band+'.tif'

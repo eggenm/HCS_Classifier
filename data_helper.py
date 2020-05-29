@@ -277,9 +277,10 @@ def combine_input_landcover(input, landcover_all, isClass):
 def scale_data(x):
     try:
         with timer.Timer() as t:
-            scaler = StandardScaler()
-            x_scaled = scaler.fit_transform(x.astype(np.float64))
-            return x_scaled
+            print('DEPRECATED - SCALING DONE ON INGEST')
+            #scaler = StandardScaler()
+            #x_scaled = scaler.fit_transform(x.astype(np.float64))
+            #return x_scaled
     finally:
         print('ScaleData Request took %.03f sec.' % t.interval)
 
@@ -589,11 +590,16 @@ input_data_cache = imagery_cache()
 if __name__ == "__main__":
     #write_input_data=True
     #x = get_input_data(['aspect', 'VH', 'blue_max', 'EVI'],'Kalimantan', str(2015), ['app_kalbar'], False)
-    #x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTHungarindoPersada', 'app_kalbar','app_kaltim', 'Bumitama_PTDamaiAgroSejahtera'] , False )#,
+    x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera'] , False )#,
+    ref_study_area = get_reference_raster_from_shape('West_Kalimantan', 'Kalimantan', 2015)
+    # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
+    x = get_large_area_input_data(ref_study_area, ['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],
+                                  'Kalimantan', str(2015), 'West_Kalimantan')
 
-    ref_study_area = get_reference_raster_from_shape('West_Kalimantan' , 'Kalimantan' , 2015)
-    #x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
-    x = get_large_area_input_data(ref_study_area, [ 'blue_max'], 'Kalimantan',  str(2015),  'West_Kalimantan' )
+   # x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),
+      #                 ['app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'app_kalbar','app_kaltim', 'crgl_stal', 'app_muba'] , False )#,
+
+
        # , 'swir2_max', 'VH', 'VV','EVI',], 'Kalimantan',  str(2015),  'West_Kalimantan' )
     #x = get_large_area_input_data(ref_study_area,['blue_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','EVI', 'slope'], 'Kalimantan', str(2015),'West_Kalimantan')
 

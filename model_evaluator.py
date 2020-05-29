@@ -18,9 +18,9 @@ resolution = 30
 
 year=str(2015)
 sites = { #'app_muba':'Sumatra',
-#'app_riau': 'Sumatra',
+'app_riau': 'Sumatra',
 #'app_oki' : 'Sumatra',
-#     'app_jambi' : 'Sumatra',#,
+     'app_jambi' : 'Sumatra',#,
  #         'crgl_stal' : 'Sumatra',
 
 #'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
@@ -29,7 +29,7 @@ sites = { #'app_muba':'Sumatra',
     'PTAgroAndalan':'Kalimantan',
       'PTMitraNusaSarana':'Kalimantan',
    'gar_pgm':'Kalimantan',
-'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
+#'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
     # 'Bumitama_PTHungarindoPersada':'Kalimantan',
           }
 #sites = [
@@ -54,6 +54,21 @@ band_set ={ 0: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swi
             14: ['swir1_max', 'slope', 'VH_0', 'VH']
              #    'EVI', 'slope']
             }
+
+add_1_band_set = {
+    'base': ['swir1_max', 'VH_0', 'slope'],
+    'blue': ['swir1_max', 'VH_0', 'slope','blue_max'],
+    'green': ['swir1_max', 'VH_0', 'slope','green_max'],
+    'red': ['swir1_max', 'VH_0', 'slope','red_max'],
+    'nir': ['swir1_max', 'VH_0', 'slope','nir_max'],
+    'swir2': ['swir1_max', 'VH_0', 'slope','swir2_max'],
+    'VH': ['swir1_max', 'VH_0', 'slope','VH'],
+    'VH2': ['swir1_max', 'VH_0', 'slope','VH_2'],
+    'VV0': ['swir1_max', 'VH_0', 'slope','VV_0'],
+    'VV': ['swir1_max', 'VH_0', 'slope','VV'],
+    'VV2': ['swir1_max', 'VH_0', 'slope','VV_2'],
+    'EVI': ['swir1_max', 'VH_0', 'slope','EVI'],
+    }
 
 pixel_window_size=1
 doGridSearch=True
@@ -139,8 +154,7 @@ class model_performance_logger:
     def save_score(self):
         print('saved')
 
-def evaluate_model():
-
+def init_x_y_data(sites, band_set):
     for concession, island in sites.items():
         for key, bands in band_set.items():
             data_scoring = helper.get_input_data(bands, year, [concession], False)
@@ -156,6 +170,7 @@ def evaluate_model():
     X_score = False
     y_score_all = False
 
+def evaluate_model():
 
     for scoreConcession in sites:
         print(scoreConcession)
@@ -174,28 +189,11 @@ def evaluate_model():
 
             print(key, '....',bands)
 
-            #all_bands = list(itertools.chain(*bands))
-            # all_bands = band_groups.flatt
-            #print('ALL_BANDS:', all_bands)
-            #data = pd.DataFrame()
-            #data_scoring = helper.get_concession_data(bands, scoreConcession)
-            #data_scoring = helper.get_input_data(bands, island, year, [scoreConcession], False )
-            #data_scoring = helper.trim_data2(data_scoring)
-            #data_scoring = helper.drop_no_data(data_scoring)
-            #X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
-            #X_scaled_score = helper.scale_data(X_score)
             X_scaled_score = get_predictor_data(key,[scoreConcession])
-            #print('ACTUAL:  ', data_scoring['clas'].value_counts())
-            #y_score_all = data_scoring['clas'].values
+
             y_score_all = get_landcover_data(key,[scoreConcession])
 
-            #data = helper.trim_data2(helper.get_concession_data(bands, trainConcessions))
-            #data = helper.trim_data2(helper.get_input_data(bands, island, year, trainConcessions, False ))
-            #data=helper.drop_no_data(data)
-            #X = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
-            #X_scaled = helper.scale_data(X)
             X_scaled = get_predictor_data(key, trainConcessions)
-            #landcover = data['clas'].values
             landcover = get_landcover_data(key,trainConcessions)
             for y in range(400, 750, 150):
                 training_sample_rate = y
@@ -249,6 +247,44 @@ def evaluate_model():
     #result.to_csv(resultfile, index=False)
     print(db.get_all_model_performance())
 
+def evaluate_bands():
+    score_base, kappa2base, kappa3base = 0.0
+    for concession in sites:
+        trainConcessions = [concession]
+        scoreConcession = [concession]
+        result = pd.DataFrame(columns=['concession', 'added_band', 'two_class_score_weighted_addl', 'kappa_addl', 'kappa_3_addl'])
+        i=0
+        for name, bands in add_1_band_set.items():
+            X_scaled = get_predictor_data(name, trainConcessions)
+            landcover = get_landcover_data(name, trainConcessions)
+            training_sample_rate = 500
+            X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate,
+                                                                test_size=0.30,
+                                                                random_state=33)
+            model = train_model(X_train, helper.map_to_3class(y_train.values.ravel()), 'f1_macro')
+            yhat = model.predict(X_test)
+            if(name =='base'):
+                score_3_na, score_3_weighted_na, kappa3base = score_model(helper.map_to_3class(y_test.values.ravel()), yhat)
+                score_two_na, score_base, kappa2base = score_model(helper.map_to_2class(y_test.values.ravel()),
+                                                                    helper.map_3_to_2class(yhat))
+                print(concession, ' score_base:  ', score_base )
+                print(concession, ' kappa3base:  ', kappa3base)
+                print(concession, ' kappa2base:  ', kappa2base)
+                continue
+            elif(score_base==0):
+                raise RuntimeError
+
+            score_3, score_3_weighted, kappa3 = score_model(helper.map_to_3class(y_test.values.ravel()), yhat)
+            score_two, score_two_weighted, kappa2 = score_model(helper.map_to_2class(y_test.values.ravel()),
+                                                                helper.map_3_to_2class(yhat))
+            print(concession,' ', name, ' score:  ', score_two_weighted)
+            print(concession,' ', name, ' kappa3:  ', kappa3)
+            print(concession, ' ', name,' kappa2:  ', kappa3)
+            result.loc[i] = [concession, name, score_two_weighted-score_base, kappa2-kappa2base, kappa3-kappa3base]
+            print(result.loc[i])
+            i += 1
+
+
 def get_predictor_data(band_id, concessions):
     data = pd.DataFrame()
     for concession in concessions:
@@ -272,9 +308,12 @@ def get_landcover_data(band_id, concessions):
 if __name__ == "__main__":
     scaled_x_data = dict()
     actual_data = dict()
-    evaluate_model()
-    resultfile = base_dir + 'result.05262020.csv'
-    db.get_all_model_performance().to_csv(resultfile, index=False)
+    #init_x_y_data(sites, band_set)
+    #evaluate_model()
+    init_x_y_data(sites, add_1_band_set)
+    resultfile = base_dir + 'add1band_result.05282020.csv'
+    #db.get_all_model_performance().to_csv(resultfile, index=False)
+    evaluate_bands().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)
     # x = helper.gen_windows(array, pixel_window_size)
