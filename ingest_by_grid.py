@@ -130,7 +130,7 @@ if __name__ == "__main__":
 #
 #
 # ##SUMATRA
-#        site = 'Sumatra'
+       site = 'Sumatra'
 #        polygons = get_grid_polygons(95, 107, -6,6)
 #        download_data(polygons, 44)
 #        cleanup_files()
