@@ -24,13 +24,13 @@ sites = { #'app_muba':'Sumatra',
  #         'crgl_stal' : 'Sumatra',
 
 #'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
-     #    'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
+         'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
 
     'PTAgroAndalan':'Kalimantan',
       'PTMitraNusaSarana':'Kalimantan',
    'gar_pgm':'Kalimantan',
 'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
-     'Bumitama_PTHungarindoPersada':'Kalimantan',
+    # 'Bumitama_PTHungarindoPersada':'Kalimantan',
           }
 #sites = [
 
@@ -48,7 +48,10 @@ band_set ={ 0: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swi
                 'VH_2', 'VV_2', 'EVI', 'slope'],
             9: ['swir1_max',  'VH_0'],
             10: ['swir1_max', 'EVI', 'VH_0'],
-            11: ['swir1_max', 'slope', 'VH_0']
+            11: ['swir1_max', 'slope', 'VH_0'],
+            12: ['swir1_max',  'VH_0', 'VH'],
+            13: ['swir1_max', 'EVI', 'VH_0', 'VH'],
+            14: ['swir1_max', 'slope', 'VH_0', 'VH']
              #    'EVI', 'slope']
             }
 

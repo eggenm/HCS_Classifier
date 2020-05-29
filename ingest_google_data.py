@@ -216,7 +216,7 @@ def assemble_radar_data(study_area, year):
     sentinel1 = sentinel1.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
     sentinel1 = sentinel1.filterBounds(study_area)
     sentinel1 = sentinel1.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'));
-    myRadar = ee.Image(sat_ops.prep_sar(sentinel1)).select([ 'VV_0', 'VH_0'])
+    myRadar = ee.Image(sat_ops.prep_sar(sentinel1)).select([ 'VV', 'VH'])
 
     return(myRadar)
 #radar_composite = ee.Image(sat_ops.prep_sar(sentinel1))
