@@ -133,10 +133,10 @@ def prep_ls8(img):
 
 def prep_sar(image_collection):
     composite = ee.Image.cat([
-        image_collection.select('VH').mean().rename('VH_2').unitScale(-38,4).focal_median(6),
-        image_collection.select('VV').mean().rename('VV_2').unitScale(-26,13).focal_median(6),
-        image_collection.select('VH').mean().rename('VH').unitScale(-38, 4).focal_median(3),
-        image_collection.select('VV').mean().rename('VV').unitScale(-26, 13).focal_median(3)   ,
+     #   image_collection.select('VH').mean().rename('VH_2').unitScale(-38,4).focal_median(6),
+     #   image_collection.select('VV').mean().rename('VV_2').unitScale(-26,13).focal_median(6),
+     #   image_collection.select('VH').mean().rename('VH').unitScale(-38, 4).focal_median(3),
+     #   image_collection.select('VV').mean().rename('VV').unitScale(-26, 13).focal_median(3)   ,
         image_collection.select('VH').mean().rename('VH_0').unitScale(-38, 4),
         image_collection.select('VV').mean().rename('VV_0').unitScale(-26, 13)  # ,
         #(image_collection.select('VH').subtract(image_collection.select('VV'))).mean(),
