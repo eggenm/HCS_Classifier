@@ -87,17 +87,25 @@ def download_data(polygons,i):
                     {'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
                 filename = out_path + site + '/in/' + str(year) + '/' + prefix + '.zip'
                 print(url)
-                try:
-                    with timer.Timer() as t:
-                        r = requests.get(url, stream=True)
-                        with open(filename, 'wb') as fd:
-                            for chunk in r.iter_content(chunk_size=1024):
-                                fd.write(chunk)
-                        fd.close()
-                finally:
-                    print('Request took %.03f sec.' % t.interval)
-                z = zipfile.ZipFile(filename)
-                z.extractall(path=out_path + '/' + site + '/in/' + str(year))
+                failed = 0
+                while(failed<4):
+                    try:
+                        with timer.Timer() as t:
+                            r = requests.get(url, stream=True)
+                            with open(filename, 'wb') as fd:
+                                for chunk in r.iter_content(chunk_size=1024):
+                                    fd.write(chunk)
+                            fd.close()
+                            z = zipfile.ZipFile(filename)
+                            z.extractall(path=out_path + '/' + site + '/in/' + str(year))
+                            failed = 99
+                    except:
+                        failed +=1
+                        if failed==3:
+                            raise TimeoutError
+                    finally:
+                        print('Request-Extract took %.03f sec.' % t.interval)
+
 
 def cleanup_files():
     # Get a list of all the file paths that ends with .txt from in specified directory
