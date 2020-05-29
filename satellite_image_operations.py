@@ -133,8 +133,8 @@ def prep_ls8(img):
 
 def prep_sar(image_collection):
     composite = ee.Image.cat([
-        image_collection.select('VH').mean().rename('VH_0'),
-        image_collection.select('VV').mean().rename('VV_0')#,
+        image_collection.select('VH').mean().rename('VH_0').unitScale(-38,4),
+        image_collection.select('VV').mean().rename('VV_0').unitScale(-26,13)#,
         #(image_collection.select('VH').subtract(image_collection.select('VV'))).mean(),
      #   (image_collection.select('VH').divide(image_collection.select('VV'))).mean()
         #  sentinel1.select('VH').reduce(ee.Reducer.stdDev()).rename('VH_vari'), There are string artifacts with this operation

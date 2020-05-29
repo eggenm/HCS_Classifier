@@ -62,9 +62,9 @@ def download_data(polygons,i):
     fc = ee.FeatureCollection(polygons)
     all_study_area = fc.geometry().bounds()
     radar = ingest.assemble_radar_data(all_study_area, year)
-    # sentinel = ingest.assemble_sentinel_data(all_study_area, year)
+    #sentinel = ingest.assemble_sentinel_data(all_study_area, year)
   #  l8 = ingest.assemble_l8(all_study_area, year)
-  #  dem = ingest.getDEM(all_study_area)
+    dem = ingest.getDEM(all_study_area)
   #  soil = ingest.getSoil(all_study_area)
   #  water_mask = ingest.get_water_mask(all_study_area)
 
@@ -72,7 +72,7 @@ def download_data(polygons,i):
         #  '_greenest': sentinel,
         '_radar': radar,  # 'class': strata_img,
    #     '_greenest': l8,
-    #    '_dem':dem
+        '_dem':dem
      #   '_soil': soil
        # '_watermask': water_mask
 
@@ -114,10 +114,10 @@ def cleanup_files():
 
 if __name__ == "__main__":
     ## KALIMANTAN
-     #  site = 'Kalimantan'
-     #  polygons = get_grid_polygons(107, 119, -5,5)
-     #  download_data(polygons, 33)
-     #  cleanup_files()
+       site = 'Kalimantan'
+       polygons = get_grid_polygons(107, 119, -5,5)
+       download_data(polygons, 33)
+       cleanup_files()
 
 
 ##SUMATRA
@@ -126,13 +126,13 @@ if __name__ == "__main__":
        download_data(polygons, 44)
        cleanup_files()
 #something
-   # polygons = get_grid_polygons(98, 102, -6, 4)
-   # download_data(polygons, 22 )
-  #  cleanup_files()
-    # polygons = get_grid_polygons(98, 99, 4, 5)
-    # download_data(polygons, 12)
-    # cleanup_files()
-    # polygons = get_grid_polygons(106, 109, -4, 1)
-    # download_data(polygons, 13)
-    # cleanup_files()
+       polygons = get_grid_polygons(98, 102, -6, 4)
+       download_data(polygons, 22 )
+       cleanup_files()
+       polygons = get_grid_polygons(98, 99, 4, 5)
+       download_data(polygons, 12)
+       cleanup_files()
+       polygons = get_grid_polygons(106, 109, -4, 1)
+       download_data(polygons, 13)
+       cleanup_files()
 

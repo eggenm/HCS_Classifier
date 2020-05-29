@@ -151,10 +151,14 @@ def getYearlyNdvi_L8():
 def getDEM(all_study_area):
     dem = ee.Image("USGS/SRTMGL1_003").clip(all_study_area)
     elevation = dem.select('elevation');
-    #dem = ee.Image(elevation.addBands(ee.Terrain.slope(elevation).rename('slope')));
+    slope = ee.Terrain.slope(elevation).rename('slope');
+    elevation = elevation.unitScale(-30, 3300)
+    slope = slope.unitScale(0, 80)
+    dem = elevation.addBands(slope)
+
    # dem = ee.Image(dem.addBands(ee.Terrain.aspect(elevation).rename('aspect')));
   #  return dem
-    return ee.Terrain.aspect(elevation).rename('aspect')
+    return dem
 # =============================================================================
 # Soil Great Groups
 # =============================================================================
