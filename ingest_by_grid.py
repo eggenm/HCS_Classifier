@@ -123,17 +123,17 @@ def cleanup_files():
 
 if __name__ == "__main__":
     ## KALIMANTAN
-       site = 'Kalimantan'
-       polygons = get_grid_polygons(107, 119, -5,5)
-       download_data(polygons, 33)
-       cleanup_files()
-
-
-##SUMATRA
-       site = 'Sumatra'
-       polygons = get_grid_polygons(95, 107, -6,6)
-       download_data(polygons, 44)
-       cleanup_files()
+#        site = 'Kalimantan'
+#        polygons = get_grid_polygons(107, 119, -5,5)
+#        download_data(polygons, 33)
+#        cleanup_files()
+#
+#
+# ##SUMATRA
+#        site = 'Sumatra'
+#        polygons = get_grid_polygons(95, 107, -6,6)
+#        download_data(polygons, 44)
+#        cleanup_files()
 #something
        polygons = get_grid_polygons(98, 102, -6, 4)
        download_data(polygons, 22 )
