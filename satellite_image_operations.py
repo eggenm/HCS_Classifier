@@ -56,8 +56,8 @@ s2_band_dict_median = {
    'EVI2':'EVI2_s2_median'
 }
 
-s1_band_dict = {#'VH': 'VH',
-             # 'VV': 'VV',
+s1_band_dict = {'VH': 'VH',
+              'VV': 'VV',
             'VH_0': 'VH_0',
              'VV_0': 'VV_0',
            'VH_2': 'VH_2',
@@ -69,7 +69,7 @@ s1_band_dict = {#'VH': 'VH',
 dem_band_dict = {
     'elevation':'elevation',
     'slope': 'slope',
-    'aspect':'aspect'
+    #'aspect':'aspect'
 
 }
 soil_band_dict = {
