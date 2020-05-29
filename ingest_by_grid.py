@@ -101,6 +101,7 @@ def download_data(polygons,i):
                             failed = 99
                     except:
                         failed +=1
+                        print('*****Error on download-extract from google. Times failed: ', failed)
                         if failed==3:
                             raise TimeoutError
                     finally:
