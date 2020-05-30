@@ -604,15 +604,15 @@ if __name__ == "__main__":
 
 
 
- #   ref_study_area = get_reference_raster_from_shape('Jambi', 'Sumatra', 2015)
+    ref_study_area = get_reference_raster_from_shape('Jambi', 'Sumatra', 2015)
     # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
-  #  x = get_large_area_input_data(ref_study_area, ['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],
-            #                     'Sumatra', str(2015), 'Jambi')
+    x = get_large_area_input_data(ref_study_area, ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'EVI'],
+                                 'Sumatra', str(2015), 'Jambi')
 
    # x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),
     #                   ['app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'app_kalbar','app_kaltim', 'crgl_stal', 'app_muba'] , False )#,
 
-    x = get_input_data(['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'EVI'], str(2015),['app_kalbar'] , False )
+    #x = get_input_data(['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'EVI'], str(2015),['app_kalbar'] , False )
        # , 'swir2_max', 'VH', 'VV','EVI',], 'Kalimantan',  str(2015),  'West_Kalimantan' )
     #x = get_large_area_input_data(ref_study_area,['blue_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','EVI', 'slope'], 'Kalimantan', str(2015),'West_Kalimantan')
 
