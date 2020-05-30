@@ -161,9 +161,9 @@ def init_x_y_data(sites, band_set):
             data_scoring = helper.trim_data2(data_scoring)
             data_scoring = helper.drop_no_data(data_scoring)
             X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
-            X_scaled_score = helper.scale_data(X_score)
+            #X_scaled_score = helper.scale_data(X_score)
             new_key = str(key) + str(concession)
-            scaled_x_data[new_key] = deepcopy(X_scaled_score)
+            scaled_x_data[new_key] = deepcopy(X_score)
             y_score_all = data_scoring['clas'].values
             actual_data[new_key] = deepcopy(y_score_all)
     X_scaled_score = False

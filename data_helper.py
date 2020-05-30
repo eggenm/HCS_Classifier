@@ -351,7 +351,7 @@ def write_concession_band(data_src, bounding_raster,  outtif):
                  print('ji:  ', ji)
                  print('window:  ', window)
                #  print('window.shape:  ', window.shape)
-                 block = data_src[window.col_off:window.col_off+width,window.row_off:window.row_off+height ]#.read(window=window)
+                 block = data_src[window.col_off:window.col_off+window.width,window.row_off:window.row_off+window.height ]#.read(window=window)
             #     if sum(sum(sum(~np.isnan(block)))) > 0:
                  dst.write(block , window=window)
         dst.close()
@@ -590,8 +590,8 @@ input_data_cache = imagery_cache()
 if __name__ == "__main__":
     #write_input_data=True
     #x = get_input_data(['aspect', 'VH', 'blue_max', 'EVI'],'Kalimantan', str(2015), ['app_kalbar'], False)
-    #x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan']#,'PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
-    #                   , False )#,
+    x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
+                       , False )#,
 
     x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),
                        ['app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'app_kalbar', 'app_kaltim',
