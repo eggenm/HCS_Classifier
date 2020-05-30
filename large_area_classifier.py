@@ -23,10 +23,10 @@ sites = [
 ]
 sites = [
     'Bumitama_PTGemilangMakmurSubur',
-    'Bumitama_PTHungarindoPersada',
-    'PTAgroAndalan',
+  #  'Bumitama_PTHungarindoPersada',
+    #'PTAgroAndalan',
     'gar_pgm',
-    'Bumitama_PTDamaiAgroSejahtera'
+    'Bumitama_PTDamaiAgroSejahtera',
     'PTMitraNusaSarana',
 
 ]
@@ -238,7 +238,7 @@ def log_accuracy(result, name, id):
 
 
 if __name__ == "__main__":
-    name = 'gar_pgm'
+    name = 'PTAgroAndalan'
     try:
         with timer.Timer() as t:
             island = db.conncession_island_dict[name]
@@ -250,7 +250,7 @@ if __name__ == "__main__":
                 ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
             # TODO this relies on hardcoded bands where below pulls from database
             X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, year, name)
-            iterations_per_site = 3
+            iterations_per_site = 5
             total_predictions = iterations_per_site * len(sites)
             #predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
             predictions = np.zeros(X_scaled_class.shape[0])

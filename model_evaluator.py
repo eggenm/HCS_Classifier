@@ -311,7 +311,7 @@ if __name__ == "__main__":
     #init_x_y_data(sites, band_set)
     #evaluate_model()
     init_x_y_data(sites, add_1_band_set)
-    resultfile = base_dir + 'add1band_result.05282020.csv'
+    resultfile = base_dir + 'add1band_result.05292020.csv'
     #db.get_all_model_performance().to_csv(resultfile, index=False)
     evaluate_bands().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
