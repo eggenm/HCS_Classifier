@@ -474,8 +474,8 @@ def get_large_area_input_data(study_area_base_raster, bands, island, year, name=
             with timer.Timer() as t:
                 x = get_concession_bands(bands, island, year, study_area_base_raster, name)
                 x = drop_no_data(x)
-                X_scaled_class = scale_data(x)
-                return X_scaled_class
+                #X_scaled_class = scale_data(x)
+                return x
                # print('X_scaled_class.shape:  ', X_scaled_class.shape)
         finally:
             x = False
@@ -594,7 +594,16 @@ if __name__ == "__main__":
     #                   , False )#,
 
     x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),
-                       ['app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'app_kalbar','app_kaltim', 'crgl_stal', 'app_muba'] , False )#,
+                       ['app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'app_kalbar', 'app_kaltim',
+                        'crgl_stal', 'app_muba'], False)  # ,
+
+    ref_study_area = get_reference_raster_from_shape('West_Kalimantan', 'Kalimantan', 2015)
+    # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
+    x = get_large_area_input_data(ref_study_area, ['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],
+                                  'Kalimantan', str(2015), 'West_Kalimantan')
+
+
+
     ref_study_area = get_reference_raster_from_shape('Jambi', 'Sumatra', 2015)
     # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
     x = get_large_area_input_data(ref_study_area, ['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],

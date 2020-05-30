@@ -245,11 +245,11 @@ if __name__ == "__main__":
    # base_dir = dirfuncs.guess_data_dir()
    # resultfile = base_dir + 'result.test2.csv'
    # get_all_model_performance().to_csv(resultfile, index=False)
-    print(get_best_bands(['Bumitama_PTHungarindoPersada']))
+  #  print(get_best_bands(['Bumitama_PTHungarindoPersada']))
     print(get_best_bands(['Bumitama_PTGemilangMakmurSubur']))
     print(get_best_bands(['PTAgroAndalan']))
     print(get_best_bands(['gar_pgm']))
-    print(get_best_bands(['Bumitama_PTDamaiAgroSejahtera']))
+#    print(get_best_bands(['Bumitama_PTDamaiAgroSejahtera']))
     print(get_best_bands(['PTMitraNusaSarana']))
    # init_database()
     #delete_model_performance()

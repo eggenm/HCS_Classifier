@@ -23,9 +23,9 @@ sites = [
 ]
 sites = [
     'Bumitama_PTGemilangMakmurSubur',
-    'Bumitama_PTHungarindoPersada',
+   # 'Bumitama_PTHungarindoPersada',
     'PTAgroAndalan',
-    'gar_pgm',
+   # 'gar_pgm',
     #'Bumitama_PTDamaiAgroSejahtera'
     'PTMitraNusaSarana',
 
@@ -210,9 +210,9 @@ def get_training_data(sites, bands, year, sample_rate,  seed):
     train_df = helper.trim_data2(helper.get_input_data(bands, year, sites, False))
     train_df = helper.drop_no_data(train_df)
     X = train_df[[col for col in train_df.columns if (col != 'clas')]]
-    X_scaled = helper.scale_data(X)
+    #X_scaled = helper.scale_data(X)
     landcover = train_df['clas'].values
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=sample_rate, test_size=0.35,
+    X_train, X_test, y_train, y_test = train_test_split(X, landcover, train_size=sample_rate, test_size=0.35,
                                                         random_state=seed)
     return X_train, X_test, y_train, y_test
 
@@ -238,7 +238,7 @@ def log_accuracy(result, name, id):
 
 
 if __name__ == "__main__":
-    name = 'West_Kalimantan'
+    name = 'gar_pgm'
     try:
         with timer.Timer() as t:
             island = db.conncession_island_dict[name]
