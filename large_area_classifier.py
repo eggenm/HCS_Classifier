@@ -23,10 +23,10 @@ sites = [
 ]
 sites = [
     'Bumitama_PTGemilangMakmurSubur',
-   # 'Bumitama_PTHungarindoPersada',
+    'Bumitama_PTHungarindoPersada',
     'PTAgroAndalan',
-   # 'gar_pgm',
-    #'Bumitama_PTDamaiAgroSejahtera'
+    'gar_pgm',
+    'Bumitama_PTDamaiAgroSejahtera'
     'PTMitraNusaSarana',
 
 ]
@@ -103,7 +103,7 @@ def predict(X_scaled_class, rfmodel):#, predictions):
             for i in range(0, end, step):
                 y = min(i + step, end)
                 print(i, y)
-                block = X_scaled_class[i:y, :]
+                block = X_scaled_class.values[i:y, :]
                 print('block.shape: ', block.shape)
                 if (rfmodel.scheme == 'ALL'):
                     predictions[i:y] = predictions[i:y] + helper.map_to_2class(rfmodel.model.predict(block))

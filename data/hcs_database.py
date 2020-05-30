@@ -240,16 +240,19 @@ def get_best_scheme(concession):
 
 if __name__ == "__main__":
     print('in main')
-    #print(get_all_model_performance())
+    print(get_all_model_performance())
     conn = sqlite3.connect('hcs_database.db')
-   # base_dir = dirfuncs.guess_data_dir()
-   # resultfile = base_dir + 'result.test2.csv'
-   # get_all_model_performance().to_csv(resultfile, index=False)
-  #  print(get_best_bands(['Bumitama_PTHungarindoPersada']))
+    base_dir = dirfuncs.guess_data_dir()
+    resultfile = base_dir + 'result_B.5282020.csv'
+    df = pd.read_csv(resultfile)
+    df.to_sql('model_performance_log', conn, if_exists='append', index=False)
+    print(get_all_model_performance())
+    #get_all_model_performance().to_csv(resultfile, index=False)
+    print(get_best_bands(['Bumitama_PTHungarindoPersada']))
     print(get_best_bands(['Bumitama_PTGemilangMakmurSubur']))
     print(get_best_bands(['PTAgroAndalan']))
     print(get_best_bands(['gar_pgm']))
-#    print(get_best_bands(['Bumitama_PTDamaiAgroSejahtera']))
+    print(get_best_bands(['Bumitama_PTDamaiAgroSejahtera']))
     print(get_best_bands(['PTMitraNusaSarana']))
    # init_database()
     #delete_model_performance()
