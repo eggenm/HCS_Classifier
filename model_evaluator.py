@@ -54,20 +54,20 @@ band_set ={ # 0: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 's
             91: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
             92: ['swir1_max',  'VH_0', 'VV_0', 'EVI' ,'slope'],
             93: ['swir1_max',  'VH_0', 'VV_0', 'EVI' ],
-            94: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'VV_2', 'VH_2','slope'],
-            95: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'VV_2', 'VH_2'],
-            96: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV_2', 'VH_2', 'slope'],
-            97: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV_2', 'VH_2'],
-            98: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV', 'VH', 'EVI' ,'slope'],
-            99: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV', 'VH', 'EVI'],
+            94: ['nir_max', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'VV_2', 'VH_2','slope'],
+            95: ['nir_max', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'VV_2', 'VH_2'],
+            96: ['nir_max', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV_2', 'VH_2', 'slope'],
+            97: ['nir_max', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV_2', 'VH_2'],
+            98: ['nir_max', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV', 'VH', 'EVI' ,'slope'],
+            99: ['nir_max', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV', 'VH', 'EVI'],
             19: ['swir1_max', 'VH_0', 'VV_0', 'VH', 'VV', 'VV_2', 'VH_2', 'EVI', 'slope'],
             29: ['swir1_max', 'VH_0', 'VV_0', 'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
             39: ['swir1_max',  'VH', 'VV', 'EVI', 'slope'],
             49: ['swir1_max',  'VH', 'VV', 'EVI', ],
-            59: ['nir', 'swir1_max',  'swir2_max' , 'VV_2', 'VH_2', 'EVI' ,'slope'],
-            69: ['nir', 'swir1_max',  'swir2_max' , 'VV_2', 'VH_2', 'EVI' ],
-            79: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'EVI', 'slope'],
-            89: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'EVI', ],
+            59: ['nir_max', 'swir1_max',  'swir2_max' , 'VV_2', 'VH_2', 'EVI' ,'slope'],
+            69: ['nir_max', 'swir1_max',  'swir2_max' , 'VV_2', 'VH_2', 'EVI' ],
+            79: ['nir_max', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'EVI', 'slope'],
+            89: ['nir_max', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'EVI', ],
             10: ['swir1_max', 'EVI', 'VH_0', 'VV_2'],
             11: ['swir1_max', 'slope', 'VH', 'VV_2'],
             12: ['swir1_max',  'VH_0', 'VH'],
@@ -207,7 +207,8 @@ def evaluate_model():
                                        'max_leaf_nodes', 'max_features', 'n_estimators', 'training_sample_rate', 'resolution', 'kappa', 'kappa_3'])
         x = range(4, 11, 2)
         for key, bands in band_set.items():
-
+            myBands = {key:bands}
+            init_x_y_data(sites, myBands)
 
             i = 0
 
@@ -345,7 +346,7 @@ def get_landcover_data2(band_id, concessions):
 if __name__ == "__main__":
     scaled_x_data = dict()
     actual_data = dict()
-    init_x_y_data(sites, band_set)
+    #init_x_y_data(sites, band_set)
     resultfile = base_dir + 'sumatra_result.05292020.csv'
     evaluate_model()
     #init_x_y_data(sites, add_1_band_set)
