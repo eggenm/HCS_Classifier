@@ -241,18 +241,18 @@ def evaluate_model():
 
                 ###########   USE ROC_AUC  ###################
 
-                model = train_model(X_train, helper.map_to_3class(y_train.values.ravel()), 'roc_auc_ovo')
-                yhat = model.predict(X_scaled_score)
-                score_3, score_3_weighted, kappa3 = score_model(helper.map_to_3class(y_score_all.values.ravel()), yhat)
-                score_two, score_two_weighted, kappa2 = score_model(helper.map_to_2class(y_score_all.values.ravel()),
-                                                            helper.map_3_to_2class(yhat))
-                result.loc[i] = [scoreConcession[0], str(bands), 'roc_auc_ovo', '3CLASS', score_3, score_3_weighted, score_two,
-                                 score_two_weighted, str(trainConcessions),
-                                 model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'],
-                                 model.get_params()['max_features'], model.get_params()['n_estimators'],
-                                 training_sample_rate, resolution, kappa2, kappa3]
-                print(result.loc[i])
-                i += 1
+                # model = train_model(X_train, helper.map_to_3class(y_train.values.ravel()), 'roc_auc_ovo')
+                # yhat = model.predict(X_scaled_score)
+                # score_3, score_3_weighted, kappa3 = score_model(helper.map_to_3class(y_score_all.values.ravel()), yhat)
+                # score_two, score_two_weighted, kappa2 = score_model(helper.map_to_2class(y_score_all.values.ravel()),
+                #                                             helper.map_3_to_2class(yhat))
+                # result.loc[i] = [scoreConcession[0], str(bands), 'roc_auc_ovo', '3CLASS', score_3, score_3_weighted, score_two,
+                #                  score_two_weighted, str(trainConcessions),
+                #                  model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'],
+                #                  model.get_params()['max_features'], model.get_params()['n_estimators'],
+                #                  training_sample_rate, resolution, kappa2, kappa3]
+                # print(result.loc[i])
+                # i += 1
 
                 ###########   USE F1  ###################
 
