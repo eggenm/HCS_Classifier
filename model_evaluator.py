@@ -217,7 +217,7 @@ def evaluate_model():
 
             y_score_all = get_landcover_data(key,scoreConcession)
             X_scaled = get_predictor_data2(key, trainConcessions)
-            landcover = get_landcover_data(key,trainConcessions)
+            landcover = get_landcover_data2(key,trainConcessions)
             for y in range(400, 700, 125):
                 training_sample_rate = y
                 X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.20,
