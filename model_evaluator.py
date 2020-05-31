@@ -351,7 +351,7 @@ if __name__ == "__main__":
     actual_data = dict()
     #init_x_y_data(sites, band_set)
     resultfile = base_dir + 'sumatra_result.05292020.csv'
-    #evaluate_model()
+    evaluate_model()
 
     #resultfile = base_dir + 'add1band_result.05292020.csv'
     db.get_all_model_performance().to_csv(resultfile, index=False)
