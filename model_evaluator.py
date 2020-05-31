@@ -197,8 +197,9 @@ def evaluate_model():
 
     for scoreConcession in sites:
         print(scoreConcession)
-        trainConcessions = sites
+        trainConcessions = deepcopy(sites)
         trainConcessions.remove(scoreConcession)
+        trainConcessions = [item for sublist in trainConcessions for item in sublist]
 
         result = pd.DataFrame(columns=['concession', 'bands', 'score_type', 'class_scheme', 'score', 'score_weighted',
                                        'two_class_score', 'two_class_score_weighted', 'training_concessions',
@@ -215,8 +216,7 @@ def evaluate_model():
             X_scaled_score = get_predictor_data(key,scoreConcession)
 
             y_score_all = get_landcover_data(key,scoreConcession)
-
-            X_scaled = get_predictor_data(key, trainConcessions)
+            X_scaled = get_predictor_data2(key, trainConcessions)
             landcover = get_landcover_data(key,trainConcessions)
             for y in range(400, 700, 125):
                 training_sample_rate = y
@@ -320,6 +320,26 @@ def get_landcover_data(band_id, concessions):
     data = pd.DataFrame()
     new_key = str(band_id) + concessions[0]
     data = pd.DataFrame(actual_data[new_key])
+    return data
+
+def get_predictor_data2(band_id, concessions):
+    data = pd.DataFrame()
+    for concession in concessions:
+        new_key = str(band_id)+concession
+        if data.empty:
+            data = pd.DataFrame(scaled_x_data[new_key])
+        else:
+            data = pd.concat([data, pd.DataFrame(scaled_x_data[new_key])], ignore_index=True)
+    return data
+
+def get_landcover_data2(band_id, concessions):
+    data = pd.DataFrame()
+    for concession in concessions:
+        new_key = str(band_id) + concession
+        if data.empty:
+            data = pd.DataFrame(actual_data[new_key])
+        else:
+            data = pd.concat([data, pd.DataFrame(actual_data[new_key])], ignore_index=True)
     return data
 
 if __name__ == "__main__":
