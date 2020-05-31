@@ -31,9 +31,9 @@ sites = [ #'app_muba':'Sumatra',
    # 'gar_pgm':'Kalimantan',
 #'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
     # 'Bumitama_PTHungarindoPersada':'Kalimantan',
-['Bumitama_PTDamaiAgroSejahtera','PTAgroAndalan'],
-['PTMitraNusaSarana', 'gar_pgm'],
-['Bumitama_PTGemilangMakmurSubur', 'Bumitama_PTHungarindoPersada']
+#['Bumitama_PTDamaiAgroSejahtera','PTAgroAndalan'],
+#['PTMitraNusaSarana', 'gar_pgm'],
+#['Bumitama_PTGemilangMakmurSubur', 'Bumitama_PTHungarindoPersada']
 
           ]
 #sites = [
@@ -120,9 +120,9 @@ def train_model(X_train, y_train, score_stat):
                                         .8 ],
                        'n_estimators': [100, 250, 375, 500, 750]}]
 
-        # param_grid = [{
+        #param_grid = [{
         #                 'max_leaf_nodes': [6, 10],
-        #                 'n_estimators': [100, 250, 375, 500 ]}]
+          #              'n_estimators': [100, 250, 375, 500 ]}]
         grid_search = GridSearchCV(clf, param_grid, cv = 5, scoring = score_stat,
                                    return_train_score = True, refit = True)
 
@@ -274,9 +274,11 @@ def evaluate_model():
 
 def evaluate_bands():
     i = 0
+    result = pd.DataFrame(
+        columns=['concession', 'added_band', 'two_class_score_weighted_addl', 'kappa_addl', 'kappa_3_addl'])
     for concession in sites:
         trainConcessions = concession
-        result = pd.DataFrame(columns=['concession', 'added_band', 'two_class_score_weighted_addl', 'kappa_addl', 'kappa_3_addl'])
+
 
         score_base = 0.0
         kappa2base = 0.0
