@@ -369,15 +369,14 @@ def get_feature_inputs(band_groups, bounding_box, island, year, concession=None)
     print('len(array):  ', len(array))
     for i, band in enumerate(band_groups):
         if(concession):
-            tif = base_dir + concession + '/out/' +year+ '/input_' + concession +'_'+ band + '.tif'
             try:
-                file_list = sorted(glob.glob(tif))
-                out_img =  rx.open_rasterio(file_list[0])
+                image_cache = imagery_data.Imagery_Cache.getInstance()
+                out_img = image_cache.get_band_by_concession_name_year(band, concession, year)
             except:
-                print('except: ', band , concession, island)
-                out_img = reproject_match_input_band(band, island, year, bounding_box)
-                if (write_input_data):
-                    write_concession_band(out_img, bounding_box,  tif)
+                    print('except: ', band , concession, island)
+                    out_img = reproject_match_input_band(band, island, year, bounding_box)
+                    if (write_input_data):
+                        write_concession_band(out_img, bounding_box,  tif)
         else:
             out_img = reproject_match_input_band(band, island, year, bounding_box)
 

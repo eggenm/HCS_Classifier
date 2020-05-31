@@ -31,9 +31,9 @@ sites = [ #'app_muba':'Sumatra',
    # 'gar_pgm':'Kalimantan',
 #'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
     # 'Bumitama_PTHungarindoPersada':'Kalimantan',
-#['Bumitama_PTDamaiAgroSejahtera','PTAgroAndalan'],
-#['PTMitraNusaSarana', 'gar_pgm'],
-#['Bumitama_PTGemilangMakmurSubur', 'Bumitama_PTHungarindoPersada']
+['Bumitama_PTDamaiAgroSejahtera','PTAgroAndalan'],
+['PTMitraNusaSarana', 'gar_pgm'],
+['Bumitama_PTGemilangMakmurSubur', 'Bumitama_PTHungarindoPersada']
 
           ]
 #sites = [
@@ -113,15 +113,16 @@ def train_model(X_train, y_train, score_stat):
               class_weight='balanced')
     if doGridSearch:
         print(" ############  IN GRID SEARCH  ############# ")
-        param_grid = [{'max_depth': [ 6, 8, 10 ],
+        param_grid = [{#'max_depth': [ 6, 8, 10 ],
                        'max_leaf_nodes': [6, 10 ],
-                       'max_features': [ .2, .4, .65,
+                       'max_features': [ #.2,
+                                         .33, .65,
                                         .8 ],
                        'n_estimators': [100, 250, 375, 500, 750]}]
 
         # param_grid = [{
-        #                'max_leaf_nodes': [6, 10],
-        #                'n_estimators': [100, 250, 375, 500 ]}]
+        #                 'max_leaf_nodes': [6, 10],
+        #                 'n_estimators': [100, 250, 375, 500 ]}]
         grid_search = GridSearchCV(clf, param_grid, cv = 5, scoring = score_stat,
                                    return_train_score = True, refit = True)
 
@@ -281,6 +282,8 @@ def evaluate_bands():
         kappa2base = 0.0
         kappa3base = 0.0
         for name, bands in add_1_band_set.items():
+            myBands = {name: bands}
+            init_x_y_data([concession], myBands)
             X_scaled = get_predictor_data(name, trainConcessions)
             landcover = get_landcover_data(name, trainConcessions)
             training_sample_rate = 350
@@ -348,10 +351,10 @@ if __name__ == "__main__":
     actual_data = dict()
     #init_x_y_data(sites, band_set)
     resultfile = base_dir + 'sumatra_result.05292020.csv'
-    evaluate_model()
-    #init_x_y_data(sites, add_1_band_set)
+    #evaluate_model()
+
     #resultfile = base_dir + 'add1band_result.05292020.csv'
-    #db.get_all_model_performance().to_csv(resultfile, index=False)
+    db.get_all_model_performance().to_csv(resultfile, index=False)
     #evaluate_bands().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)

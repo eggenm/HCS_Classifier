@@ -34,11 +34,15 @@ class Imagery_Cache:
         #return self.island_data_table[key]
 
 
-    def get_band_by_concession_name_year(self, band, name, island, year ):
+    def get_band_by_concession_name_year(self, band, name,  year ):
         key = name + str(year) + band
         try:
             self.island_data_table[key]
         except KeyError:
-            return False
+            tif = os.path.join(self.base_dir, name, 'out', str(year), '*' + band + '.tif')
+            file = glob.glob(tif)
+            self.island_data_table[key] = rx.open_rasterio(file[0])
+            #return rx.open_rasterio(file[0])
+            #return False
         return self.island_data_table[key]
 
