@@ -50,28 +50,28 @@ band_set ={ # 0: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 's
 #          #   7:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI' ],
 #             8: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0',
 #                 'VH_2', 'VV_2', 'EVI', 'slope'],
-#             9: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ,'slope'],
-#             91: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
-#             92: ['swir1_max',  'VH_0', 'VV_0', 'EVI' ,'slope'],
-#             93: ['swir1_max',  'VH_0', 'VV_0', 'EVI' ],
-#             94: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'VV_2', 'VH_2','slope'],
-#             95: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'VV_2', 'VH_2'],
-#             96: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV_2', 'VH_2', 'slope'],
-#             97: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV_2', 'VH_2'],
-#             98: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV', 'VH', 'EVI' ,'slope'],
-#             99: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV', 'VH', 'EVI'],
-#             19: ['swir1_max', 'VH_0', 'VV_0', 'VH', 'VV', 'VV_2', 'VH_2', 'EVI', 'slope'],
-#             29: ['swir1_max', 'VH_0', 'VV_0', 'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
-#             39: ['swir1_max',  'VH', 'VV', 'EVI', 'slope'],
-#             49: ['swir1_max',  'VH', 'VV', 'EVI', ],
-#             59: ['nir', 'swir1_max',  'swir2_max' , 'VV_2', 'VH_2', 'EVI' ,'slope'],
-#             69: ['nir', 'swir1_max',  'swir2_max' , 'VV_2', 'VH_2', 'EVI' ],
-#             79: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'EVI', 'slope'],
-#             89: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'EVI', ],
-#             10: ['swir1_max', 'EVI', 'VH_0', 'VV_2'],
-#             11: ['swir1_max', 'slope', 'VH', 'VV_2'],
-#             12: ['swir1_max',  'VH_0', 'VH'],
-#             13: ['swir1_max', 'EVI', 'VH', 'VV_0'],
+            9: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ,'slope'],
+            91: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
+            92: ['swir1_max',  'VH_0', 'VV_0', 'EVI' ,'slope'],
+            93: ['swir1_max',  'VH_0', 'VV_0', 'EVI' ],
+            94: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'VV_2', 'VH_2','slope'],
+            95: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'VV_2', 'VH_2'],
+            96: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV_2', 'VH_2', 'slope'],
+            97: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV_2', 'VH_2'],
+            98: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV', 'VH', 'EVI' ,'slope'],
+            99: ['nir', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV', 'VH', 'EVI'],
+            19: ['swir1_max', 'VH_0', 'VV_0', 'VH', 'VV', 'VV_2', 'VH_2', 'EVI', 'slope'],
+            29: ['swir1_max', 'VH_0', 'VV_0', 'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
+            39: ['swir1_max',  'VH', 'VV', 'EVI', 'slope'],
+            49: ['swir1_max',  'VH', 'VV', 'EVI', ],
+            59: ['nir', 'swir1_max',  'swir2_max' , 'VV_2', 'VH_2', 'EVI' ,'slope'],
+            69: ['nir', 'swir1_max',  'swir2_max' , 'VV_2', 'VH_2', 'EVI' ],
+            79: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'EVI', 'slope'],
+            89: ['nir', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'EVI', ],
+            10: ['swir1_max', 'EVI', 'VH_0', 'VV_2'],
+            11: ['swir1_max', 'slope', 'VH', 'VV_2'],
+            12: ['swir1_max',  'VH_0', 'VH'],
+            13: ['swir1_max', 'EVI', 'VH', 'VV_0'],
             14: ['swir1_max', 'slope', 'VH_0', 'VV']
              #    'EVI', 'slope']
             }
@@ -271,11 +271,11 @@ def evaluate_model():
     print(db.get_all_model_performance())
 
 def evaluate_bands():
-
+    i = 0
     for concession in sites:
         trainConcessions = concession
         result = pd.DataFrame(columns=['concession', 'added_band', 'two_class_score_weighted_addl', 'kappa_addl', 'kappa_3_addl'])
-        i=0
+
         score_base = 0.0
         kappa2base = 0.0
         kappa3base = 0.0
@@ -348,10 +348,10 @@ if __name__ == "__main__":
     init_x_y_data(sites, band_set)
     resultfile = base_dir + 'sumatra_result.05292020.csv'
     evaluate_model()
-    # init_x_y_data(sites, add_1_band_set)
-    # resultfile = base_dir + 'add1band_result.05292020.csv'
-    # #db.get_all_model_performance().to_csv(resultfile, index=False)
-    # evaluate_bands().to_csv(resultfile, index=False)
+    #init_x_y_data(sites, add_1_band_set)
+    #resultfile = base_dir + 'add1band_result.05292020.csv'
+    #db.get_all_model_performance().to_csv(resultfile, index=False)
+    #evaluate_bands().to_csv(resultfile, index=False)
     # img=get_feature_inputs(band_set.get(5))
     # array=np.asarray(img)
     # x = helper.gen_windows(array, pixel_window_size)
