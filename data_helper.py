@@ -481,7 +481,7 @@ def get_large_area_input_data(study_area_base_raster, bands, island, year, name=
 
 def get_reference_raster_from_shape(shapefile, island, year):
     bounding = shapefilehelp.get_bounding_box_polygon(db.shapefiles[shapefile])
-    outtif = get_input_band('blue_max', island, year)
+    outtif = get_input_band('nir_max', island, year)
     #out_img = reproject_match_input_band(outtif)
     out_img =outtif.rio.clip(bounding, outtif.rio.crs)
     outtif = False
