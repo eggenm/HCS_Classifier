@@ -426,9 +426,7 @@ def get_concession_bands(bands, island, year, bounding_box, concession=None):
         x=False
         with timer.Timer() as t:
             img = get_feature_inputs(bands, bounding_box, island, year, concession)
-            #array = np.asarray(img[0])
-            x = gen_windows2(img)
-            #x = gen_windows(img, pixel_window_size)
+            x = None#gen_windows2(img) TODO take this out!!!!
     finally:
         array=False
         img=False
