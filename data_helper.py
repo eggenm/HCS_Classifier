@@ -601,13 +601,13 @@ if __name__ == "__main__":
 
     ref_study_area = get_reference_raster_from_shape('South_Sumatra', 'Sumatra', 2015)
     # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
-    x = get_large_area_input_data(ref_study_area, [ 'nir_max', 'swir1_max', 'swir2_max', 'EVI', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],
+    x = get_large_area_input_data(ref_study_area, [ 'nir_max', 'swir1_max', 'swir2_max', 'EVI', 'VH_0', 'VV_0'],
                                  'Sumatra', str(2015), 'South_Sumatra')
-
-    ref_study_area = get_reference_raster_from_shape('South_Sumatra', 'Sumatra', 2015)
+#['VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation']
+    ref_study_area = get_reference_raster_from_shape('Riau', 'Sumatra', 2015)
     # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
-    x = get_large_area_input_data(ref_study_area, [ 'nir_max', 'swir1_max', 'swir2_max', 'EVI', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],
-                                 'Sumatra', str(2015), 'South_Sumatra')
+    x = get_large_area_input_data(ref_study_area, [ 'nir_max', 'swir1_max', 'swir2_max', 'EVI', 'VH_0', 'VV_0'],
+                                 'Sumatra', str(2015), 'Riau')
 
    # x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),
     #                   ['app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'app_kalbar','app_kaltim', 'crgl_stal', 'app_muba'] , False )#,

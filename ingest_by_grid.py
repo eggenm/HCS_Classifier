@@ -71,8 +71,8 @@ def download_data(polygons,i):
     images = {
         #  '_greenest': sentinel,
         '_radar': radar,  # 'class': strata_img,
-        '_greenest': l8,
-        '_dem':dem
+       # '_greenest': l8,
+      #  '_dem':dem
      #   '_soil': soil
        # '_watermask': water_mask
 
