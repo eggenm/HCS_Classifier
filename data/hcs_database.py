@@ -109,9 +109,9 @@ shapefiles = {'app_kalbar': shapefile_base + 'Kalbar_DTK_Stratification.shp',
 
                 'Jambi': province_shapfile_dir + 'Jambi_Province.shp',
                 'Lampung': province_shapfile_dir + 'Lampung.shp',
-                'Riau': province_shapfile_dir + 'Riau.shp',
+                'Riau': province_shapfile_dir + 'Riau_clip.shp',
                 'West_Sumatra': province_shapfile_dir + 'Sumatera_Barat.shp',
-                'South_Sumatra': province_shapfile_dir + 'Sumatera_Selatan.shp',
+                'South_Sumatra': province_shapfile_dir + 'Sumatera_Selatan_clip.shp',
                 'Bengkulu': province_shapfile_dir + 'Bengkulu.shp',
                 'North_Sumatra': province_shapfile_dir + 'Sumatera_Utara.shp',
                 'Aceh': province_shapfile_dir + 'Aceh.shp',
@@ -243,10 +243,10 @@ if __name__ == "__main__":
     print(get_all_model_performance())
     conn = sqlite3.connect('hcs_database.db')
     base_dir = dirfuncs.guess_data_dir()
-    #resultfile = base_dir + 'result_B.5282020.csv'
-    #df = pd.read_csv(resultfile)
-    #df.to_sql('model_performance_log', conn, if_exists='append', index=False)
-    #print(get_all_model_performance())
+    resultfile = base_dir + 'Suma_result.06012020.csv'
+    df = pd.read_csv(resultfile)
+    df.to_sql('model_performance_log', conn, if_exists='append', index=False)
+    print(get_all_model_performance())
     #get_all_model_performance().to_csv(resultfile, index=False)
    # print(get_best_bands(['Bumitama_PTHungarindoPersada']))
     print(get_best_bands(['app_riau']))
