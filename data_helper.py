@@ -468,7 +468,7 @@ def get_large_area_input_data(study_area_base_raster, bands, island, year, name=
         try:
             with timer.Timer() as t:
                 x = get_concession_bands(bands, island, year, study_area_base_raster, name)
-                x = drop_no_data(x)
+                #x = drop_no_data(x)  TODO uncomment!!!!!!
                 #X_scaled_class = scale_data(x)
                 return x
                # print('X_scaled_class.shape:  ', X_scaled_class.shape)
@@ -598,10 +598,10 @@ if __name__ == "__main__":
 
 
 
-    ref_study_area = get_reference_raster_from_shape('South_Sumatra', 'Sumatra', 2015)
+    #ref_study_area = get_reference_raster_from_shape('South_Sumatra', 'Sumatra', 2015)
     # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
-    x = get_large_area_input_data(ref_study_area, ['VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'] ,
-                                 'Sumatra', str(2015), 'South_Sumatra')
+  #  x = get_large_area_input_data(ref_study_area, ['VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'] ,
+       #                          'Sumatra', str(2015), 'South_Sumatra')
 #
     #['nir_max', 'swir1_max', 'swir2_max', 'EVI', 'VH_0', 'VV_0']
     ref_study_area = get_reference_raster_from_shape('Riau', 'Sumatra', 2015)
