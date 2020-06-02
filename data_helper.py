@@ -367,6 +367,7 @@ def get_feature_inputs(band_groups, bounding_box, island, year, concession=None)
                 image_cache = imagery_data.Imagery_Cache.getInstance()
                 out_img = image_cache.get_band_by_concession_name_year(band, concession, year)
             except:
+                    tif = base_dir + concession + '/out/' + year + '/input_' + concession + '_' + band + '.tif'
                     print('except: ', band , concession, island)
                     out_img = reproject_match_input_band(band, island, year, bounding_box)
                     if (write_input_data):
