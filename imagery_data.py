@@ -46,3 +46,16 @@ class Imagery_Cache:
             #return False
         return self.island_data_table[key]
 
+    def get_class_by_concession_name(self, name ):
+        key = 'class' + name
+        try:
+            self.island_data_table[key]
+        except KeyError:
+            tif = os.path.join(self.base_dir, name,  name + '_all_class.remapped.tif')
+            file = glob.glob(tif)
+            self.island_data_table[key] = rx.open_rasterio(file[0])
+            #return rx.open_rasterio(file[0])
+            #return False
+        return self.island_data_table[key]
+
+

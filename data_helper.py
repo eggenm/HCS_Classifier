@@ -98,20 +98,6 @@ classes = {
 21:	'TP'
 }
 
-class imagery_cache:
-
-    def __init__(self):
-        self.island_data_table = {}
-
-    def get_band_by_island_year(self, band, island, year ):
-        key = island+str(year)+band
-        try:
-            self.island_data_table[key]
-        except KeyError:
-            tif = os.path.join(base_dir, island, 'out', str(year), '*' + band + '.tif')
-            file = glob.glob(tif)
-            self.island_data_table[key] = rx.open_rasterio(file[0])
-        return self.island_data_table[key]
 
 # =============================================================================
 # FUNCTIONS:  Read and prep raster data
@@ -233,6 +219,7 @@ def stack_image_input_data(concession, bands, name):
 
 def get_landcover_class_image(concession):
     print(concession)
+
     #three_class_file = base_dir + concession + '/' + concession + '_remap_3class.remapped.tif'
     allclass_file = base_dir + concession + '/' + concession + '_all_class.remapped.tif'
     print("**get_landcover_class_image:  allclass_file:  ", allclass_file)
@@ -256,22 +243,29 @@ def get_classes2(classImage, name):
 def get_classes(classImage, name):
     clas_dict = {}
     shape = classImage.shape
-    for i in range(classImage.shape[1]):
-        for j in range(classImage.shape[2]):
-            clas_dict[(i, j)] = classImage[0, i, j]
-    full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
-    classes = pd.DataFrame({name: pd.Series(clas_dict)}, index=full_index)
+    try:
+        with timer.Timer() as t:
+            for i in range(classImage.shape[1]):
+                for j in range(classImage.shape[2]):
+                    clas_dict[(i, j)] = classImage[0, i, j]
+            full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
+            classes = pd.DataFrame({name: pd.Series(clas_dict)}, index=full_index)
+    finally:
+        print('get_classes Request took %.03f sec.' % t.interval)
     return classes
 
 
-def combine_input_landcover(input, landcover_all, isClass):
-    data_df = landcover_all.merge(input, left_index=True, right_index=True, how='left')
-    #data_df = landcover2.merge(data_df, left_index=True, right_index=True, how='left')
-    if( not isClass):
-        data_df[data_df <= -999] = np.nan
-        data_df = data_df.dropna()
-    #print('*****data_df shape:  ', data_df.shape)
-    return data_df
+def combine_input_landcover(input, landcover_all):
+    try:
+        with timer.Timer() as t:
+            data_df = landcover_all.merge(input, left_index=True, right_index=True, how='left')
+            #data_df = landcover2.merge(data_df, left_index=True, right_index=True, how='left')
+            data_df[data_df <= -999] = np.nan  #MEE 6-1-2020:  This used to be conditional on whether I was using the data in a training set or not. If I was doing it to make a class map then I did not do this
+            #data_df = data_df.dropna()
+            #print('*****data_df shape:  ', data_df.shape)
+            return data_df
+    finally:
+        print('combine_input_landcover Request took %.03f sec.' % t.interval)
 
 
 def scale_data(x):
@@ -441,31 +435,34 @@ def get_concession_bands(bands, island, year, bounding_box, concession=None):
     return x
 
 
-def get_input_data(bands, year, concessions, isClass=False):
+def get_input_data(bands, year, concessions, get_predictor_data_only=False):
     data = pd.DataFrame()
-    for concession in concessions:
-        print(concession)
-        island = db.conncession_island_dict[concession]
-        all_class_image = get_landcover_class_image(concession)
-        print(all_class_image)
-        class_file = sorted(glob.glob(all_class_image))[0]
-        # if(write_input_data):
-        #    write_data_array(file_list[0],concession,'class',)
+    try:
+        with timer.Timer() as t:
+            for concession in concessions:
+                print(concession)
+                island = db.conncession_island_dict[concession]
+                image_cache = imagery_data.Imagery_Cache.getInstance()
+                all_class = image_cache.get_class_by_concession_name(concession)
 
-        all_class = rx.open_rasterio(class_file)
-        if(write_input_data):
-            print('TODO - check class image, shape: ', all_class.shape)
-           # write_data_array(class_file, 'Class'+concession)
-        y = get_classes(all_class.data, 'clas')
-        #box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])
-        x = get_concession_bands(bands, island, year, all_class, concession)
-        if data.empty:
-            data = combine_input_landcover(x, y, isClass)
-        else:
-            data = pd.concat([data, combine_input_landcover(x, y, isClass)], ignore_index=True)
-    all_class=False
-    x=False
-    y=False
+                #box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])
+                x = get_concession_bands(bands, island, year, all_class, concession)
+
+                if data.empty and not get_predictor_data_only:
+                    y = get_classes(all_class.data, 'clas')
+                    data = combine_input_landcover(x, y)
+                elif data.empty and get_predictor_data_only:
+                    data = x
+                elif not get_predictor_data_only:
+                    y = get_classes(all_class.data, 'clas')
+                    data = pd.concat([data, combine_input_landcover(x, y)], ignore_index=True)
+                else:
+                    pd.concat([data, x], ignore_index=True)
+            all_class=False
+            x=False
+            y=False
+    finally:
+        print('get_input_data Request took %.03f sec.' % t.interval)
     return data
 
 def get_large_area_input_data(study_area_base_raster, bands, island, year, name=None):
@@ -584,7 +581,6 @@ def drop_no_data(data):
     finally:
         print('Drop NoData Request took %.03f sec.' % t.interval)
 
-input_data_cache = imagery_cache()
 #print(landcoverClassMap)
 if __name__ == "__main__":
     #write_input_data=True
@@ -603,10 +599,15 @@ if __name__ == "__main__":
 
 
 
-    ref_study_area = get_reference_raster_from_shape('Jambi', 'Sumatra', 2015)
+    ref_study_area = get_reference_raster_from_shape('South_Sumatra', 'Sumatra', 2015)
     # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
-    x = get_large_area_input_data(ref_study_area, ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'EVI'],
-                                 'Sumatra', str(2015), 'Jambi')
+    x = get_large_area_input_data(ref_study_area, [ 'nir_max', 'swir1_max', 'swir2_max', 'EVI', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],
+                                 'Sumatra', str(2015), 'South_Sumatra')
+
+    ref_study_area = get_reference_raster_from_shape('South_Sumatra', 'Sumatra', 2015)
+    # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
+    x = get_large_area_input_data(ref_study_area, [ 'nir_max', 'swir1_max', 'swir2_max', 'EVI', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],
+                                 'Sumatra', str(2015), 'South_Sumatra')
 
    # x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),
     #                   ['app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'app_kalbar','app_kaltim', 'crgl_stal', 'app_muba'] , False )#,

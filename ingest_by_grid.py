@@ -63,16 +63,16 @@ def download_data(polygons,i):
     all_study_area = fc.geometry().bounds()
     radar = ingest.assemble_radar_data(all_study_area, year)
     #sentinel = ingest.assemble_sentinel_data(all_study_area, year)
-  #  l8 = ingest.assemble_l8(all_study_area, year)
- #   dem = ingest.getDEM(all_study_area)
+    l8 = ingest.assemble_l8(all_study_area, year)
+    dem = ingest.getDEM(all_study_area)
   #  soil = ingest.getSoil(all_study_area)
   #  water_mask = ingest.get_water_mask(all_study_area)
 
     images = {
         #  '_greenest': sentinel,
         '_radar': radar,  # 'class': strata_img,
-   #     '_greenest': l8,
-  #      '_dem':dem
+        '_greenest': l8,
+        '_dem':dem
      #   '_soil': soil
        # '_watermask': water_mask
 
@@ -134,14 +134,17 @@ if __name__ == "__main__":
 #        polygons = get_grid_polygons(95, 107, -6,6)
 #        download_data(polygons, 44)
 #        cleanup_files()
+       polygons = get_grid_polygons(107, 110, -6, 6)
+       download_data(polygons, 55)
+       cleanup_files()
 #something
-       polygons = get_grid_polygons(98, 102, -6, 4)
-       download_data(polygons, 22 )
-       cleanup_files()
-       polygons = get_grid_polygons(98, 99, 4, 5)
-       download_data(polygons, 12)
-       cleanup_files()
-       polygons = get_grid_polygons(106, 109, -4, 1)
-       download_data(polygons, 13)
-       cleanup_files()
+       # polygons = get_grid_polygons(98, 102, -6, 4)
+       # download_data(polygons, 22 )
+       # cleanup_files()
+       # polygons = get_grid_polygons(98, 99, 4, 5)
+       # download_data(polygons, 12)
+       # cleanup_files()
+       # polygons = get_grid_polygons(106, 109, -4, 1)
+       # download_data(polygons, 13)
+       # cleanup_files()
 

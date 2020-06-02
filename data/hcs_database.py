@@ -185,7 +185,7 @@ def get_max_model_run(concession):
     c = conn.cursor()
     #c.execute("SELECT * FROM model_performance_log where two_class_score_weighted = ( SELECT max(two_class_score_weighted) from model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ?)" ,  (concession) )
     c.execute(
-        "SELECT * FROM model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ? order by kappa desc, two_class_score_weighted desc",
+        "SELECT * FROM model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ?  order by two_class_score_weighted desc, kappa_3 desc ",
         (concession))
 
     rows = c.fetchone()
@@ -249,9 +249,13 @@ if __name__ == "__main__":
     #print(get_all_model_performance())
     #get_all_model_performance().to_csv(resultfile, index=False)
    # print(get_best_bands(['Bumitama_PTHungarindoPersada']))
-    print(get_best_bands(['Bumitama_PTGemilangMakmurSubur']))
-    print(get_best_bands(['PTAgroAndalan']))
-    print(get_max_model_run(['PTAgroAndalan']))
+    print(get_best_bands(['app_riau']))
+    print(get_best_bands(['app_oki']))
+    print(get_best_bands(['app_jambi']))
+    print(get_max_model_run(['Bumitama_PTGemilangMakmurSubur'])['two_class_score_weighted'])
+    print(get_max_model_run(['gar_pgm'])['two_class_score_weighted'])
+    print(get_max_model_run(['Bumitama_PTDamaiAgroSejahtera'])['two_class_score_weighted'])
+    print(get_max_model_run(['PTMitraNusaSarana'])['two_class_score_weighted'])
     print(get_best_bands(['gar_pgm']))
     print(get_best_bands(['Bumitama_PTDamaiAgroSejahtera']))
     print(get_best_bands(['PTMitraNusaSarana']))

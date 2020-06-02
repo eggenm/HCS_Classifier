@@ -10,6 +10,7 @@ from sklearn.ensemble import RandomForestClassifier as rfc
 import sklearn.metrics
 from sklearn.metrics import f1_score
 from copy import deepcopy
+import timer
 import itertools
 
 #############   SETUP  PARAMS    ######################
@@ -18,9 +19,15 @@ resolution = 30
 
 year=str(2015)
 sites = [ #'app_muba':'Sumatra',
-['app_riau'],
-['app_oki'],
-     ['app_jambi'] ,
+#['app_riau'],
+#['app_oki'],
+  #   ['app_jambi'] ,
+# ['Bumitama_PTDamaiAgroSejahtera'],
+    ['Bumitama_PTHungarindoPersada'],
+    ['PTAgroAndalan'],
+    ['PTMitraNusaSarana'],
+    ['gar_pgm'],
+ ['Bumitama_PTGemilangMakmurSubur'],
  #         'crgl_stal' : 'Sumatra',
 
 #'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
@@ -52,27 +59,26 @@ band_set ={ # 0: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 's
 #                 'VH_2', 'VV_2', 'EVI', 'slope'],
             9: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ,'slope'],
             91: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
-            92: ['swir1_max',  'VH_0', 'VV_0', 'EVI' ,'slope'],
-            93: ['swir1_max',  'VH_0', 'VV_0', 'EVI' ],
-            94: ['nir_max', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'VV_2', 'VH_2','slope'],
-            95: ['nir_max', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'VV_2', 'VH_2'],
-            96: ['nir_max', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV_2', 'VH_2', 'slope'],
-            97: ['nir_max', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV_2', 'VH_2'],
-            98: ['nir_max', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV', 'VH', 'EVI' ,'slope'],
-            99: ['nir_max', 'swir1_max',  'swir2_max' , 'VH_0', 'VV_0', 'VV', 'VH', 'EVI'],
-            19: ['swir1_max', 'VH_0', 'VV_0', 'VH', 'VV', 'VV_2', 'VH_2', 'EVI', 'slope'],
-            29: ['swir1_max', 'VH_0', 'VV_0', 'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
+            94: ['nir_max', 'swir1_max',   'VH', 'VV', 'VV_2', 'VH_2','slope'],
+            95: ['nir_max', 'swir1_max',   'VH', 'VV', 'VV_2', 'VH_2'],
+            96: ['nir_max', 'swir1_max',   'VV_2', 'VH_2', 'EVI' ,'slope'],
+            97: ['nir_max', 'swir1_max',   'VV_2', 'VH_2', 'EVI' ],
+            98: ['nir_max', 'swir1_max',  'VV', 'VH', 'EVI' ,'slope'],
+            99: ['nir_max', 'swir1_max',  'VV', 'VH', 'EVI'],
+            19: ['swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI', 'slope'],
+            29: ['swir1_max', 'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
             39: ['swir1_max',  'VH', 'VV', 'EVI', 'slope'],
-            49: ['swir1_max',  'VH', 'VV', 'EVI', ],
-            59: ['nir_max', 'swir1_max',  'swir2_max' , 'VV_2', 'VH_2', 'EVI' ,'slope'],
-            69: ['nir_max', 'swir1_max',  'swir2_max' , 'VV_2', 'VH_2', 'EVI' ],
-            79: ['nir_max', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'EVI', 'slope'],
-            89: ['nir_max', 'swir1_max',  'swir2_max' , 'VH', 'VV', 'EVI', ],
-            10: ['swir1_max', 'EVI', 'VH_0', 'VV_2'],
+            49: ['swir1_max',  'VH', 'VV', 'EVI', 'nir_max'],
+            10: ['swir1_max', 'EVI', 'VH' , 'VV_2'],
             11: ['swir1_max', 'slope', 'VH', 'VV_2'],
-            12: ['swir1_max',  'VH_0', 'VH'],
-            13: ['swir1_max', 'EVI', 'VH', 'VV_0'],
-            14: ['swir1_max', 'slope', 'VH_0', 'VV']
+            12: ['swir1_max',  'VH_2', 'VH', 'nir_max'],
+            13: ['swir1_max', 'EVI', 'VH', 'VV'],
+            14: ['swir1_max', 'slope', 'VH', 'VV', 'VH_2'],
+            16: ['nir_max', 'swir1_max',   'VH', 'VV', 'VV_2', 'VH_2','EVI','slope'],
+            17: ['nir_max', 'swir1_max',   'VH', 'VV', 'VV_2', 'VH_2', 'EVI',],
+            18: ['nir_max', 'swir1_max', 'swir2_max', 'VH_0', 'VV_0', 'EVI'],
+            19: ['nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI'],
+            20: ['nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'slope']
              #    'EVI', 'slope']
             }
 
@@ -120,9 +126,9 @@ def train_model(X_train, y_train, score_stat):
                                         .8 ],
                        'n_estimators': [100, 250, 375, 500, 750]}]
 
-        #param_grid = [{
-        #                 'max_leaf_nodes': [6, 10],
-          #              'n_estimators': [100, 250, 375, 500 ]}]
+     #   param_grid = [{
+      #                   'max_leaf_nodes': [6, 10],
+       #                 'n_estimators': [100, 250, 375, 500 ]}]
         grid_search = GridSearchCV(clf, param_grid, cv = 5, scoring = score_stat,
                                    return_train_score = True, refit = True)
 
@@ -178,21 +184,32 @@ class model_performance_logger:
         print('saved')
 
 def init_x_y_data(sites, band_set):
-    for concessions in sites:
-        for key, bands in band_set.items():
-            data_scoring = helper.get_input_data(bands, year, concessions, False)
-            data_scoring = helper.trim_data2(data_scoring)
-            data_scoring = helper.drop_no_data(data_scoring)
-            X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
-            #X_scaled_score = helper.scale_data(X_score)
-            new_key = str(key) + str(concessions[0])  #assumes unique concession 0  !!!
-            print('NEW_KEY:  ', new_key)
-            scaled_x_data[new_key] = deepcopy(X_score)
-            y_score_all = data_scoring['clas'].values
-            actual_data[new_key] = deepcopy(y_score_all)
-    X_scaled_score = False
-    X_score = False
-    y_score_all = False
+    try:
+        with timer.Timer() as t:
+            for concessions in sites:
+                for key, bands in band_set.items():
+                    new_key = str(key) + str(concessions[0])  # assumes unique concession 0  !!!
+                    print('NEW_KEY:  ', new_key)
+                    try:
+                        raw_class_data[concessions[0]]
+                        #if we already have class data for the concession just return the predictors
+                        print("****WE HAVE THE RAW CONCESSION CLASSES ****")
+                        data_scoring = helper.get_input_data(bands, year, concessions, True)
+                        data_scoring['clas'] = raw_class_data[concessions[0]]
+                    except KeyError:
+                        data_scoring = helper.get_input_data(bands, year, concessions, False)
+                        raw_class_data[concessions[0]] = data_scoring['clas'].values
+                    data_scoring = helper.trim_data2(data_scoring)
+                    data_scoring = helper.drop_no_data(data_scoring)
+                    X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
+                    y_score_all = data_scoring['clas'].values
+                    actual_data[new_key] = deepcopy(y_score_all)
+                    scaled_x_data[new_key] = deepcopy(X_score)
+    finally:
+        print('INIT_XY_DATA took %.03f sec.' % t.interval)
+        X_scaled_score = False
+        X_score = False
+        y_score_all = False
 
 def evaluate_model():
 
@@ -351,8 +368,9 @@ def get_landcover_data2(band_id, concessions):
 if __name__ == "__main__":
     scaled_x_data = dict()
     actual_data = dict()
+    raw_class_data = dict()
     #init_x_y_data(sites, band_set)
-    resultfile = base_dir + 'sumatra_result.05292020.csv'
+    resultfile = base_dir + 'Suma_result.06012020.csv'
     evaluate_model()
 
     #resultfile = base_dir + 'add1band_result.05292020.csv'
