@@ -17,19 +17,19 @@ base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
 year = str(2015)
 sites = [
-    'app_riau',
     'app_oki',
+    'app_riau',
     'app_jambi'
 ]
-sites = [
-    'Bumitama_PTGemilangMakmurSubur',
-  #  'Bumitama_PTHungarindoPersada',
-    #'PTAgroAndalan',
-    'gar_pgm',
-    'Bumitama_PTDamaiAgroSejahtera',
-    'PTMitraNusaSarana',
-
-]
+# sites = [
+#     'Bumitama_PTGemilangMakmurSubur',
+#   #  'Bumitama_PTHungarindoPersada',
+#     #'PTAgroAndalan',
+#     'gar_pgm',
+#     'Bumitama_PTDamaiAgroSejahtera',
+#     'PTMitraNusaSarana',
+#
+# ]
 bands = [#'blue_max', 'green_max', 'red_max',
         # 'nir_max',
         'swir1_max',# 'VH_2', 'VV_2', 'EVI'#,'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
@@ -238,7 +238,7 @@ def log_accuracy(result, name, id):
 
 
 if __name__ == "__main__":
-    name = 'PTAgroAndalan'
+    name = 'Jambi'
     try:
         with timer.Timer() as t:
             island = db.conncession_island_dict[name]
@@ -281,7 +281,7 @@ if __name__ == "__main__":
                     X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
                                                                       year, name)
                     predictions  =  predictions + predict(X_scaled_class, trained_model)#, predictions)
-                    if k%4==0:
+                    if k%7==0:
                         write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j)
                     k=k+1
                     if('slope' not in scores['bands']):
@@ -296,7 +296,7 @@ if __name__ == "__main__":
                         X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
                                                                           year, name)
                         predictions = predictions + predict(X_scaled_class, trained_model)  # , predictions)
-                        if k % 6 == 0:
+                        if k % 7 == 0:
                             write_map((np.around(predictions / (k + 1))).astype(rio.int16), ref_study_area, name, j+100)
                         k = k + 1
 
