@@ -2,8 +2,8 @@ import sqlite3
 import pandas as pd
 import dirfuncs
 import itertools
-#conn = sqlite3.connect('data/hcs_database.db')
-conn = sqlite3.connect('hcs_database.db')
+conn = sqlite3.connect('data/hcs_database.db')
+#conn = sqlite3.connect('hcs_database.db')
 
 
 maps_dict = {'app_jambi': 'ft:1bgkWL4VgYSgfAupZmVGcnXJJqMmvyBtl3_VgfyVV',
@@ -241,7 +241,7 @@ def get_best_scheme(concession):
 if __name__ == "__main__":
     print('in main')
     #print(get_all_model_performance())
-    conn = sqlite3.connect('hcs_database.db')
+    conn = sqlite3.connect('data/hcs_database.db')
     base_dir = dirfuncs.guess_data_dir()
     resultfile = base_dir + 'result.06022020_server.csv'
     #df = pd.read_csv(resultfile)
