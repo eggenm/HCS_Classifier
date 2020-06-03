@@ -238,7 +238,7 @@ def log_accuracy(result, name, id):
 
 
 if __name__ == "__main__":
-    name = 'South_Sumatra'
+    name = 'Riau'
     try:
         with timer.Timer() as t:
             island = db.conncession_island_dict[name]
