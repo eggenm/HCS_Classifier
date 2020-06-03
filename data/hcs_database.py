@@ -2,8 +2,8 @@ import sqlite3
 import pandas as pd
 import dirfuncs
 import itertools
-conn = sqlite3.connect('data/hcs_database.db')
-#conn = sqlite3.connect('hcs_database.db')
+#conn = sqlite3.connect('data/hcs_database.db')
+conn = sqlite3.connect('hcs_database.db')
 
 
 maps_dict = {'app_jambi': 'ft:1bgkWL4VgYSgfAupZmVGcnXJJqMmvyBtl3_VgfyVV',
@@ -185,7 +185,7 @@ def get_max_model_run(concession):
     c = conn.cursor()
     #c.execute("SELECT * FROM model_performance_log where two_class_score_weighted = ( SELECT max(two_class_score_weighted) from model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ?)" ,  (concession) )
     c.execute(
-        "SELECT * FROM model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ?  order by two_class_score_weighted desc, kappa_3 desc ",
+        "SELECT * FROM model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ?  order by kappa_3 desc, n_estimators desc ",
         (concession))
 
     rows = c.fetchone()
@@ -240,25 +240,25 @@ def get_best_scheme(concession):
 
 if __name__ == "__main__":
     print('in main')
-    print(get_all_model_performance())
+    #print(get_all_model_performance())
     conn = sqlite3.connect('hcs_database.db')
     base_dir = dirfuncs.guess_data_dir()
-    resultfile = base_dir + 'Suma_result.06012020.csv'
-    df = pd.read_csv(resultfile)
-    df.to_sql('model_performance_log', conn, if_exists='append', index=False)
-    print(get_all_model_performance())
-    #get_all_model_performance().to_csv(resultfile, index=False)
+    resultfile = base_dir + 'result.06022020_server.csv'
+    #df = pd.read_csv(resultfile)
+    #df.to_sql('model_performance_log', conn, if_exists='append', index=False)
+   # print(get_all_model_performance())
+    get_all_model_performance().to_csv(resultfile, index=False)
    # print(get_best_bands(['Bumitama_PTHungarindoPersada']))
-    print(get_best_bands(['app_riau']))
-    print(get_best_bands(['app_oki']))
-    print(get_best_bands(['app_jambi']))
-    print(get_max_model_run(['Bumitama_PTGemilangMakmurSubur'])['two_class_score_weighted'])
-    print(get_max_model_run(['gar_pgm'])['two_class_score_weighted'])
-    print(get_max_model_run(['Bumitama_PTDamaiAgroSejahtera'])['two_class_score_weighted'])
-    print(get_max_model_run(['PTMitraNusaSarana'])['two_class_score_weighted'])
-    print(get_best_bands(['gar_pgm']))
-    print(get_best_bands(['Bumitama_PTDamaiAgroSejahtera']))
-    print(get_best_bands(['PTMitraNusaSarana']))
+   #  print(get_best_bands(['app_riau']))
+   #  print(get_best_bands(['app_oki']))
+   #  print(get_best_bands(['app_jambi']))
+   #  print(get_max_model_run(['app_oki']))
+    # print(get_max_model_run(['gar_pgm'])['two_class_score_weighted'])
+    # print(get_max_model_run(['Bumitama_PTDamaiAgroSejahtera'])['two_class_score_weighted'])
+    # print(get_max_model_run(['PTMitraNusaSarana'])['two_class_score_weighted'])
+    # print(get_best_bands(['gar_pgm']))
+    # print(get_best_bands(['Bumitama_PTDamaiAgroSejahtera']))
+    # print(get_best_bands(['PTMitraNusaSarana']))
    # init_database()
     #delete_model_performance()
    # print(get_all_model_performance())

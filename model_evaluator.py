@@ -107,7 +107,13 @@ def show_results(y_test, y_hat):
     confMatrix = sklearn.metrics.confusion_matrix(y_test, y_hat)
     print(confMatrix)
     kappa  = sklearn.metrics.cohen_kappa_score(y_test, y_hat)
+    accuracy = sklearn.metrics.accuracy_score(y_test, y_hat)
+    f1 = f1_score(y_test, y_hat, average='macro')
+    f1_weighted = f1_score(y_test, y_hat, average='weighted')
     print('KAPPA:  ', kappa)
+    print('Accuracy:  ', accuracy)
+    print('f1:  ', f1)
+    print('f1_weighted:  ', f1_weighted)
 
 
 def train_model(X_train, y_train, score_stat):

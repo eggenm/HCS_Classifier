@@ -426,7 +426,7 @@ def get_concession_bands(bands, island, year, bounding_box, concession=None):
         x=False
         with timer.Timer() as t:
             img = get_feature_inputs(bands, bounding_box, island, year, concession)
-            x = None#gen_windows2(img) TODO take this out!!!!
+            x = gen_windows2(img)
     finally:
         array=False
         img=False
@@ -468,7 +468,7 @@ def get_large_area_input_data(study_area_base_raster, bands, island, year, name=
         try:
             with timer.Timer() as t:
                 x = get_concession_bands(bands, island, year, study_area_base_raster, name)
-                #x = drop_no_data(x)  TODO uncomment!!!!!!
+                x = drop_no_data(x)
                 #X_scaled_class = scale_data(x)
                 return x
                # print('X_scaled_class.shape:  ', X_scaled_class.shape)
@@ -583,7 +583,7 @@ def drop_no_data(data):
 #print(landcoverClassMap)
 if __name__ == "__main__":
     #write_input_data=True
-    #x = get_input_data(['aspect', 'VH', 'blue_max', 'EVI'],'Kalimantan', str(2015), ['app_kalbar'], False)
+    x = get_input_data(['VH', 'blue_max', 'EVI'], str(2015), ['app_kalbar'], False)
   #  x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
    #                    , False )#,
 
