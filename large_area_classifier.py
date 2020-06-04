@@ -21,15 +21,15 @@ sites = [
     'app_riau',
     'app_jambi'
 ]
-# sites = [
-#     'Bumitama_PTGemilangMakmurSubur',
-#   #  'Bumitama_PTHungarindoPersada',
-#     #'PTAgroAndalan',
-#     'gar_pgm',
+sites = [
+     'Bumitama_PTGemilangMakmurSubur',
+  'Bumitama_PTHungarindoPersada',
+     'PTAgroAndalan',
+     'gar_pgm',
 #     'Bumitama_PTDamaiAgroSejahtera',
-#     'PTMitraNusaSarana',
+     'PTMitraNusaSarana',
 #
-# ]
+ ]
 bands = [#'blue_max', 'green_max', 'red_max',
         # 'nir_max',
         'swir1_max',# 'VH_2', 'VV_2', 'EVI'#,'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
@@ -238,7 +238,7 @@ def log_accuracy(result, name, id):
 
 
 if __name__ == "__main__":
-    name = 'Riau'
+    name = 'West_Kalimantan'
     try:
         with timer.Timer() as t:
             island = db.conncession_island_dict[name]
