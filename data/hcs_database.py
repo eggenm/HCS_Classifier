@@ -22,7 +22,7 @@ plots_dict = {'crgl_stal': '',
               'wilm_cal': '',
               'gar_pgm': ''}
 
-conncession_island_dict =  { 'app_muba':'Sumatra',
+data_context_dict =  { 'app_muba':'Sumatra',
 'app_riau': 'Sumatra',
 'app_oki' : 'Sumatra',
       'app_jambi' : 'Sumatra',
@@ -51,6 +51,11 @@ conncession_island_dict =  { 'app_muba':'Sumatra',
                              'Aceh': 'Sumatra',
 
                              'Papua': 'Papua',
+
+                       'impervious':'supplementary',
+                       'oil_palm':'supplementary',
+                       'agriculture':'supplementary',
+                       'forest':'supplementary'
           }
 
 
@@ -185,7 +190,7 @@ def get_max_model_run(concession):
     c = conn.cursor()
     #c.execute("SELECT * FROM model_performance_log where two_class_score_weighted = ( SELECT max(two_class_score_weighted) from model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ?)" ,  (concession) )
     c.execute(
-        "SELECT * FROM model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ?  order by kappa_3 desc, n_estimators desc ",
+        "SELECT * FROM model_performance_log where max_leaf_nodes < 13 and max_features <.81 and class_scheme='3CLASS' and concession = ?  order by round(kappa_3,1) desc, n_estimators desc, two_class_score_weighted desc ",
         (concession))
 
     rows = c.fetchone()
@@ -240,25 +245,48 @@ def get_best_scheme(concession):
 
 if __name__ == "__main__":
     print('in main')
-    #print(get_all_model_performance())
-    conn = sqlite3.connect('data/hcs_database.db')
-    base_dir = dirfuncs.guess_data_dir()
-    resultfile = base_dir + 'result.06022020_server.csv'
-    #df = pd.read_csv(resultfile)
-    #df.to_sql('model_performance_log', conn, if_exists='append', index=False)
-   # print(get_all_model_performance())
-    get_all_model_performance().to_csv(resultfile, index=False)
+    print(get_all_model_performance())
+   #  conn = sqlite3.connect('hcs_database.db')
+   #  base_dir = dirfuncs.guess_data_dir()
+   #  resultfile = base_dir + 'result.06022020_server.csv'
+   #  df = pd.read_csv(resultfile)
+   #  df.to_sql('model_performance_log', conn, if_exists='append', index=False)
+   # # print(get_all_model_performance())
+   #  get_all_model_performance().to_csv(resultfile, index=False)
    # print(get_best_bands(['Bumitama_PTHungarindoPersada']))
-   #  print(get_best_bands(['app_riau']))
-   #  print(get_best_bands(['app_oki']))
-   #  print(get_best_bands(['app_jambi']))
-   #  print(get_max_model_run(['app_oki']))
+    print(get_best_bands(['app_riau']))
+    print(get_best_bands(['app_oki']))
+    print(get_best_bands(['app_jambi']))
+    print(get_max_model_run(['app_riau']))
     # print(get_max_model_run(['gar_pgm'])['two_class_score_weighted'])
     # print(get_max_model_run(['Bumitama_PTDamaiAgroSejahtera'])['two_class_score_weighted'])
     # print(get_max_model_run(['PTMitraNusaSarana'])['two_class_score_weighted'])
-    # print(get_best_bands(['gar_pgm']))
-    # print(get_best_bands(['Bumitama_PTDamaiAgroSejahtera']))
-    # print(get_best_bands(['PTMitraNusaSarana']))
+    print(get_best_bands(['gar_pgm']))
+    print(get_best_bands(['PTAgroAndalan']))
+    print(get_best_bands(['PTMitraNusaSarana']))
+    print(get_best_bands(['Bumitama_PTHungarindoPersada']))
+    print(get_best_bands(['Bumitama_PTGemilangMakmurSubur']))
+
+    print(get_best_number_estimators(['app_riau']))
+    print(get_best_number_estimators(['app_oki']))
+    print(get_best_number_estimators(['app_jambi']))
+    print(get_max_model_run(['gar_pgm'])['two_class_score_weighted'])
+    # print(get_max_model_run(['Bumitama_PTDamaiAgroSejahtera'])['two_class_score_weighted'])
+    # print(get_max_model_run(['PTMitraNusaSarana'])['two_class_score_weighted'])
+    print(get_best_number_estimators(['gar_pgm']))
+    print(get_best_number_estimators(['PTAgroAndalan']))
+    print(get_best_number_estimators(['PTMitraNusaSarana']))
+    print(get_best_number_estimators(['Bumitama_PTHungarindoPersada']))
+    print(get_best_number_estimators(['Bumitama_PTGemilangMakmurSubur']))
+
+    print(get_max_model_run(['app_riau'])['kappa_3'])
+    print(get_max_model_run(['app_oki'])['kappa_3'])
+    print(get_max_model_run(['app_jambi'])['kappa_3'])
+    print(get_max_model_run(['gar_pgm'])['kappa_3'])
+    print(get_max_model_run(['PTAgroAndalan'])['kappa_3'])
+    print(get_max_model_run(['PTMitraNusaSarana'])['kappa_3'])
+    print(get_max_model_run(['Bumitama_PTHungarindoPersada'])['kappa_3'])
+    print(get_max_model_run(['Bumitama_PTGemilangMakmurSubur'])['kappa_3'])
    # init_database()
     #delete_model_performance()
    # print(get_all_model_performance())
