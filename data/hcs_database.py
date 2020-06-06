@@ -22,7 +22,7 @@ plots_dict = {'crgl_stal': '',
               'wilm_cal': '',
               'gar_pgm': ''}
 
-data_context_dict =  { 'app_muba':'Sumatra',
+conncession_island_dict =  { 'app_muba':'Sumatra',
 'app_riau': 'Sumatra',
 'app_oki' : 'Sumatra',
       'app_jambi' : 'Sumatra',
