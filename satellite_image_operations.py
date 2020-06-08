@@ -32,7 +32,7 @@ s2_band_dict = {
            'B11': 'swir2_max',
       #   'B12': 'S2_swir3_max',
    #           'nd': 'ndvi_s2_max',
-    'EVI2':'EVI'
+    'EVI':'EVI'
 }
 
 s2_band_dict_median = {
@@ -133,10 +133,10 @@ def prep_ls8(img):
 
 def prep_sar(image_collection):
     composite = ee.Image.cat([
-     #   image_collection.select('VH').mean().rename('VH_2').unitScale(-38,4).focal_median(6),
-     #   image_collection.select('VV').mean().rename('VV_2').unitScale(-26,13).focal_median(6),
-     #   image_collection.select('VH').mean().rename('VH').unitScale(-38, 4).focal_median(3),
-     #   image_collection.select('VV').mean().rename('VV').unitScale(-26, 13).focal_median(3)   ,
+        image_collection.select('VH').mean().rename('VH_2').unitScale(-38,4).focal_median(6),
+        image_collection.select('VV').mean().rename('VV_2').unitScale(-26,13).focal_median(6),
+        image_collection.select('VH').mean().rename('VH').unitScale(-38, 4).focal_median(3),
+        image_collection.select('VV').mean().rename('VV').unitScale(-26, 13).focal_median(3)   ,
         image_collection.select('VH').mean().rename('VH_0').unitScale(-38, 4),
         image_collection.select('VV').mean().rename('VV_0').unitScale(-26, 13)  # ,
         #(image_collection.select('VH').subtract(image_collection.select('VV'))).mean(),
@@ -156,7 +156,7 @@ def prep_s2(img):
     #old_names = list(s2_band_dict.keys())
    # new_names = list(s2_band_dict.values())
     # Add ndvi
-    img = add_EVI_s2(img)
+    #img = add_EVI_s2(img)
     img = add_EVI2_s2(img)
    # img = img.select(old_names, new_names)
     return img
@@ -180,7 +180,7 @@ def add_EVI2_s2(image):
         'RED': image.select('B4'),
         'NIR': image.select('B8')
   }
-    evi2 = image.expression('2.4 * (NIR - RED) / (NIR + RED + 1)', bands).rename('EVI2');
+    evi2 = image.expression('2.4 * (NIR - RED) / (NIR + RED + 1)', bands).rename('EVI');
 
     return image.addBands(evi2);
 

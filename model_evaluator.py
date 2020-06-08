@@ -12,6 +12,7 @@ from sklearn.metrics import f1_score
 from copy import deepcopy
 import timer
 import itertools
+import sampler
 
 #############   SETUP  PARAMS    ######################
 training_sample_rate = 0.003
@@ -244,11 +245,14 @@ def evaluate_model():
             X_scaled = get_predictor_data2(key, trainConcessions)
             landcover = get_landcover_data2(key,trainConcessions)
             for y in range(400, 700, 125):
-                training_sample_rate = y
-                X_train, X_test, y_train, y_test = train_test_split(X_scaled, landcover, train_size=training_sample_rate, test_size=0.20,
-                        random_state=16)
-                print('****  training_sample_rate  *****', training_sample_rate)
-                print('****  X_train size *****', len(X_train))
+                sample_sizes_dict = sampler.Sampler.get_sample_rate_by_type(y, sites)
+                for concession in trainConcessions:
+                    train_sample = sample_sizes_dict[db.data_context_dict[concession][0]]
+                    test_sample = sample_sizes_dict[db.data_context_dict[concession][1]]
+                    X_train_site, X_test_site, y_train_site, y_test_site = train_test_split(X_scaled[concession], landcover[concession], train_size=train_sample, test_size=test_sample,
+                            random_state=16)
+                    print('****  training_sample_rate  *****', train_sample)
+                    print('****  X_train size *****', len(X_train))
                 ##########################################################
                 #####     MODEL WITH ALL CLASSES     #########
                 # model = train_model(X_train, y_train.values.ravel())

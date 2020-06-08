@@ -238,9 +238,9 @@ def assemble_sentinel_data(study_area, year):
     #slope = ee.Terrain.slope(elevation);
     #dem = ee.Image(elevation.addBands(slope));
     sentinel2_masked = sentinel2.map(sat_ops.prep_s2)
-    old_names = list(s2_band_dict_median.keys())
-    new_names = list(s2_band_dict_median.values())
-    clean_s2_img_med=ee.Image(sentinel2_masked.median()).select(old_names, new_names)
+    #old_names = list(s2_band_dict_median.keys())
+   # new_names = list(s2_band_dict_median.values())
+    #clean_s2_img_med=ee.Image(sentinel2_masked.median()).select(old_names, new_names)
     old_names = list(s2_band_dict.keys())
     new_names = list(s2_band_dict.values())
     clean_s2_img_green = sentinel2_masked.qualityMosaic('EVI').select(old_names, new_names)

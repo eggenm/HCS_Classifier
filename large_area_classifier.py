@@ -12,31 +12,33 @@ import scipy.stats as stat
 import csv
 import glob
 import rioxarray as rx
+import sampler
 
 base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
 year = str(2015)
-sites = [
-    'app_oki',
-    'app_riau',
+sites = {
+    'app_oki'
+    'app_riau'
     'app_jambi'
-]
-sites = [
-     'Bumitama_PTGemilangMakmurSubur',
+}
+sites = {
+    'app_riau',
+    'app_jambi',
+    'Bumitama_PTGemilangMakmurSubur',
   'Bumitama_PTHungarindoPersada',
      'PTAgroAndalan',
-     'gar_pgm',
+    # 'gar_pgm'
 #     'Bumitama_PTDamaiAgroSejahtera',
-     'PTMitraNusaSarana',
+     'PTMitraNusaSarana'
 #
- ]
+}
 bands = [#'blue_max', 'green_max', 'red_max',
         # 'nir_max',
         'swir1_max',# 'VH_2', 'VV_2', 'EVI'#,'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
  ]
 
-
-
+my_sampler = sampler.Sampler()
 #    , 'VV', 'EVI']
 
 # =============================================================================
@@ -207,13 +209,27 @@ def get_trained_model(scoreConcession, trainConcessions, seed, override_bands = 
 
 
 def get_training_data(sites, bands, year, sample_rate,  seed):
-    train_df = helper.trim_data2(helper.get_input_data(bands, year, sites, False))
-    train_df = helper.drop_no_data(train_df)
-    X = train_df[[col for col in train_df.columns if (col != 'clas')]]
-    #X_scaled = helper.scale_data(X)
-    landcover = train_df['clas'].values
-    X_train, X_test, y_train, y_test = train_test_split(X, landcover, train_size=sample_rate, test_size=0.35,
-                                                        random_state=seed)
+    train_dict = helper.get_input_data(bands, year, sites, False)
+    X_train = pd.DataFrame()
+    X_test = pd.DataFrame()
+    y_train = np.empty(0)
+    y_test = np.empty(0)
+    sample_sizes_dict = my_sampler.get_sample_rate_by_type(sample_rate, sites)
+    for site in sites:
+        train_df = helper.trim_data2(train_dict[site])
+        train_df = helper.drop_no_data(train_df)
+        X = train_df[[col for col in train_df.columns if (col != 'clas')]]
+        #X_scaled = helper.scale_data(X)
+        landcover = train_df['clas'].values
+        train_sample = int(sample_sizes_dict[db.data_context_dict[site]][0])
+        test_sample =sample_sizes_dict[db.data_context_dict[site]][1]
+        X_train_site, X_test_site, y_train_site, y_test_site = train_test_split(X, landcover, train_size=train_sample, test_size=test_sample,
+                                                            random_state=seed)
+        X_train=pd.concat([X_train, X_train_site], ignore_index=True)
+        X_test=pd.concat([X_test, X_test_site], ignore_index=True)
+        y_train = np.concatenate([y_train, y_train_site])
+        y_test = np.concatenate([y_test, y_test_site])
+
     return X_train, X_test, y_train, y_test
 
 def score_model(y_test, yhat):
@@ -238,10 +254,10 @@ def log_accuracy(result, name, id):
 
 
 if __name__ == "__main__":
-    name = 'West_Kalimantan'
+    name = 'gar_pgm'
     try:
         with timer.Timer() as t:
-            island = db.conncession_island_dict[name]
+            island = db.data_context_dict[name]
             tif = base_dir + name + '/out/' + year + '/input_' + name + '_' + bands[0] + '.tif'
             try:
                  file_list = sorted(glob.glob(tif))

@@ -32,13 +32,13 @@ def reproject_match_input_band(concession_tif, result_tif):
     return image3
 
 if __name__ == "__main__":
-    # wbt = WhiteboxTools()
-     name = 'Jambi'
-    # file = 'JambiFINAL_classified_by_ensemble_rf.tif'
+     wbt = WhiteboxTools()
+     name = 'West_Kalimantan'
+     file = 'West_KalimantanFINAL_classified_by_ensemble_rf.tif'
     # year = 2015
      base_dir = dir.guess_data_dir()
-    # wbt.work_dir = os.path.join(base_dir, name, 'sklearn_test')
-    # wbt.majority_filter(file, "Jambi_Final_smooth3x3.tif", filterx=3, filtery=3)
+     wbt.work_dir = os.path.join(base_dir, name, 'sklearn_test')
+     wbt.majority_filter(file, "WestKalimantan_Final_smooth3x3.tif", filterx=3, filtery=3)
 
     #read all class remap
      array = np.zeros((2))
