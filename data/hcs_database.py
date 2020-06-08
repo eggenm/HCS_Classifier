@@ -22,7 +22,7 @@ plots_dict = {'crgl_stal': '',
               'wilm_cal': '',
               'gar_pgm': ''}
 
-conncession_island_dict =  { 'app_muba':'Sumatra',
+data_context_dict =  { 'app_muba':'Sumatra',
 'app_riau': 'Sumatra',
 'app_oki' : 'Sumatra',
       'app_jambi' : 'Sumatra',
@@ -52,10 +52,10 @@ conncession_island_dict =  { 'app_muba':'Sumatra',
 
                              'Papua': 'Papua',
 
-                       'impervious':'supplementary',
-                       'oil_palm':'supplementary',
-                       'agriculture':'supplementary',
-                       'forest':'supplementary'
+                       'impervious':'supplementary_class',
+                       'oil_palm':'supplementary_class',
+                       'agriculture':'supplementary_class',
+                       'forest':'supplementary_class'
           }
 
 
