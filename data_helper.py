@@ -232,7 +232,10 @@ def get_input_band(band, name, year):
             print(band)
             image_cache = imagery_data.Imagery_Cache.getInstance()
             print('IMAGE CACHE SINGLETON: ',image_cache)
-            image = image_cache.get_band_by_island_year(band, name, year)
+            if(db.data_context_dict!='supplementary_class'):
+                image = image_cache.get_band_by_context_year(band, name, year)
+            #else
+               # image = image_cache.get_fixed_band
     finally:
         print('Get' , band , ' Request took %.03f sec.' % t.interval)
     return image
@@ -389,7 +392,7 @@ def get_input_data(bands, year, sites, get_predictor_data_only=False):
 def get_large_area_input_data(study_area_base_raster, bands, island, year, name=None):
         try:
             with timer.Timer() as t:
-                x = get_concession_bands(bands, island, year, study_area_base_raster, name)
+                x = get_concession_bands(bands, year, study_area_base_raster, name)
                 x = drop_no_data(x)
                 #X_scaled_class = scale_data(x)
                 return x
@@ -459,9 +462,11 @@ def drop_no_data(data):
 #print(landcoverClassMap)
 if __name__ == "__main__":
     #write_input_data=True
-    x = get_input_data(['VH', 'blue_max', 'EVI'], str(2015), ['app_kalbar'], False)
-  #  x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
+    x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope'], str(2015), ['impervious', 'forest'], False)
+  #  x = get_input_data([ 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
    #                    , False )#,
+
+  #  [ 'nir_max', 'swir1_max', 'swir2_max', 'EVI']
 
 #    x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),
  ##                      ['app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'app_kalbar', 'app_kaltim',
@@ -480,10 +485,10 @@ if __name__ == "__main__":
        #                          'Sumatra', str(2015), 'South_Sumatra')
 #
     #['nir_max', 'swir1_max', 'swir2_max', 'EVI', 'VH_0', 'VV_0']
-    ref_study_area = get_reference_raster_from_shape('Riau', 'Sumatra', 2015)
+ ##   ref_study_area = get_reference_raster_from_shape('Riau', 'Sumatra', 2015)
     # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
-    x = get_large_area_input_data(ref_study_area,['VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],
-                                 'Sumatra', str(2015), 'Riau')
+  #  x = get_large_area_input_data(ref_study_area,['VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],
+  #                               'Sumatra', str(2015), 'Riau')
 
    # x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),
     #                   ['app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'app_kalbar','app_kaltim', 'crgl_stal', 'app_muba'] , False )#,

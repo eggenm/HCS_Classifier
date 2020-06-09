@@ -17,22 +17,23 @@ import sampler
 base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
 year = str(2015)
-sites = {
-    'app_oki'
-    'app_riau'
-    'app_jambi'
-}
-sites = {
+
+sites = [
     'app_riau',
-    'app_jambi',
+    'app_oki',
     'Bumitama_PTGemilangMakmurSubur',
   'Bumitama_PTHungarindoPersada',
      'PTAgroAndalan',
-    # 'gar_pgm'
-#     'Bumitama_PTDamaiAgroSejahtera',
+    'gar_pgm',
+     'Bumitama_PTDamaiAgroSejahtera',
      'PTMitraNusaSarana'
+    #,
+
+    #'app_jambi'
+ #   'impervious',
+ #   'forest'
 #
-}
+]
 bands = [#'blue_max', 'green_max', 'red_max',
         # 'nir_max',
         'swir1_max',# 'VH_2', 'VV_2', 'EVI'#,'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
@@ -249,12 +250,13 @@ def log_accuracy(result, name, id):
             writer.writeheader()
             for data in result:
                 writer.writerow(data)
+        csvfile.close()
     except IOError:
         print("%%%%%%%%%%%%%%%%%%        I/O error.  Log file not written:  ", csvfile,  '            %%%%%%%%%%%%%%%%%%%%%%')
 
 
 if __name__ == "__main__":
-    name = 'gar_pgm'
+    name = 'Jambi'
     try:
         with timer.Timer() as t:
             island = db.data_context_dict[name]
@@ -278,6 +280,8 @@ if __name__ == "__main__":
             k=0
             result = []
             for i, scoreConcession in enumerate(sites):
+                if(db.data_context_dict[scoreConcession]=='supplementary_class'):
+                    continue
                 print(scoreConcession)
                 trainConcessions = list(sites)
                 trainConcessions.remove(scoreConcession)
@@ -301,8 +305,9 @@ if __name__ == "__main__":
                         write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j)
                     k=k+1
                     if('slope' not in scores['bands']):
-                        bands = scores['bands'].append('slope')
-                        print('**********  BANDS with slope:  ', scores['bands'], '   ************')
+                        scores['bands'].append('slope')
+                        bands = scores['bands']
+                        print('**********  BANDS with slope:  ',bands, '   ************')
                         trained_model, scores = get_trained_model(scoreConcession, trainConcessions, j+100, bands)
                         scores['oob_concessions'] = scoreConcession
                         scores['train_concessions'] = trainConcessions

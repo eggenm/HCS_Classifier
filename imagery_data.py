@@ -25,12 +25,12 @@ class Imagery_Cache:
         else:
             Imagery_Cache.__instance = self
 
-    def get_band_by_island_year(self, band, island, year ):
-        key = island+str(year)+band
+    def get_band_by_context_year(self, band, context, year ):
+        key = context+str(year)+band
         try:
             self.island_data_table[key]
         except KeyError:
-            tif = os.path.join(self.base_dir, island, 'out', str(year), '*' + band + '.tif')
+            tif = os.path.join(self.base_dir, context, 'out', str(year), '*' + band + '.tif')
             file = glob.glob(tif)
             #self.island_data_table[key] = rx.open_rasterio(file[0])
             return rx.open_rasterio(file[0])
@@ -67,9 +67,11 @@ class Imagery_Cache:
         return files
 
     def get_input_image_path(self, name, year, context, band):
-        if (context == 'supplemental_class'):
-            tif = base_dir + context + name + '/out/input_' + name + '_' + band + '.tif'
+        if (context == 'supplementary_class'):
+            tif = os.path.join(self.base_dir, context, name, 'out', 'input_' + name + '_' + band + '.tif')
+
         else:
-            tif = base_dir + name + '/out/' + year + '/input_' + name + '_' + band + '.tif'
+            tif = os.path.join(self.base_dir, name, 'out', str(year), 'input_' + name + '_' + band + '.tif')
+        return tif
 
 
