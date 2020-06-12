@@ -175,10 +175,11 @@ def getSoil(all_study_area):
 def assemble_l8(study_area, year):
     date_start = ee.Date.fromYMD(year-1, 1, 1) # need more than 1 year of landsat to make usable composite
     date_end = ee.Date.fromYMD(year, 12, 31)
-    ic = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
+    #ic = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
+    ic = ee.ImageCollection("LANDSAT/LC08/C01/T1_TOA")
     ic = ic.filterDate(date_start, date_end)
     ic = ic.filterBounds(study_area)
-    ic=ic.filter(ee.Filter.lt('CLOUD_COVER', 80))
+    ic=ic.filter(ee.Filter.lt('CLOUD_COVER', 60))
     ic_masked = ic.map(sat_ops.prep_ls8)
     clean_l8_img = ee.Image(ic_masked.qualityMosaic('EVI'))
     return(clean_l8_img)
@@ -229,7 +230,7 @@ def assemble_sentinel_data(study_area, year):
     date_end = ee.Date.fromYMD(year, 12, 31)
     sentinel2 = sentinel2.filterDate(date_start, date_end)
     # Pre-filter to get less cloudy granules.
-    sentinel2 = sentinel2.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 55))
+    sentinel2 = sentinel2.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 60))
     sentinel2 = sentinel2.filterBounds(study_area)
     #ndvis_s2 = getYearlyNdvi_s2()
     #ndvis_l8 = getYearlyNdvi_L8()

@@ -3,8 +3,8 @@ ee.Initialize()
 import numpy as np
 
 l8_band_dict =  {#'B1': 'ublue',
-              'B2': 'blue_max',
-              'B3': 'green_max',
+       #       'B2': 'blue_max',
+       #       'B3': 'green_max',
                'B4': 'red_max',
                'B5': 'nir_max',
                'B6': 'swir1_max',
@@ -17,8 +17,8 @@ l8_band_dict =  {#'B1': 'ublue',
 
 s2_band_dict = {
     #'B1': 'S2_ublue',
-            'B2': 'blue_max',
-           'B3': 'green_max',
+            #'B2': 'blue_max',
+         #  'B3': 'green_max',
           'B4': 'red_max',
      #        'B5': 'rededge1_max',
      #      'B6': 'rededge2_max',
@@ -85,6 +85,17 @@ def maskCloudsLandsat8(image):
     mask = qa.bitwiseAnd(cloudShadowBitMask).eq(0).And(qa.bitwiseAnd(cloudsBitMask).eq(0))
     return image.updateMask(mask)
 
+
+def maskL8Clouds_2(image):
+    qa = image.select('BQA');
+    mask = qa.bitwiseAnd(ee.Number(2).pow(12).int()).eq(1).And(qa.bitwiseAnd(ee.Number(2).pow(13).int()).eq(1)).Or(
+        qa.bitwiseAnd(ee.Number(2).pow(4).int()).neq(0)).And(qa.bitwiseAnd(ee.Number(2).pow(7).int()).neq(0)).And(
+                                                                 qa.bitwiseAnd(ee.Number(2).pow(5).int()).neq(0)).And(
+                                                                 qa.bitwiseAnd(ee.Number(2).pow(6).int()).neq(
+                                                                     0)).Not();
+    return image.updateMask(mask)
+
+
 def maskS2clouds(image):
     qa = image.select('QA60')
     # Bits 10 and 11 are clouds and cirrus, respectively.
@@ -93,6 +104,12 @@ def maskS2clouds(image):
     # Both flags should be set to zero, indicating clear conditions.
     mask = qa.bitwiseAnd(cloudBitMask).eq(0).And(qa.bitwiseAnd(cirrusBitMask).eq(0));
     return image.updateMask(mask).divide(10000)
+
+def mask_using_CDI(image):
+   cdi = ee.Algorithms.Sentinel2.CDI(image);
+   mask = cdi.gt(-0.3);
+   return image.updateMask(mask);
+
 
 def maskCloudsL5(image):
   score = ee.Algorithms.Landsat.simpleCloudScore(image).select('cloud');
@@ -114,8 +131,9 @@ def prep_ls8(img):
     add an ndvi band, and rename all bands.
     """
     # Mask out flagged clouds
-    img = maskCloudsLandsat8(img)
-    img = img.unitScale(0,10000)
+    #img = maskCloudsLandsat8(img)
+    img = maskL8Clouds_2(img)
+    #img = img.unitScale(0,10000)
 
     # Rename bands
 
@@ -150,7 +168,9 @@ def prep_sar(image_collection):
 
 def prep_s2(img):
     # Mask out flagged clouds
-    img = maskS2clouds(img)
+    #img = maskS2clouds(img)
+    img = mask_using_CDI(img)
+    img = img.unitScale(0,10000)
     # Rename bands
     img = img.addBands(img.normalizedDifference(['B8', 'B4']))
     #old_names = list(s2_band_dict.keys())

@@ -25,16 +25,24 @@ image_cache = imagery_data.Imagery_Cache.getInstance()
 #out_tif = r'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\Sumatra\\out\\2015\\jambi_crop_blue_max.tif'
 input='C:\\Users\\ME\\Dropbox\\HCSproject\\data\\app_files\\stratified_shapefiles\\Jambi_WKS_Stratification.shp'
 
+supplemental_class_codes = {
+    'impervious':22,
+    'forest':7,
+    'oil_palm':11,
+    'agriculture': 20
+}
+
 def getFeatures(gdf):
     """Function to parse features from GeoDataFrame in such a manner that rasterio wants them"""
     return [js.loads(gdf.to_json())['features'][0]['geometry']]
 
 
 def ingest_kml_fixed_classes():
-    input = 'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\supplementary_class\\impervious\\doc.kml'
+    #input = 'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\supplementary_class\\impervious\\doc.kml'
+    input = 'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\Forest_001\\doc.kml'
     srcDS = gdal.OpenEx(input)
-    output = 'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\supplementary_class\\impervious\\impervious.json'
-    #ds = gdal.VectorTranslate(output, srcDS, format='GeoJSON')
+    output = 'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\Forest_001\\forest001.json'
+    ds = gdal.VectorTranslate(output, srcDS, format='GeoJSON')
     #file = glob.glob(output)
     with open(output) as f:
         features = js.load(f)["features"]
