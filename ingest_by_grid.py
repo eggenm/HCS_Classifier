@@ -11,6 +11,7 @@ import requests
 import dirfuncs
 import os
 import glob
+import time
 from data import hcs_database as hcs_db
 import satellite_image_operations as sat_ops
 import pandas as pd
@@ -27,8 +28,8 @@ lon_edge=1
 # lat_end = 5
 lat_edge = 1
 #site = 'Kalimantan'
-#years = [2015]
-years= [2016]#,2017,2018,2019]
+years = [2016]
+#years= [2017,2018,2019]
 site = 'None'
 out_path = dirfuncs.guess_data_dir()
 #Take a set of years
@@ -103,6 +104,7 @@ def download_data(polys,i, year):
                     except:
                         failed +=1
                         print('*****Error on download-extract from google. Times failed: ', failed)
+                        time.sleep(5)#wait for 5 seconds if we are having trouble getting file from GEE
                         if failed==8:
                             raise TimeoutError
                     finally:
