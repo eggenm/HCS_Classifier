@@ -27,8 +27,8 @@ lon_edge=1
 # lat_end = 5
 lat_edge = 1
 #site = 'Kalimantan'
-years = [2015]
-years= [2016,2017,2018,2019]
+#years = [2015]
+years= [2016]#,2017,2018,2019]
 site = 'None'
 out_path = dirfuncs.guess_data_dir()
 #Take a set of years
@@ -89,7 +89,7 @@ def download_data(polys,i, year):
                 filename = out_path + site + '/in/' + str(year) + '/' + prefix + '.zip'
                 print(url)
                 failed = 0
-                while(failed<4):
+                while(failed<9):
                     try:
                         with timer.Timer() as t:
                             r = requests.get(url, stream=True)
@@ -103,7 +103,7 @@ def download_data(polys,i, year):
                     except:
                         failed +=1
                         print('*****Error on download-extract from google. Times failed: ', failed)
-                        if failed==3:
+                        if failed==8:
                             raise TimeoutError
                     finally:
                         print('Request-Extract took %.03f sec.' % t.interval)
