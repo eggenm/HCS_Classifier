@@ -83,8 +83,9 @@ def download_data(polys,i, year):
     for key, value in images.items():
         for band in value.bandNames().getInfo():
             print(band)
-            cell = int(geometry.get('label').getInfo())
+
             for geometry in polygons:
+                cell = int(geometry.get('label').getInfo())
                 if cell < start:
                     continue
                 else:
