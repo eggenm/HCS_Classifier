@@ -28,7 +28,8 @@ lon_edge=1
 # lat_end = 5
 lat_edge = 1
 #site = 'Kalimantan'
-years = [2018,2019]
+years = [2018]
+start = 39
 #years= [2017,2018,2019]
 site = 'None'
 out_path = dirfuncs.guess_data_dir()
@@ -82,33 +83,37 @@ def download_data(polys,i, year):
     for key, value in images.items():
         for band in value.bandNames().getInfo():
             print(band)
+            cell = int(geometry.get('label').getInfo())
             for geometry in polygons:
-                prefix = site + key + '_'+str(i)+'_' + geometry.get('label').getInfo() + '_' + band
-                print('prefix:  ', prefix)
-                url = value.select(band).clip(geometry).getDownloadURL(
-                    {'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
-                filename = out_path + site + '/in/' + str(year) + '/' + prefix + '.zip'
-                print(url)
-                failed = 0
-                while(failed<9):
-                    try:
-                        with timer.Timer() as t:
-                            r = requests.get(url, stream=True)
-                            with open(filename, 'wb') as fd:
-                                for chunk in r.iter_content(chunk_size=1024):
-                                    fd.write(chunk)
-                            fd.close()
-                            z = zipfile.ZipFile(filename)
-                            z.extractall(path=out_path + '/' + site + '/in/' + str(year))
-                            failed = 99
-                    except:
-                        failed +=1
-                        print('*****Error on download-extract from google. Times failed: ', failed)
-                        time.sleep(5)#wait for 5 seconds if we are having trouble getting file from GEE
-                        if failed==8:
-                            raise TimeoutError
-                    finally:
-                        print('Request-Extract took %.03f sec.' % t.interval)
+                if cell < start:
+                    continue
+                else:
+                    prefix = site + key + '_'+str(i)+'_' + str(cell) + '_' + band
+                    print('prefix:  ', prefix)
+                    url = value.select(band).clip(geometry).getDownloadURL(
+                        {'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
+                    filename = out_path + site + '/in/' + str(year) + '/' + prefix + '.zip'
+                    print(url)
+                    failed = 0
+                    while(failed<12):
+                        try:
+                            with timer.Timer() as t:
+                                r = requests.get(url, stream=True)
+                                with open(filename, 'wb') as fd:
+                                    for chunk in r.iter_content(chunk_size=1024):
+                                        fd.write(chunk)
+                                fd.close()
+                                z = zipfile.ZipFile(filename)
+                                z.extractall(path=out_path + '/' + site + '/in/' + str(year))
+                                failed = 99
+                        except:
+                            failed +=1
+                            print('*****Error on download-extract from google. Times failed: ', failed)
+                            time.sleep(10)#wait for 5 seconds if we are having trouble getting file from GEE
+                            if failed==11:
+                                raise TimeoutError
+                        finally:
+                            print('Request-Extract took %.03f sec.' % t.interval)
 
 
 def cleanup_files(year):
