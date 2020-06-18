@@ -22,14 +22,14 @@ import pandas as pd
 #A shape file - study area
 #Get a bounding box
 # lon_start=107
-lon_edge=1
+lon_edge=.25
 # lon_end=119
 # lat_start = -5
 # lat_end = 5
-lat_edge = 1
+lat_edge = .25
 #site = 'Kalimantan'
 years = [2019]
-start = 10
+start = 1
 #years= [2017,2018,2019]
 site = 'None'
 out_path = dirfuncs.guess_data_dir()
