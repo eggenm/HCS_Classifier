@@ -29,7 +29,7 @@ s2_band_dict = {
      #         'B9': 'S2_vape_max',
   #
              'B10': 'swir1_max',
-           'B11': 'swir2_max',
+    #       'B11': 'swir2_max',
       #   'B12': 'S2_swir3_max',
    #           'nd': 'ndvi_s2_max',
   #  'EVI':'EVI'
