@@ -132,18 +132,20 @@ def cleanup_files(year):
 
 if __name__ == "__main__":
      #KALIMANTAN
-         site = 'Kalimantan'
-         polygons = get_grid_polygons(107, 119, -5,5)
-         for year in years:
-            download_data(polygons, 33, year)
-            cleanup_files(year)
+    #     site = 'Kalimantan'
+   #      polygons = get_grid_polygons(107, 119, -5,5)
+        # for year in years:
+         #   download_data(polygons, 33, year)
+         #   cleanup_files(year)
 #
 #
 # ##SUMATRA
          site = 'Sumatra'
+
          polygons = get_grid_polygons(95, 107, -6,6)
-         download_data(polygons, 44)
-         cleanup_files()
+         for year in years:
+           download_data(polygons, 44, year)
+           cleanup_files(year)
        #polygons = get_grid_polygons(107, 110, -6, 6)
        #for year in years:
            #download_data(polygons, 55)
@@ -152,7 +154,7 @@ if __name__ == "__main__":
 #      polygons = get_grid_polygons(98, 102, -6, 4)
        #for year in years:
 
-           # download_data(polygons, 22 )
+           # download_data(polygons, 22, year )
            # cleanup_files()
         # polygons = get_grid_polygons(98, 99, 4, 5)
         #for year in years:
