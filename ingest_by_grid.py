@@ -22,13 +22,13 @@ import pandas as pd
 #A shape file - study area
 #Get a bounding box
 # lon_start=107
-lon_edge=.25
+lon_edge=.5
 # lon_end=119
 # lat_start = -5
 # lat_end = 5
-lat_edge = .25
+lat_edge = .5
 #site = 'Kalimantan'
-years = [2019]
+years = [2016, 2017, 2018, 2019]
 start = 1
 #years= [2017,2018,2019]
 site = 'None'
@@ -141,9 +141,9 @@ if __name__ == "__main__":
 #
 # ##SUMATRA
          site = 'Sumatra'
-#        polygons = get_grid_polygons(95, 107, -6,6)
-#        download_data(polygons, 44)
-#        cleanup_files()
+         polygons = get_grid_polygons(95, 107, -6,6)
+         download_data(polygons, 44)
+         cleanup_files()
        #polygons = get_grid_polygons(107, 110, -6, 6)
        #for year in years:
            #download_data(polygons, 55)
