@@ -19,20 +19,20 @@ s2_band_dict = {
     #'B1': 'S2_ublue',
             #'B2': 'blue_max',
          #  'B3': 'green_max',
-          'B4': 'red_max',
+        #  'B4': 'red_max',
      #        'B5': 'rededge1_max',
      #      'B6': 'rededge2_max',
      #       'B7': 'rededge3_max',
   #
-                'B8': 'nir_max',
+         #       'B8': 'nir_max',
         #         'B8A': 'S2_nir2_max',
      #         'B9': 'S2_vape_max',
   #
-             'B10': 'swir1_max',
+         #    'B10': 'swir1_max',
            'B11': 'swir2_max',
       #   'B12': 'S2_swir3_max',
    #           'nd': 'ndvi_s2_max',
-    'EVI':'EVI'
+  #  'EVI':'EVI'
 }
 
 s2_band_dict_median = {
