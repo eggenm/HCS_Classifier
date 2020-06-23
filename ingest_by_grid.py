@@ -22,16 +22,17 @@ import pandas as pd
 #A shape file - study area
 #Get a bounding box
 # lon_start=107
-lon_edge=.5
+lon_edge=.25
 # lon_end=119
 # lat_start = -5
 # lat_end = 5
-lat_edge = .5
+lat_edge = .25
 #site = 'Kalimantan'
 years = [#2016,
-     2017, 2018, 2019
+     #2017, 2018,
+      #   2019
          ]
-start = 1
+start = 1884
 #years= [2017,2018,2019]
 site = 'None'
 out_path = dirfuncs.guess_data_dir()
@@ -134,20 +135,20 @@ def cleanup_files(year):
 
 if __name__ == "__main__":
      #KALIMANTAN
-    #     site = 'Kalimantan'
-   #      polygons = get_grid_polygons(107, 119, -5,5)
-        # for year in years:
-         #   download_data(polygons, 33, year)
-         #   cleanup_files(year)
+        site = 'Kalimantan'
+        polygons = get_grid_polygons(107, 119, -5,5)
+        for year in years:
+           download_data(polygons, 33, year)
+           cleanup_files(year)
 #
 #
 # ##SUMATRA
-         site = 'Sumatra'
-
-         polygons = get_grid_polygons(95, 107, -6,6)
-         for year in years:
-           download_data(polygons, 44, year)
-           cleanup_files(year)
+         #site = 'Sumatra'
+         #
+         # polygons = get_grid_polygons(95, 107, -6,6)
+         # for year in years:
+         #   download_data(polygons, 44, year)
+         #   cleanup_files(year)
        #polygons = get_grid_polygons(107, 110, -6, 6)
        #for year in years:
            #download_data(polygons, 55)
