@@ -31,9 +31,9 @@ lat_edge = .5
 years = [#2016,
   #   2017,
     2018,
-    2019
+   # 2019
          ]
-start = 1
+start = 276
 #years= [2017,2018,2019]
 site = 'None'
 out_path = dirfuncs.guess_data_dir()
