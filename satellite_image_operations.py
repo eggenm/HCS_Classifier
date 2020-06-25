@@ -24,7 +24,7 @@ s2_band_dict = {
      #      'B6': 'rededge2_max',
      #       'B7': 'rededge3_max',
   #
-       #         'B8': 'nir_max',
+                'B8': 'nir_max',
         #         'B8A': 'S2_nir2_max',
      #         'B9': 'S2_vape_max',
   #
@@ -32,7 +32,7 @@ s2_band_dict = {
         #   'B11': 'swir2_max',
       #   'B12': 'S2_swir3_max',
    #           'nd': 'ndvi_s2_max',
-    'EVI':'EVI'
+  #  'EVI':'EVI'
 }
 
 s2_band_dict_median = {
