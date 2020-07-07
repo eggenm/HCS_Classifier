@@ -28,7 +28,7 @@ lon_edge=.5
 # lat_end = 5
 lat_edge = .5
 #site = 'Kalimantan'
-years = [2016,
+years = [2015, 2016,
      2017,
     2018,
     2019
@@ -68,16 +68,16 @@ def get_grid_polygons(lon_start, lon_end, lat_start,lat_end):
 def download_data(polys,i, year):
     fc = ee.FeatureCollection(polys)
     all_study_area = fc.geometry().bounds()
-    #radar = ingest.assemble_radar_data(all_study_area, year)
-    sentinel = ingest.assemble_sentinel_data(all_study_area, year)
+    radar = ingest.assemble_radar_data(all_study_area, year)
+    #sentinel = ingest.assemble_sentinel_data(all_study_area, year)
     #l8 = ingest.assemble_l8(all_study_area, year)
     #dem = ingest.getDEM(all_study_area)
   #  soil = ingest.getSoil(all_study_area)
   #  water_mask = ingest.get_water_mask(all_study_area)
 
     images = {
-          '_greenestwCDI': sentinel,
-      #  '_radar': radar,  # 'class': strata_img,
+      #    '_greenestwCDI': sentinel,
+        '_radar': radar,  # 'class': strata_img,
       #  '_greenestw_mask2': l8,
       #  '_dem':dem
      #   '_soil': soil
@@ -136,24 +136,24 @@ def cleanup_files(year):
 
 if __name__ == "__main__":
      #KALIMANTAN
-    #     site = 'Kalimantan'
-   #      polygons = get_grid_polygons(107, 119, -5,5)
-        # for year in years:
-         #   download_data(polygons, 33, year)
-         #   cleanup_files(year)
+         site = 'Kalimantan'
+         polygons = get_grid_polygons(107, 119, -5,5)
+         for year in years:
+            download_data(polygons, 33, year)
+            cleanup_files(year)
 #
 #
 # ##SUMATRA
-         site = 'Sumatra'
+         #site = 'Sumatra'
 
          #polygons = get_grid_polygons(95, 107, -6,6)
          # for year in years:
          #   download_data(polygons, 44, year)
          #   cleanup_files(year)
-         polygons = get_grid_polygons(107, 110, -6, 6)
-         for year in years:
-           download_data(polygons, 55, year)
-           cleanup_files(year)
+         #polygons = get_grid_polygons(107, 110, -6, 6)
+         #for year in years:
+           #download_data(polygons, 55, year)
+           #cleanup_files(year)
 #something
 #      polygons = get_grid_polygons(98, 102, -6, 4)
        #for year in years:
