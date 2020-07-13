@@ -33,7 +33,7 @@ years = [#2015, 2016,
   #  2018,
     2019
          ]
-start = 256
+start = 1
 #years= [2017,2018,2019]
 site = 'None'
 out_path = dirfuncs.guess_data_dir()

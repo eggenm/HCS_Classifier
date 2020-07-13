@@ -220,8 +220,8 @@ def assemble_radar_data(study_area, year):
     myRadar = ee.Image(sat_ops.prep_sar(sentinel1)).select([
         #'VV_0', 'VH_0',
    #  'VV',
-      'VH',
-      #  'VV_2', 'VH_2'
+    #  'VH',
+        'VV_2', 'VH_2'
     ])
 
     return(myRadar)
