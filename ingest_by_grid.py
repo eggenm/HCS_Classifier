@@ -28,9 +28,9 @@ lon_edge=.5
 # lat_end = 5
 lat_edge = .5
 #site = 'Kalimantan'
-years = [#2015, 2016,
-    # 2017,
-  #  2018,
+years = [2015, 2016,
+     2017,
+    2018,
     2019
          ]
 start = 1
@@ -146,14 +146,14 @@ if __name__ == "__main__":
 # ##SUMATRA
          site = 'Sumatra'
 
-         polygons = get_grid_polygons(95, 107, -6,6)
+         # polygons = get_grid_polygons(95, 107, -6,6)
+         # for year in years:
+         #   download_data(polygons, 44, year)
+         #   cleanup_files(year)
+         polygons = get_grid_polygons(107, 110, -6, 6)
          for year in years:
-           download_data(polygons, 44, year)
+           download_data(polygons, 55, year)
            cleanup_files(year)
-         #polygons = get_grid_polygons(107, 110, -6, 6)
-         #for year in years:
-           #download_data(polygons, 55, year)
-           #cleanup_files(year)
 #something
 #      polygons = get_grid_polygons(98, 102, -6, 4)
        #for year in years:
