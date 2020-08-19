@@ -19,6 +19,7 @@ from shapely.geometry import shape, GeometryCollection
 from fiona.crs import from_epsg
 from rasterio import features as rioft
 import imagery_data
+import dirfuncs
 
 image_cache = imagery_data.Imagery_Cache.getInstance()
 
@@ -26,10 +27,13 @@ image_cache = imagery_data.Imagery_Cache.getInstance()
 input='C:\\Users\\ME\\Dropbox\\HCSproject\\data\\app_files\\stratified_shapefiles\\Jambi_WKS_Stratification.shp'
 
 supplemental_class_codes = {
-    'impervious':22,
+    'impervious':23,
     'forest':7,
     'oil_palm':11,
-    'agriculture': 20
+    'water': 16,
+    'pulp_and_paper': 21,
+    'coconut': 13,
+
 }
 
 def getFeatures(gdf):
@@ -39,50 +43,59 @@ def getFeatures(gdf):
 
 def ingest_kml_fixed_classes():
     #input = 'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\supplementary_class\\impervious\\doc.kml'
-    input = 'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\Forest_001\\doc.kml'
-    srcDS = gdal.OpenEx(input)
-    output = 'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\Forest_001\\forest001.json'
-    ds = gdal.VectorTranslate(output, srcDS, format='GeoJSON')
-    #file = glob.glob(output)
-    with open(output) as f:
-        features = js.load(f)["features"]
+    for landcover in supplemental_class_codes.keys():
+        input = dirfuncs.guess_data_dir() + 'supplementary_class\\'+landcover+'\\doc.kml'
+        srcDS = gdal.OpenEx(input)
+        output = dirfuncs.guess_data_dir() + 'supplementary_class\\'+landcover+'\\'+landcover+'.json'
+        #ds = gdal.VectorTranslate(output, srcDS, format='GeoJSON')
+        file = glob.glob(output)
+        with open(output) as f:
+                data = f.read()
+                #TODO on windows you may get a parsing error that does not make sense but it has to do with EOL characters
+                jsonload = js.loads(data)
+                features = jsonload["features"]
 
-    # NOTE: buffer(0) is a trick for fixing scenarios where polygons have overlapping coordinates
-    #temp = GeometryCollection([shape(feature["geometry"]).buffer(0) for feature in features])
-    shapes = ( (shape(feature["geometry"]).buffer(0),int(feature['properties']['Description']), feature['properties']['Name']) for feature in features )
-
-    image2 = image_cache.get_band_by_island_year('nir_max', 'Sumatra', 2015)
-    image = image_cache.get_band_by_island_year('nir_max', 'Kalimantan', 2015)
-    for geom in shapes:
-        print(geom)
-        xmin, ymin, xmax, ymax = geom[0].bounds
-        name = geom[2]
-        bbox = box(xmin, ymin, xmax, ymax)
-        geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(4326))
-        geo = geo.to_crs(crs=from_epsg(4326))
-        coords = getFeatures(geo)
-        try:
-            out_img = image.rio.clip(coords, image.rio.crs)
-        except:
-            #try:
-                print("CLIP ERROR trying other island")
-                out_img = image2.rio.clip(coords, image.rio.crs)
-        # meta = out_img.meta.copy()
-        trans = out_img.transform
-        crs = out_img.rio.crs
-        height = out_img.rio.height
-        width = out_img.rio.width
-        dtype = rio.int16
-        # burned = rioft.rasterize(shapes=geom, fill=0)
-        out_fn = 'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\supplementary_class\\impervious\\' + name +'.tif'
-        with rio.open(out_fn, 'w+', driver='GTiff',
-                      height=height, width=width,
-                      crs=crs, dtype=dtype, transform=trans, count=1) as out:
-            out_arr = out.read(1)
-            burned = rioft.rasterize(shapes=[(geom[0], geom[1])], fill=-9999, out=out_arr, transform=out.transform)
-            burned = np.where(burned != geom[1], -9999, burned) #NoData the other pixels
-            out.write_band(1, burned)
-        out.close()
+        # NOTE: buffer(0) is a trick for fixing scenarios where polygons have overlapping coordinates
+        #temp = GeometryCollection([shape(feature["geometry"]).buffer(0) for feature in features])
+        shapes = ( (shape(feature["geometry"]).buffer(0),(feature['properties']['Description']), feature['properties']['Name']) for feature in features )
+        #TODO get the year from the json or doc.kml
+ #       image2 = image_cache.get_band_by_context_year('nir_max', 'Sumatra', 2015)
+   #     image = image_cache.get_band_by_context_year('nir_max', 'Kalimantan', 2015)
+        for geom in shapes:
+            print(geom)
+            xmin, ymin, xmax, ymax = geom[0].bounds
+            year_list = geom[1].split(sep=',')
+            year_list = map(int, year_list)
+            year_list = list(year_list)
+            year_list.sort(reverse=True)
+            year = year_list[0]
+            name = geom[2]
+            bbox = box(xmin, ymin, xmax, ymax)
+            geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(4326))
+            geo = geo.to_crs(crs=from_epsg(4326))
+            coords = getFeatures(geo)
+            try:
+                out_img = image.rio.clip(coords, image.rio.crs)
+            except:
+                #try:
+                    print("CLIP ERROR trying other island")
+                    out_img = image2.rio.clip(coords, image.rio.crs)
+            # meta = out_img.meta.copy()
+            trans = out_img.transform
+            crs = out_img.rio.crs
+            height = out_img.rio.height
+            width = out_img.rio.width
+            dtype = rio.int16
+            # burned = rioft.rasterize(shapes=geom, fill=0)
+            out_fn = dirfuncs.guess_data_dir() + 'supplementary_class\\'+landcover+'\\' + name +'.tif'
+            with rio.open(out_fn, 'w+', driver='GTiff',
+                          height=height, width=width,
+                          crs=crs, dtype=dtype, transform=trans, count=1) as out:
+                out_arr = out.read(1)
+                burned = rioft.rasterize(shapes=[(geom[0], geom[1])], fill=-9999, out=out_arr, transform=out.transform)
+                burned = np.where(burned != geom[1], -9999, burned) #NoData the other pixels
+                out.write_band(1, burned)
+            out.close()
 
 
 
