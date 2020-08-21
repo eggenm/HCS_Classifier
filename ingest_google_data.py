@@ -174,7 +174,7 @@ def getSoil(all_study_area):
 
 def assemble_l8(study_area, year):
     date_start = ee.Date.fromYMD(year-1, 1, 1) # need more than 1 year of landsat to make usable composite
-    date_end = ee.Date.fromYMD(year, 12, 31)
+    date_end = ee.Date.fromYMD(year, 6, 30)
     #ic = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
     ic = ee.ImageCollection("LANDSAT/LC08/C01/T1_TOA")
     ic = ic.filterDate(date_start, date_end)
@@ -218,10 +218,10 @@ def assemble_radar_data(study_area, year):
     sentinel1 = sentinel1.filterBounds(study_area)
     sentinel1 = sentinel1.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'));
     myRadar = ee.Image(sat_ops.prep_sar(sentinel1)).select([
-        'VV_0', 'VH_0',
-    'VV',
-      'VH',
-        'VV_2', 'VH_2'
+       # 'VV_0', 'VH_0',
+ #   'VV',
+ #     'VH',
+        'VV_2'#, 'VH_2'
     ])
 
     return(myRadar)

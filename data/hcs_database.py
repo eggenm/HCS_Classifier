@@ -55,7 +55,10 @@ data_context_dict =  { 'app_muba':'Sumatra',
                        'impervious':'supplementary_class',
                        'oil_palm':'supplementary_class',
                        'agriculture':'supplementary_class',
-                       'forest':'supplementary_class'
+                       'forest':'supplementary_class',
+                       'coconut':'supplementary_class',
+                       'pulp_and_paper':'supplementary_class',
+                       'water':'supplementary_class',
           }
 
 

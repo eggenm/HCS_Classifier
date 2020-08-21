@@ -86,6 +86,15 @@ def maskCloudsLandsat8(image):
     return image.updateMask(mask)
 
 
+def maskClouds_L_TOA(im):
+    cs = ee.Algorithms.Landsat.simpleCloudScore(im)
+    cloud = cs.select('cloud').gte(20.0)
+    cloud = cloud.updateMask(cloud)
+    shadow = im.select('B6').lt(0.25);
+    shadow = shadow.updateMask(shadow);
+    return im.updateMask(mask)
+
+
 def maskL8Clouds_2(image):
     qa = image.select('BQA');
     mask = qa.bitwiseAnd(ee.Number(2).pow(12).int()).eq(1).And(qa.bitwiseAnd(ee.Number(2).pow(13).int()).eq(1)).Or(
