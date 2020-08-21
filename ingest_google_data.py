@@ -221,7 +221,8 @@ def assemble_radar_data(study_area, year):
        # 'VV_0', 'VH_0',
  #   'VV',
  #     'VH',
-        'VV_2'#, 'VH_2'
+    #    'VV_2',
+        'VH_2'
     ])
 
     return(myRadar)
