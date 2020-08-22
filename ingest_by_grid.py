@@ -29,9 +29,9 @@ lon_edge=.5
 lat_edge = .5
 #site = 'Kalimantan'
 years = [#2015,
-         2016,
- #    2017,
-   # 2018,
+        # 2016,
+     2017,
+    2018,
   #  2019
          ]
 start = 1
