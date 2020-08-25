@@ -219,11 +219,11 @@ def assemble_radar_data(study_area, year):
     sentinel1 = sentinel1.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'));
     myRadar = ee.Image(sat_ops.prep_sar(sentinel1)).select([
         'VV_0',
-       'VH_0',
-    'VV',
-     'VH',
-        'VV_2',
-         'VH_2'
+    #    'VH_0',
+    # 'VV',
+    #  'VH',
+    #     'VV_2',
+    #      'VH_2'
     ])
 
     return(myRadar)
