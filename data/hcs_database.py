@@ -35,6 +35,10 @@ data_context_dict =  { 'app_muba':'Sumatra',
      'Bumitama_PTHungarindoPersada':'Kalimantan',
      'PTAgroAndalan':'Kalimantan',
       'PTMitraNusaSarana':'Kalimantan',
+    'adi_perkasa':'Papua',
+    'makmur_abadi':'Kalimantan',
+    'PTLestariAbadiPerkasa':'Kalimantan',
+
 
                              'West_Kalimantan': 'Kalimantan',
                              'East_Kalimantan': 'Kalimantan',
