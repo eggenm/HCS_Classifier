@@ -96,22 +96,25 @@ def download_data(polys,i, year):
                 else:
                     prefix = site + key + '_'+str(i)+'_' + str(cell) + '_' + band
                     print('prefix:  ', prefix)
-                    url = value.select(band).clip(geometry).getDownloadURL(
-                        {'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
+                    image = value.select(band).clip(geometry)
+                    #url = image.getDownloadURL(
+                     #   {'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
                     filename = out_path + site + '/in/' + str(year) + '/' + prefix + '.zip'
-                    print(url)
+                    #print(url)
                     failed = 0
                     while(failed<12):
                         try:
                             with timer.Timer() as t:
-                                r = requests.get(url, stream=True)
-                                with open(filename, 'wb') as fd:
-                                    for chunk in r.iter_content(chunk_size=1024):
-                                        fd.write(chunk)
-                                fd.close()
-                                z = zipfile.ZipFile(filename)
-                                z.extractall(path=out_path + '/' + site + '/in/' + str(year))
-                                failed = 99
+                                task  = ee.batch.Export.image.toDrive({'image': image, 'folder': 'Indonesia', 'fileNamePrefix ': prefix,  'crs': 'EPSG:4326', 'scale': 30})
+                                task.start()
+                                #r = requests.get(url, stream=True)
+                                # with open(filename, 'wb') as fd:
+                                #     for chunk in r.iter_content(chunk_size=1024):
+                                #         fd.write(chunk)
+                                # fd.close()
+                                # z = zipfile.ZipFile(filename)
+                                # z.extractall(path=out_path + '/' + site + '/in/' + str(year))
+                                # failed = 99
                         except:
                             failed +=1
                             print('*****Error on download-extract from google. Times failed: ', failed)
