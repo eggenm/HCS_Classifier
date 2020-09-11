@@ -22,17 +22,17 @@ import pandas as pd
 #A shape file - study area
 #Get a bounding box
 # lon_start=107
-lon_edge=.25
+lon_edge=2.6
 # lon_end=119
 # lat_start = -5
 # lat_end = 5
-lat_edge = .25
+lat_edge = 2.5
 #site = 'Kalimantan'
 years = [#2015,
         # 2016,
      2017,
-   # 2018,
-  #  2019
+    #2018,
+    #2019
          ]
 start = 1
 #years= [2017,2018,2019]
@@ -69,24 +69,27 @@ def get_grid_polygons(lon_start, lon_end, lat_start,lat_end):
 def download_data(polys,i, year):
     fc = ee.FeatureCollection(polys)
     all_study_area = fc.geometry().bounds()
-   # radar = ingest.assemble_radar_data(all_study_area, year)
-    sentinel = ingest.assemble_sentinel_data(all_study_area, year)
+    radar = ingest.assemble_radar_data(all_study_area, year)
+    #sentinel = ingest.assemble_sentinel_data(all_study_area, year)
     #l8 = ingest.assemble_l8(all_study_area, year)
     #dem = ingest.getDEM(all_study_area)
   #  soil = ingest.getSoil(all_study_area)
   #  water_mask = ingest.get_water_mask(all_study_area)
 
     images = {
-          '_greenestwCDI': sentinel,
-     #   '_radar': radar,  # 'class': strata_img,
+       #   '_greenestwCDI': sentinel,
+        '_radar': radar,  # 'class': strata_img,
       #  '_greenestw_mask2': l8,
       #  '_dem':dem
      #   '_soil': soil
        # '_watermask': water_mask
 
     }
-    for key, value in images.items():
-        for band in value.bandNames().getInfo():
+    #for key, value in images.items():
+    value = radar
+    key = '_radar'
+    print(value.bandNames().getInfo())
+    for band in value.bandNames().getInfo():
             print(band)
 
             for geometry in polygons:
@@ -94,9 +97,11 @@ def download_data(polys,i, year):
                 if cell < start:
                     continue
                 else:
-                    prefix = site + key + '_'+str(i)+'_' + str(cell) + '_' + band
+                    #prefix = 'users/eggenm/indonesia/' +\
+                    prefix =   site + '/' + str(year) + '/' + site + key + '_'+str(i)+'_' + str(cell) + '_' + band
                     print('prefix:  ', prefix)
-                    image = value.select(band).clip(geometry)
+                    myimage = ee.ImageCollection(value).filterBounds(geometry.geometry()).first().select(band).clip(geometry)
+                    #print(image)
                     #url = image.getDownloadURL(
                      #   {'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
                     filename = out_path + site + '/in/' + str(year) + '/' + prefix + '.zip'
@@ -105,8 +110,23 @@ def download_data(polys,i, year):
                     while(failed<12):
                         try:
                             with timer.Timer() as t:
-                                task  = ee.batch.Export.image.toDrive({'image': image, 'folder': 'Indonesia', 'fileNamePrefix ': prefix,  'crs': 'EPSG:4326', 'scale': 30})
+                               # task  = ee.batch.Export.image.toDrive(image=myimage, folder='Indonesia', fileNamePrefix =prefix,  crs='EPSG:4326', scale=30)
+                                task = ee.batch.Export.image.toCloudStorage(image=myimage, fileNamePrefix =prefix , bucket='hcsa_forest_mapping_training_bucket',  crs='EPSG:4326', scale=30 )
+                                #task = ee.batch.Export.image.toAsset(image=myimage,  assetId=prefix,
+                                  #                                  crs='EPSG:4326', scale=30)
                                 task.start()
+                                state = task.status()['state']
+                                while state in ['READY', 'RUNNING']:
+                                    print(state + '...')
+                                    state = task.status()['state']
+                                    time.sleep(8)
+                                print('Done.', task.status())
+                                if(state== 'FAILED'):
+                                    failed += 1
+                                    print('*****Error on download-extract from google. Times failed: ', failed)
+                                    time.sleep(10)  # wait for 5 seconds if we are having trouble getting file from GEE
+                                    if failed >= 5:
+                                        raise TimeoutError
                                 #r = requests.get(url, stream=True)
                                 # with open(filename, 'wb') as fd:
                                 #     for chunk in r.iter_content(chunk_size=1024):
@@ -114,12 +134,12 @@ def download_data(polys,i, year):
                                 # fd.close()
                                 # z = zipfile.ZipFile(filename)
                                 # z.extractall(path=out_path + '/' + site + '/in/' + str(year))
-                                # failed = 99
+                                failed = 99
                         except:
                             failed +=1
                             print('*****Error on download-extract from google. Times failed: ', failed)
                             time.sleep(10)#wait for 5 seconds if we are having trouble getting file from GEE
-                            if failed==11:
+                            if failed>=5:
                                 raise TimeoutError
                         finally:
                             print('Request-Extract took %.03f sec.' % t.interval)
@@ -142,10 +162,13 @@ if __name__ == "__main__":
 
     #Papua
     site = 'Papua'
-    polygons = get_grid_polygons(129, 153.5, 0, 11.5)
+    #polygons = get_grid_polygons(129, 153.5, 0, 11.5)
+    polygons = get_grid_polygons(129, 142, -10, 0)
+   # site = 'PNG'
+  #  polygons = get_grid_polygons(142, 153.4, -11.6, -1)
     for year in years:
        download_data(polygons, 77, year)
-       cleanup_files(year)
+  #     cleanup_files(year)
 
 
      #KALIMANTAN
