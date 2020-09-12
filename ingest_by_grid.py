@@ -69,16 +69,16 @@ def get_grid_polygons(lon_start, lon_end, lat_start,lat_end):
 def download_data(polys,i, year):
     fc = ee.FeatureCollection(polys)
     all_study_area = fc.geometry().bounds()
-    radar = ingest.assemble_radar_data(all_study_area, year)
-    #sentinel = ingest.assemble_sentinel_data(all_study_area, year)
+    #radar = ingest.assemble_radar_data(all_study_area, year)
+    sentinel = ingest.assemble_sentinel_data(all_study_area, year)
     #l8 = ingest.assemble_l8(all_study_area, year)
     #dem = ingest.getDEM(all_study_area)
   #  soil = ingest.getSoil(all_study_area)
   #  water_mask = ingest.get_water_mask(all_study_area)
 
     images = {
-       #   '_greenestwCDI': sentinel,
-        '_radar': radar,  # 'class': strata_img,
+          '_greenestwCDI': sentinel,
+       # '_radar': radar,  # 'class': strata_img,
       #  '_greenestw_mask2': l8,
       #  '_dem':dem
      #   '_soil': soil
@@ -86,8 +86,8 @@ def download_data(polys,i, year):
 
     }
     #for key, value in images.items():
-    value = radar
-    key = '_radar'
+    value = sentinel
+    key = '_greenest'
     print(value.bandNames().getInfo())
     for band in value.bandNames().getInfo():
             print(band)
