@@ -30,11 +30,12 @@ lat_edge = 2.5
 #site = 'Kalimantan'
 years = [#2015,
         # 2016,
-    # 2017,
-    2018,
-    2019
+     2017,
+  #  2018,
+    #2019
          ]
-start = 1
+start = 5
+end = 10
 #years= [2017,2018,2019]
 site = 'None'
 out_path = dirfuncs.guess_data_dir()
@@ -69,16 +70,16 @@ def get_grid_polygons(lon_start, lon_end, lat_start,lat_end):
 def download_data(polys,i, year):
     fc = ee.FeatureCollection(polys)
     all_study_area = fc.geometry().bounds()
-    #radar = ingest.assemble_radar_data(all_study_area, year)
-    sentinel = ingest.assemble_sentinel_data(all_study_area, year)
+    radar = ingest.assemble_radar_data(all_study_area, year)
+    #sentinel = ingest.assemble_sentinel_data(all_study_area, year)
     #l8 = ingest.assemble_l8(all_study_area, year)
     #dem = ingest.getDEM(all_study_area)
   #  soil = ingest.getSoil(all_study_area)
   #  water_mask = ingest.get_water_mask(all_study_area)
 
     images = {
-          '_greenestwCDI': sentinel,
-       # '_radar': radar,  # 'class': strata_img,
+        #  '_greenestwCDI': sentinel,
+        '_radar': radar,  # 'class': strata_img,
       #  '_greenestw_mask2': l8,
       #  '_dem':dem
      #   '_soil': soil
@@ -86,7 +87,7 @@ def download_data(polys,i, year):
 
     }
     #for key, value in images.items():
-    value = sentinel
+    value = radar
     key = '_greenest'
     print(value.bandNames().getInfo())
     for band in value.bandNames().getInfo():
@@ -94,7 +95,7 @@ def download_data(polys,i, year):
 
             for geometry in polygons:
                 cell = int(geometry.get('label').getInfo())
-                if cell < start:
+                if cell < start or cell > end:
                     continue
                 else:
                     #prefix = 'users/eggenm/indonesia/' +\

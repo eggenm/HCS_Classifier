@@ -31,7 +31,7 @@ s2_band_dict = {
            'B11': 'swir1_max',
          'B12': 'swir2_max',
    #           'nd': 'ndvi_s2_max',
-  #  'EVI':'EVI'
+    'EVI':'EVI'
 }
 
 s2_band_dict_median = {
