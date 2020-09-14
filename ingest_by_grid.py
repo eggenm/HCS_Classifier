@@ -88,7 +88,7 @@ def download_data(polys,i, year):
     }
     #for key, value in images.items():
     value = radar
-    key = '_greenest'
+    key = '_radar'
     print(value.bandNames().getInfo())
     for band in value.bandNames().getInfo():
             print(band)
