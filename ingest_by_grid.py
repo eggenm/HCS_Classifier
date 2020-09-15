@@ -34,8 +34,8 @@ years = [#2015,
   #  2018,
     #2019
          ]
-start = 5
-end = 10
+start = 1
+end = 50
 #years= [2017,2018,2019]
 site = 'None'
 out_path = dirfuncs.guess_data_dir()
@@ -73,22 +73,22 @@ def download_data(polys,i, year):
     radar = ingest.assemble_radar_data(all_study_area, year)
     #sentinel = ingest.assemble_sentinel_data(all_study_area, year)
     #l8 = ingest.assemble_l8(all_study_area, year)
-    #dem = ingest.getDEM(all_study_area)
+    dem = ingest.getDEM(all_study_area)
   #  soil = ingest.getSoil(all_study_area)
   #  water_mask = ingest.get_water_mask(all_study_area)
 
     images = {
         #  '_greenestwCDI': sentinel,
-        '_radar': radar,  # 'class': strata_img,
+       # '_radar': radar,  # 'class': strata_img,
       #  '_greenestw_mask2': l8,
-      #  '_dem':dem
+        '_dem':dem
      #   '_soil': soil
        # '_watermask': water_mask
 
     }
     #for key, value in images.items():
-    value = radar
-    key = '_radar'
+    value = dem
+    key = '_dem'
     print(value.bandNames().getInfo())
     for band in value.bandNames().getInfo():
             print(band)
