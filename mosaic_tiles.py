@@ -14,7 +14,7 @@ my_dict=sat_ops.s2_band_dict.copy()
 #my_dict.update(sat_ops.dem_band_dict)
 print('BANDS:  ',my_dict.values())
 island='Kalimantan'
-years=[2018,2019]
+years=[2019]
 for year in years:
     dirpath = r'/home/eggen/data/concession/' + island + '/in/' +str(year)
     out_fp = r'/home/eggen/data/concession/' + island + '/out/'+str(year)+ '/'
