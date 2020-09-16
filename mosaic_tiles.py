@@ -8,12 +8,13 @@ import os
 
 #my_dict = sat_ops.l8_band_dict.copy()
 #my_dict = sat_ops.soil_band_dict.copy()
-my_dict=sat_ops.s1_band_dict.copy()
-my_dict.update(sat_ops.s2_band_dict)
+my_dict = sat_ops.dem_band_dict.copy()
+#my_dict=sat_ops.s1_band_dict.copy()
+#my_dict.update(sat_ops.s2_band_dict)
 #my_dict.update(sat_ops.dem_band_dict)
 print('BANDS:  ',my_dict.values())
 island='Papua'
-years=[2017,2018,2019]
+years=[2017]
 for year in years:
     dirpath = r'/home/eggen/data/concession/' + island + '/in/' +str(year)
     out_fp = r'/home/eggen/data/concession/' + island + '/out/'+str(year)+ '/'
