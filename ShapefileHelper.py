@@ -59,8 +59,9 @@ def ingest_kml_fixed_classes():
         #temp = GeometryCollection([shape(feature["geometry"]).buffer(0) for feature in features])
         shapes = ( (shape(feature["geometry"]).buffer(0),(feature['properties']['Description']), feature['properties']['Name']) for feature in features )
         #TODO get the year from the json or doc.kml
-        image2 = image_cache.get_band_by_context_year('nir_max', 'Sumatra', 2015)
-        image = image_cache.get_band_by_context_year('nir_max', 'Kalimantan', 2015)
+        image2 = image_cache.get_band_by_context_year('nir_max', 'Sumatra', 2017)
+        image = image_cache.get_band_by_context_year('nir_max', 'Kalimantan', 2017)
+        image3 = image_cache.get_band_by_context_year('nir_max', 'Papua', 2017)
         for geom in shapes:
             print(geom)
             xmin, ymin, xmax, ymax = geom[0].bounds

@@ -462,7 +462,7 @@ def drop_no_data(data):
 #print(landcoverClassMap)
 if __name__ == "__main__":
     #write_input_data=True
-    x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope'], str(2015), ['impervious', 'forest'], False)
+    x = get_input_data(['VH_0', 'swir2_max', 'red_max', 'EVI', 'slope'], str(2017), ['adi_perkasa'], False)
   #  x = get_input_data([ 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
    #                    , False )#,
 
