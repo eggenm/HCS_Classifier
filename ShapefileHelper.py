@@ -29,11 +29,11 @@ input='C:\\Users\\ME\\Dropbox\\HCSproject\\data\\app_files\\stratified_shapefile
 
 supplemental_class_codes = {
     'impervious':23,
-    'forest':7,
-    'oil_palm':11,
-   'water': 16,
-   'pulp_and_paper': 21,
-    'coconut': 13,
+   #  'forest':7,
+   #  'oil_palm':11,
+   # 'water': 16,
+   # 'pulp_and_paper': 21,
+   #  'coconut': 13,
 
 }
 
