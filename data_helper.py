@@ -331,11 +331,12 @@ def get_concession_bands(bands, year, bounding_box, concession=None):
     return x
 
 
-def get_fixed_bands(bands, name, context):
+
+def get_fixed_bands(bands, name, year, context):
     print('GETTING fixed class: ', name)
     try:
         x=pd.DataFrame()
-        year=1111
+
         with timer.Timer() as t:
             for file in image_cache.get_fixed_class_paths(name, context):
                 class_image = rx.open_rasterio(file)
@@ -343,6 +344,8 @@ def get_fixed_bands(bands, name, context):
                 x = pd.concat([x,band_data], ignore_index=True)
                 y = pd.concat([x,get_classes(class_image.data, 'clas')], ignore_index=True)
             data = combine_input_landcover(x, y)
+
+            #TODO, maybe for these each band could be cached as a csv?, y values are fixed , just make sure nodata is handled (discarded)
     finally:
         x=False
         y=False
@@ -365,7 +368,7 @@ def get_input_data(bands, year, sites, get_predictor_data_only=False):
                 data = pd.DataFrame()
                 if (type == 'supplementary_class'):
                     print('Getting fixed class data')
-                    data = get_fixed_bands(bands, site, type)
+                    data = get_fixed_bands(bands, site, year, type)
                     # TODO get_fixed_bands
                     # get fixed bands will query a folder for all shape or rasters
                     # look for an input_sitename based on the classfilename
@@ -462,10 +465,10 @@ def drop_no_data(data):
 #print(landcoverClassMap)
 if __name__ == "__main__":
     #write_input_data=True
-    x = get_input_data(['VH_0', 'swir2_max', 'red_max', 'EVI', 'slope'], str(2017), ['adi_perkasa'], False)
+   # x = get_input_data(['VH_0', 'swir2_max', 'red_max', 'EVI', 'slope'], str(2017), ['adi_perkasa'], False)
   #  x = get_input_data([ 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
    #                    , False )#,
-
+    x = get_input_data(['nir_max'], str(2019), ['impervious'], False)
   #  [ 'nir_max', 'swir1_max', 'swir2_max', 'EVI']
 
 #    x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),

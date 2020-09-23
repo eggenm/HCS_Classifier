@@ -20,6 +20,7 @@ from fiona.crs import from_epsg
 from rasterio import features as rioft
 import imagery_data
 import dirfuncs
+import satellite_image_operations as sat_ops
 
 image_cache = imagery_data.Imagery_Cache.getInstance()
 
@@ -30,8 +31,8 @@ supplemental_class_codes = {
     'impervious':23,
     'forest':7,
     'oil_palm':11,
-    'water': 16,
-    'pulp_and_paper': 21,
+   'water': 16,
+   'pulp_and_paper': 21,
     'coconut': 13,
 
 }
@@ -59,44 +60,70 @@ def ingest_kml_fixed_classes():
         #temp = GeometryCollection([shape(feature["geometry"]).buffer(0) for feature in features])
         shapes = ( (shape(feature["geometry"]).buffer(0),(feature['properties']['Description']), feature['properties']['Name']) for feature in features )
         #TODO get the year from the json or doc.kml
-        image2 = image_cache.get_band_by_context_year('nir_max', 'Sumatra', 2017)
-        image = image_cache.get_band_by_context_year('nir_max', 'Kalimantan', 2017)
-        image3 = image_cache.get_band_by_context_year('nir_max', 'Papua', 2017)
-        for geom in shapes:
-            print(geom)
-            xmin, ymin, xmax, ymax = geom[0].bounds
-            year_list = geom[1].split(sep=',')
-            year_list = map(int, year_list)
-            year_list = list(year_list)
-            year_list.sort(reverse=True)
-            year = year_list[0]
-            name = geom[2]
-            bbox = box(xmin, ymin, xmax, ymax)
-            geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(4326))
-            geo = geo.to_crs(crs=from_epsg(4326))
-            coords = getFeatures(geo)
-            try:
-                out_img = image.rio.clip(coords, image.rio.crs)
-            except:
-                #try:
-                    print("CLIP ERROR trying other island")
-                    out_img = image2.rio.clip(coords, image.rio.crs)
-            # meta = out_img.meta.copy()
-            trans = out_img.transform
-            crs = out_img.rio.crs
-            height = out_img.rio.height
-            width = out_img.rio.width
-            dtype = rio.int16
-            # burned = rioft.rasterize(shapes=geom, fill=0)
-            out_fn = dirfuncs.guess_data_dir() + 'supplementary_class\\'+landcover+'\\' + name +'.tif'
-            with rio.open(out_fn, 'w+', driver='GTiff',
-                          height=height, width=width,
-                          crs=crs, dtype=dtype, transform=trans, count=1) as out:
-                out_arr = out.read(1)
-                burned = rioft.rasterize(shapes=[(geom[0], geom[1])], fill=-9999, out=out_arr, transform=out.transform)
-                burned = np.where(burned != geom[1], -9999, burned) #NoData the other pixels
-                out.write_band(1, burned)
-            out.close()
+
+        my_dict = sat_ops.s1_band_dict.copy()
+        my_dict.update(sat_ops.s2_band_dict)
+        my_dict.update(sat_ops.dem_band_dict)
+        bands = my_dict.values()
+        for year in [2017,2018,2019]:
+            imageSumatra = image_cache.get_band_by_context_year('nir_max', 'Sumatra', year)
+            imageKalimantan = image_cache.get_band_by_context_year('nir_max', 'Kalimantan', year)
+            imagePapua = image_cache.get_band_by_context_year('nir_max', 'Papua', year)
+            for geom in shapes:
+                print(geom)
+                xmin, ymin, xmax, ymax = geom[0].bounds
+                year_list = geom[1].split(sep=',')
+                year_list = map(int, year_list)
+                year_list = list(year_list)
+                year_list.sort(reverse=True)
+                my_year = year_list[0]
+                if year==my_year:
+                    name = geom[2]
+                    bbox = box(xmin, ymin, xmax, ymax)
+                    geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(4326))
+                    geo = geo.to_crs(crs=from_epsg(4326))
+                    coords = getFeatures(geo)
+                    try:
+                        out_img = imageKalimantan.rio.clip(coords, imageKalimantan.rio.crs)
+                        island = 'Kalimantan'
+                    except:
+                        try:
+                            print("CLIP ERROR trying other island")
+                            out_img = imageSumatra.rio.clip(coords, imageSumatra.rio.crs)
+                            island = 'Sumatra'
+                        except:
+                            print("CLIP ERROR trying other island")
+                            out_img = imagePapua.rio.clip(coords, imagePapua.rio.crs)
+                            island = 'Papua'
+                    # meta = out_img.meta.copy()
+                    trans = out_img.transform
+                    crs = out_img.rio.crs
+                    height = out_img.rio.height
+                    width = out_img.rio.width
+                    dtype = rio.int16
+                    # burned = rioft.rasterize(shapes=geom, fill=0)
+                    out_fn = dirfuncs.guess_data_dir() + 'supplementary_class\\'+landcover+'\\' + name +'.tif'
+                    with rio.open(out_fn, 'w+', driver='GTiff',
+                                  height=height, width=width,
+                                  crs=crs, dtype=dtype, transform=trans, count=1) as out:
+                        out_arr = out.read(1)
+                        burned = rioft.rasterize(shapes=[(geom[0], supplemental_class_codes[landcover])], fill=-9999, out=out_arr, transform=out.transform)
+                        burned = np.where(burned != supplemental_class_codes[landcover], -9999, burned) #NoData the other pixels
+                        out.write_band(1, burned)
+                    out.close()
+                    for band in bands:
+                        image = image_cache.get_band_by_context_year(band, island, year)
+                        out_img = image.rio.clip(coords, image.rio.crs)
+                        dtype = rio.float32
+
+                        out_fn = dirfuncs.guess_data_dir() + 'supplementary_class\\' + landcover + '\\'+ 'out' + '\\'+ name + '_'+ band+'.tif'
+                        with rio.open(out_fn, 'w+', driver='GTiff',
+                                      height=height, width=width,
+                                      crs=crs, dtype=dtype, transform=trans, count=1) as out2:
+                            out2.write_band(1, out_img[0])
+                        out2.close()
+
+
 
 
 
