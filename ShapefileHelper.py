@@ -47,7 +47,7 @@ def ingest_kml_fixed_classes():
     for landcover in supplemental_class_codes.keys():
         input = dirfuncs.guess_data_dir() + 'supplementary_class\\'+landcover+'\\doc.kml'
         srcDS = gdal.OpenEx(input)
-        output = dirfuncs.guess_data_dir() + 'supplementary_class\\'+landcover+'\\'+landcover+'.json'
+        output = os.path.join(dirfuncs.guess_data_dir(), 'supplementary_class', landcover, landcover + '.json')
         #ds = gdal.VectorTranslate(output, srcDS, format='GeoJSON')
         file = glob.glob(output)
         with open(output) as f:
