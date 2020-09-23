@@ -82,6 +82,7 @@ def ingest_kml_fixed_classes():
                 year_list = list(year_list)
                 year_list.sort(reverse=True)
                 my_year = year_list[0]
+                print(my_year)
                 if year==my_year:
                     name = geom[2]
                     bbox = box(xmin, ymin, xmax, ymax)
