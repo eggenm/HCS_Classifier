@@ -68,12 +68,12 @@ def ingest_kml_fixed_classes():
         my_dict.update(sat_ops.s2_band_dict)
         my_dict.update(sat_ops.dem_band_dict)
         bands = my_dict.values()
+        imageSumatra = image_cache.get_band_by_context_year('nir_max', 'Sumatra', 2019)
+        imageKalimantan = image_cache.get_band_by_context_year('nir_max', 'Kalimantan', 2019)
+        imagePapua = image_cache.get_band_by_context_year('nir_max', 'Papua', 2019)
         for year in [2017,2018,2019]:
             shapes = ((shape(feature["geometry"]).buffer(0), (feature['properties']['Description']),
                        feature['properties']['Name']) for feature in features)
-            imageSumatra = image_cache.get_band_by_context_year('nir_max', 'Sumatra', year)
-            imageKalimantan = image_cache.get_band_by_context_year('nir_max', 'Kalimantan', year)
-            imagePapua = image_cache.get_band_by_context_year('nir_max', 'Papua', year)
             for geom in shapes:
                 print(geom)
                 xmin, ymin, xmax, ymax = geom[0].bounds
