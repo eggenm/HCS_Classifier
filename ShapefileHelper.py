@@ -45,16 +45,19 @@ def getFeatures(gdf):
 def ingest_kml_fixed_classes():
     #input = 'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\supplementary_class\\impervious\\doc.kml'
     for landcover in supplemental_class_codes.keys():
+        print(landcover)
         input = dirfuncs.guess_data_dir() + 'supplementary_class\\'+landcover+'\\doc.kml'
         srcDS = gdal.OpenEx(input)
         output = os.path.join(dirfuncs.guess_data_dir(), 'supplementary_class', landcover, landcover + '.json')
         #ds = gdal.VectorTranslate(output, srcDS, format='GeoJSON')
-        file = glob.glob(output)
+        #file = glob.glob(output)
+        print(output)
         with open(output) as f:
                 data = f.read()
                 #TODO on windows you may get a parsing error that does not make sense but it has to do with EOL characters
                 jsonload = js.loads(data)
                 features = jsonload["features"]
+                print(features)
 
         # NOTE: buffer(0) is a trick for fixing scenarios where polygons have overlapping coordinates
         #temp = GeometryCollection([shape(feature["geometry"]).buffer(0) for feature in features])
