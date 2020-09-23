@@ -104,7 +104,6 @@ def ingest_kml_fixed_classes():
                         island = 'Papua'
                 # meta = out_img.meta.copy()
                 print(island)
-                continue
                 trans = out_img.transform
                 crs = out_img.rio.crs
                 height = out_img.rio.height
