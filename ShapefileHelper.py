@@ -61,7 +61,7 @@ def ingest_kml_fixed_classes():
 
         # NOTE: buffer(0) is a trick for fixing scenarios where polygons have overlapping coordinates
         #temp = GeometryCollection([shape(feature["geometry"]).buffer(0) for feature in features])
-        shapes = ( (shape(feature["geometry"]).buffer(0),(feature['properties']['Description']), feature['properties']['Name']) for feature in features )
+
         #TODO get the year from the json or doc.kml
 
         my_dict = sat_ops.s1_band_dict.copy()
@@ -69,6 +69,8 @@ def ingest_kml_fixed_classes():
         my_dict.update(sat_ops.dem_band_dict)
         bands = my_dict.values()
         for year in [2017,2018,2019]:
+            shapes = ((shape(feature["geometry"]).buffer(0), (feature['properties']['Description']),
+                       feature['properties']['Name']) for feature in features)
             imageSumatra = image_cache.get_band_by_context_year('nir_max', 'Sumatra', year)
             imageKalimantan = image_cache.get_band_by_context_year('nir_max', 'Kalimantan', year)
             imagePapua = image_cache.get_band_by_context_year('nir_max', 'Papua', year)
