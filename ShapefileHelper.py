@@ -49,7 +49,7 @@ def ingest_kml_fixed_classes():
     imagePapua = image_cache.get_band_by_context_year('nir_max', 'Papua', 2019)
     for landcover in supplemental_class_codes.keys():
         print(landcover)
-        input = dirfuncs.guess_data_dir() + 'supplementary_class\\'+landcover+'\\doc.kml'
+        input = os.path.join(dirfuncs.guess_data_dir(), 'supplementary_class', landcover,'doc.kml')
         srcDS = gdal.OpenEx(input)
         output = os.path.join(dirfuncs.guess_data_dir(), 'supplementary_class', landcover, landcover + '.json')
         #ds = gdal.VectorTranslate(output, srcDS, format='GeoJSON')
@@ -109,7 +109,7 @@ def ingest_kml_fixed_classes():
             width = out_img.rio.width
             dtype = rio.int16
             # burned = rioft.rasterize(shapes=geom, fill=0)
-            out_fn = dirfuncs.guess_data_dir() + 'supplementary_class\\'+landcover+'\\' + name +'.tif'
+            out_fn = os.path.join(dirfuncs.guess_data_dir(),'supplementary_class', landcover, name+'.tif')
             with rio.open(out_fn, 'w+', driver='GTiff',
                           height=height, width=width,
                           crs=crs, dtype=dtype, transform=trans, count=1) as out:
@@ -125,7 +125,7 @@ def ingest_kml_fixed_classes():
                     out_img.data = np.float32(out_img)
                 dtype = rio.float32
 
-                out_fn = dirfuncs.guess_data_dir() + 'supplementary_class\\' + landcover + '\\'+ 'out' + '\\'+ name + '_'+ band+'.tif'
+                out_fn = os.path.join(dirfuncs.guess_data_dir(), 'supplementary_class', landcover,'out', name + '_'+ band+'.tif')
                 print('Writing:  ', out_fn)
                 with rio.open(out_fn, 'w+', driver='GTiff',
                               height=height, width=width,
