@@ -122,6 +122,8 @@ def ingest_kml_fixed_classes():
                 for band in bands:
                     image = image_cache.get_band_by_context_year(band, island, my_year)
                     out_img = image.rio.clip(coords, image.rio.crs)
+                    if (out_img.dtype == 'float64'):
+                        out_img.data = np.float32(out_img)
                     dtype = rio.float32
 
                     out_fn = dirfuncs.guess_data_dir() + 'supplementary_class\\' + landcover + '\\'+ 'out' + '\\'+ name + '_'+ band+'.tif'
