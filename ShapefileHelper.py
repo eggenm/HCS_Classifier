@@ -92,13 +92,13 @@ def ingest_kml_fixed_classes():
                 geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(4326))
                 geo = geo.to_crs(crs=from_epsg(4326))
                 coords = getFeatures(geo)
-                if name.index('kal')>-1:
+                if 'kal' in name:
                     out_img = imageKalimantan.rio.clip(coords, imageKalimantan.rio.crs)
                     island = 'Kalimantan'
-                elif name.index('sum')>-1:
+                elif 'sum' in name:
                         out_img = imageSumatra.rio.clip(coords, imageSumatra.rio.crs)
                         island = 'Sumatra'
-                elif name.index('pap') > -1:
+                elif 'pap' in name:
                         out_img = imagePapua.rio.clip(coords, imagePapua.rio.crs)
                         island = 'Papua'
                 else:
