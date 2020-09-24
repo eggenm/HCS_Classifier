@@ -72,7 +72,7 @@ def ingest_kml_fixed_classes():
         my_dict.update(sat_ops.dem_band_dict)
         bands = my_dict.values()
         print(bands)
-        bands = ['nir_max']
+        #bands = ['nir_max']
         shapes = ((shape(feature["geometry"]).buffer(0), (feature['properties']['Description']),
                    feature['properties']['Name']) for feature in features)
         for band in bands:
