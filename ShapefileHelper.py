@@ -28,10 +28,10 @@ image_cache = imagery_data.Imagery_Cache.getInstance()
 input='C:\\Users\\ME\\Dropbox\\HCSproject\\data\\app_files\\stratified_shapefiles\\Jambi_WKS_Stratification.shp'
 
 supplemental_class_codes = {
-    'impervious':23,
-   #  'forest':7,
-   #  'oil_palm':11,
-   # 'water': 16,
+   # 'impervious':23,
+     'forest':7,
+     'oil_palm':11,
+     'water': 16,
    # 'pulp_and_paper': 21,
    #  'coconut': 13,
 
@@ -72,56 +72,57 @@ def ingest_kml_fixed_classes():
         my_dict.update(sat_ops.dem_band_dict)
         bands = my_dict.values()
         print(bands)
-        #bands = ['nir_max']
+        bands = ['nir_max']
         shapes = ((shape(feature["geometry"]).buffer(0), (feature['properties']['Description']),
                    feature['properties']['Name']) for feature in features)
-        for geom in shapes:
-            print(geom)
+        for band in bands:
+            for geom in shapes:
+                print(geom)
 
-            xmin, ymin, xmax, ymax = geom[0].bounds
-            year_list = geom[1].split(sep=',')
-            year_list = map(int, year_list)
-            year_list = list(year_list)
-            year_list.sort(reverse=True)
-            my_year = year_list[0]
-            name = geom[2]
-            bbox = box(xmin, ymin, xmax, ymax)
-            geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(4326))
-            geo = geo.to_crs(crs=from_epsg(4326))
-            coords = getFeatures(geo)
-            try:
-                out_img = imageKalimantan.rio.clip(coords, imageKalimantan.rio.crs)
-                island = 'Kalimantan'
-            except:
+                xmin, ymin, xmax, ymax = geom[0].bounds
+                year_list = geom[1].split(sep=',')
+                year_list = map(int, year_list)
+                year_list = list(year_list)
+                year_list.sort(reverse=True)
+                my_year = year_list[0]
+                name = geom[2]
+                bbox = box(xmin, ymin, xmax, ymax)
+                geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(4326))
+                geo = geo.to_crs(crs=from_epsg(4326))
+                coords = getFeatures(geo)
                 try:
-                    print("CLIP ERROR trying other island")
-                    out_img = imageSumatra.rio.clip(coords, imageSumatra.rio.crs)
-                    island = 'Sumatra'
+                    out_img = imageKalimantan.rio.clip(coords, imageKalimantan.rio.crs)
+                    island = 'Kalimantan'
                 except:
-                    print("CLIP ERROR trying other island")
-                    out_img = imagePapua.rio.clip(coords, imagePapua.rio.crs)
-                    island = 'Papua'
-            # meta = out_img.meta.copy()
-            print(island)
-            trans = out_img.transform
-            crs = out_img.rio.crs
-            height = out_img.rio.height
-            width = out_img.rio.width
-            dtype = rio.int16
-            # burned = rioft.rasterize(shapes=geom, fill=0)
-            out_fn = os.path.join(dirfuncs.guess_data_dir(),'supplementary_class', landcover, name+'.tif')
-            with rio.open(out_fn, 'w+', driver='GTiff',
-                          height=height, width=width,
-                          crs=crs, dtype=dtype, transform=trans, count=1) as out:
-                out_arr = out.read(1)
-                burned = rioft.rasterize(shapes=[(geom[0], supplemental_class_codes[landcover])], fill=-9999, out=out_arr, transform=out.transform)
-                burned = np.where(burned != supplemental_class_codes[landcover], -9999, burned) #NoData the other pixels
-                out.write_band(1, burned)
-            out.close()
-            for band in bands:
+                    try:
+                        print("CLIP ERROR trying other island")
+                        out_img = imageSumatra.rio.clip(coords, imageSumatra.rio.crs)
+                        island = 'Sumatra'
+                    except:
+                        print("CLIP ERROR trying other island")
+                        out_img = imagePapua.rio.clip(coords, imagePapua.rio.crs)
+                        island = 'Papua'
+                # meta = out_img.meta.copy()
+                print(island)
+                trans = out_img.transform
+                crs = out_img.rio.crs
+                height = out_img.rio.height
+                width = out_img.rio.width
+                dtype = rio.int16
+                # burned = rioft.rasterize(shapes=geom, fill=0)
+                out_fn = os.path.join(dirfuncs.guess_data_dir(),'supplementary_class', landcover, name+'.tif')
+                # with rio.open(out_fn, 'w+', driver='GTiff',
+                #               height=height, width=width,
+                #               crs=crs, dtype=dtype, transform=trans, count=1) as out:
+                #     out_arr = out.read(1)
+                #     burned = rioft.rasterize(shapes=[(geom[0], supplemental_class_codes[landcover])], fill=-9999, out=out_arr, transform=out.transform)
+                #     burned = np.where(burned != supplemental_class_codes[landcover], -9999, burned) #NoData the other pixels
+                #     out.write_band(1, burned)
+                # out.close()
+
                 image = image_cache.get_band_by_context_year(band, island, my_year)
                 out_img = image.rio.clip(coords, image.rio.crs)
-                if (out_img.dtype == 'float64'):
+                if out_img.dtype == 'float64':
                     out_img.data = np.float32(out_img)
                 dtype = rio.float32
 
