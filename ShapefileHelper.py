@@ -87,7 +87,11 @@ def ingest_kml_fixed_classes():
                 year_list = list(year_list)
                 year_list.sort(reverse=True)
                 my_year = year_list[0]
+                if my_year < 2017 : continue #TODO this only applies because we are just using sentinel 2 data after 2017
                 name = geom[2]
+                out_band = os.path.join(dirfuncs.guess_data_dir(), 'supplementary_class', landcover, 'out',
+                                        name + '_' + band + '.tif')
+                if os.path.isfile(out_band): continue # this is a hack because I have hit errors in the middle of long batch jobs and had to restart
                 bbox = box(xmin, ymin, xmax, ymax)
                 geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(4326))
                 geo = geo.to_crs(crs=from_epsg(4326))
@@ -111,8 +115,8 @@ def ingest_kml_fixed_classes():
                 width = out_img.rio.width
                 dtype = rio.int16
                 # burned = rioft.rasterize(shapes=geom, fill=0)
-                out_fn = os.path.join(dirfuncs.guess_data_dir(),'supplementary_class', landcover, name+'.tif')
-                with rio.open(out_fn, 'w+', driver='GTiff',
+                out_class = os.path.join(dirfuncs.guess_data_dir(),'supplementary_class', landcover, name+'.tif')
+                with rio.open(out_class, 'w+', driver='GTiff',
                               height=height, width=width,
                               crs=crs, dtype=dtype, transform=trans, count=1) as out:
                     out_arr = out.read(1)
@@ -126,9 +130,9 @@ def ingest_kml_fixed_classes():
                     out_img.data = np.float32(out_img)
                 dtype = rio.float32
 
-                out_fn = os.path.join(dirfuncs.guess_data_dir(), 'supplementary_class', landcover,'out', name + '_'+ band+'.tif')
-                print('Writing:  ', out_fn)
-                with rio.open(out_fn, 'w+', driver='GTiff',
+
+                print('Writing:  ', out_band)
+                with rio.open(out_band, 'w+', driver='GTiff',
                               height=height, width=width,
                               crs=crs, dtype=dtype, transform=trans, count=1) as out2:
                     out2.write_band(1, out_img[0])
