@@ -28,11 +28,11 @@ input='C:\\Users\\ME\\Dropbox\\HCSproject\\data\\app_files\\stratified_shapefile
 
 supplemental_class_codes = {
    # 'impervious':23,
-     'forest':7,
-     'oil_palm':11,
-     'water': 16,
-   # 'pulp_and_paper': 21,
-   #  'coconut': 13,
+   #  'forest':7,
+    # 'oil_palm':11,
+   #  'water': 16,
+    'pulp_and_paper': 21,
+     'coconut': 13,
 
 }
 
@@ -75,55 +75,62 @@ def ingest_kml_fixed_classes():
         #bands = ['nir_max']
 
 
-        for band in bands:
-            shapes = ((shape(feature["geometry"]).buffer(0), (feature['properties']['Description']),
-                       feature['properties']['Name']) for feature in features)
-            for geom in shapes:
-                print(geom)
 
-                xmin, ymin, xmax, ymax = geom[0].bounds
-                year_list = geom[1].split(sep=',')
-                year_list = map(int, year_list)
-                year_list = list(year_list)
-                year_list.sort(reverse=True)
-                my_year = year_list[0]
-                if my_year < 2017 : continue #TODO this only applies because we are just using sentinel 2 data after 2017
-                name = geom[2]
-                out_band = os.path.join(dirfuncs.guess_data_dir(), 'supplementary_class', landcover, 'out',
-                                        name + '_' + band + '.tif')
-                if os.path.isfile(out_band): continue # this is a hack because I have hit errors in the middle of long batch jobs and had to restart
-                bbox = box(xmin, ymin, xmax, ymax)
-                geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(4326))
-                geo = geo.to_crs(crs=from_epsg(4326))
-                coords = getFeatures(geo)
-                if 'kal' in name:
-                    out_img = imageKalimantan.rio.clip(coords, imageKalimantan.rio.crs)
-                    island = 'Kalimantan'
-                elif 'sum' in name:
+        shapes = ((shape(feature["geometry"]).buffer(0), (feature['properties']['Description']),
+                   feature['properties']['Name']) for feature in features)
+        for geom in shapes:
+            print(geom)
+            get_reference = True
+            xmin, ymin, xmax, ymax = geom[0].bounds
+            year_list = geom[1].split(sep=',')
+            year_list = map(int, year_list)
+            year_list = list(year_list)
+            year_list.sort(reverse=True)
+            my_year = year_list[0]
+            if my_year < 2017: continue  # TODO this only applies because we are just using sentinel 2 data after 2017
+            name = geom[2]
+            for band in bands:
+                if get_reference:
+                    bbox = box(xmin, ymin, xmax, ymax)
+                    geo = gpd.GeoDataFrame({'geometry': bbox}, index=[0], crs=from_epsg(4326))
+                    geo = geo.to_crs(crs=from_epsg(4326))
+                    coords = getFeatures(geo)
+                    if 'kal' in name:
+                        out_img = imageKalimantan.rio.clip(coords, imageKalimantan.rio.crs)
+                        island = 'Kalimantan'
+                    elif 'sum' in name:
                         out_img = imageSumatra.rio.clip(coords, imageSumatra.rio.crs)
                         island = 'Sumatra'
-                elif 'pap' in name:
+                    elif 'pap' in name:
                         out_img = imagePapua.rio.clip(coords, imagePapua.rio.crs)
                         island = 'Papua'
-                else:
-                    raise RuntimeError
-                # meta = out_img.meta.copy()
-                print(island)
-                trans = out_img.transform
-                crs = out_img.rio.crs
-                height = out_img.rio.height
-                width = out_img.rio.width
-                dtype = rio.int16
-                # burned = rioft.rasterize(shapes=geom, fill=0)
-                out_class = os.path.join(dirfuncs.guess_data_dir(),'supplementary_class', landcover, name+'.tif')
-                with rio.open(out_class, 'w+', driver='GTiff',
-                              height=height, width=width,
-                              crs=crs, dtype=dtype, transform=trans, count=1) as out:
-                    out_arr = out.read(1)
-                    burned = rioft.rasterize(shapes=[(geom[0], supplemental_class_codes[landcover])], fill=-9999, out=out_arr, transform=out.transform)
-                    burned = np.where(burned != supplemental_class_codes[landcover], -9999, burned) #NoData the other pixels
-                    out.write_band(1, burned)
-                out.close()
+                    else:
+                        raise RuntimeError
+                    # meta = out_img.meta.copy()
+                    print(island)
+                    trans = out_img.transform
+                    crs = out_img.rio.crs
+                    height = out_img.rio.height
+                    width = out_img.rio.width
+                    dtype = rio.int16
+                    # burned = rioft.rasterize(shapes=geom, fill=0)
+                    out_class = os.path.join(dirfuncs.guess_data_dir(), 'supplementary_class', landcover, name + '.tif')
+                    with rio.open(out_class, 'w+', driver='GTiff',
+                                  height=height, width=width,
+                                  crs=crs, dtype=dtype, transform=trans, count=1) as out:
+                        out_arr = out.read(1)
+                        burned = rioft.rasterize(shapes=[(geom[0], supplemental_class_codes[landcover])], fill=-9999,
+                                                 out=out_arr, transform=out.transform)
+                        burned = np.where(burned != supplemental_class_codes[landcover], -9999,
+                                          burned)  # NoData the other pixels
+                        out.write_band(1, burned)
+                    out.close()
+                    get_reference=False
+
+                out_band = os.path.join(dirfuncs.guess_data_dir(), 'supplementary_class', landcover, 'out',
+                                        name + '_' + band + '.tif')
+                if os.path.isfile(out_band): continue # this is a hack because I have hit errors in the middle of long batch jobs and had find way to restart
+
                 image = image_cache.get_band_by_context_year(band, island, my_year)
                 out_img = image.rio.clip(coords, image.rio.crs)
                 if out_img.dtype == 'float64':
