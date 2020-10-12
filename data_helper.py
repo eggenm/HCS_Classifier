@@ -475,7 +475,7 @@ if __name__ == "__main__":
         print(row['app_key'], bool(row['ingest']), row['assessment_year'])
         if(bool(row['ingest'])):
             x = get_input_data(bands, str(int(row['assessment_year'])), [row['app_key']], False)
-            print(x)
+            
 
     print(con_df)
     #write_input_data=True
