@@ -475,14 +475,14 @@ if __name__ == "__main__":
         print(row['app_key'], bool(row['ingest']), row['assessment_year'])
         if(bool(row['ingest'])):
             x = get_input_data(bands, str(int(row['assessment_year'])), [row['app_key']], False)
-            
+
 
     print(con_df)
     #write_input_data=True
    # x = get_input_data(['VH_0', 'swir2_max', 'red_max', 'EVI', 'slope'], str(2017), ['adi_perkasa'], False)
   #  x = get_input_data([ 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
    #                    , False )#,
-    x = get_input_data(['nir_max'], str(2019), ['impervious'], False)
+   # x = get_input_data(['nir_max'], str(2019), ['impervious'], False)
   #  [ 'nir_max', 'swir1_max', 'swir2_max', 'EVI']
 
 #    x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),
