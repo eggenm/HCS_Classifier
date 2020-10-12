@@ -25,6 +25,7 @@ import imagery_data
 import itertools as it
 from rioxarray import merge as rxmerge
 import matplotlib.pyplot as plt
+import satellite_image_operations as sat_ops
 
 # =============================================================================
 # Identify files
@@ -464,6 +465,19 @@ def drop_no_data(data):
 
 #print(landcoverClassMap)
 if __name__ == "__main__":
+    concessions_csv = base_dir + 'concession_inventory.csv'
+    con_df = pd.read_csv(concessions_csv)
+    my_dict = sat_ops.s2_band_dict.copy()
+    my_dict.update(sat_ops.s1_band_dict)
+    my_dict.update(sat_ops.dem_band_dict)
+    bands = my_dict.values()
+    for index, row in con_df.iterrows():
+        print(row['app_key'], bool(row['ingest']), row['assessment_year'])
+        if(bool(row['ingest'])):
+            x = get_input_data(bands, str(int(row['assessment_year'])), [row['app_key']], False)
+            print(x)
+
+    print(con_df)
     #write_input_data=True
    # x = get_input_data(['VH_0', 'swir2_max', 'red_max', 'EVI', 'slope'], str(2017), ['adi_perkasa'], False)
   #  x = get_input_data([ 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
