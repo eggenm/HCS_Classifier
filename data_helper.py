@@ -301,26 +301,32 @@ def write_concession_band(data_src, bounding_raster,  outtif):
 
 def get_feature_inputs(band_groups, bounding_box,  year, concession=None):
     tif=''
-    print('Band_Groups:  ',band_groups)
-    array = [0 for x in range(len(band_groups))]
-    print('len(array):  ', len(array))
-    image_cache = imagery_data.Imagery_Cache.getInstance()
-    for i, band in enumerate(band_groups):
-        context = db.data_context_dict[concession]
-        try:
-            out_img = image_cache.get_band_by_name_year(band, concession, year, context)
-        except:
-                tif = image_cache.get_input_image_path(concession, year, context, band)
-                print('except: ', band , concession, context)
-                out_img = reproject_match_input_band(band, context, year, bounding_box)
-                if (write_input_data):
-                    write_concession_band(out_img, bounding_box,  tif)
+    try:
+        with timer.Timer() as t:
+            print('Band_Groups:  ',band_groups)
+            array = [0 for x in range(len(band_groups))]
+            print('len(array):  ', len(array))
+            image_cache = imagery_data.Imagery_Cache.getInstance()
+            for i, band in enumerate(band_groups):
+                context = db.data_context_dict[concession]
+                try:
+                    out_img = image_cache.get_band_by_name_year(band, concession, year, context)
+                except:
+                        tif = image_cache.get_input_image_path(concession, year, context, band)
+                        print('except: ', band , concession, context)
+                        out_img = reproject_match_input_band(band, context, year, bounding_box)
+                        if (write_input_data):
+                            write_concession_band(out_img, bounding_box,  tif)
 
-        print('I:  ',i)
-        array[i] = np.asarray(out_img[0])
-        out_img = False
+                print('I:  ',i)
+                array[i] = np.asarray(out_img[0])
+                print('out_image type: ', type(out_img))
+                out_img = False
+            print ('array type: ' , type(array))
+            return np.asarray(array)
+    finally:
+        print('get_feature_inputs took %.03f sec.' % t.interval)
 
-    return np.asarray(array)
 
 
 def get_concession_bands(bands, year, bounding_box, concession=None):
