@@ -33,7 +33,7 @@ import satellite_image_operations as sat_ops
 base_dir = dirfuncs.guess_data_dir()
 pixel_window_size = 1
 stackData = True
-write_input_data = True
+write_input_data = False
 image_cache = imagery_data.Imagery_Cache.getInstance()
 
 
@@ -178,10 +178,13 @@ def gen_windows2(array):
             i = 0
             windows = pd.DataFrame({i: aList[0]}, index=full_index)
             for i in range(1, len(aList)):
+                print( 'gen_windows:  ', i, '  of  ', len(aList))
                 temp = pd.DataFrame({i: aList[i]}, index=full_index)
                 windows = windows.merge(temp, left_index=True, right_index=True, how='left')
+                temp=False
             windows.index.names = ['i', 'j']
             aList=False
+            array=False
     finally:
         print('gen_windows2 request took %.03f sec.' % t.interval)
     return windows
