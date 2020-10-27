@@ -79,6 +79,9 @@ data_context_dict =  { 'app_muba':'Sumatra',
 'PTMentariPratama':'Kalimantan',
 'PTSukajadiSawitMekar':'Kalimantan',
 'PTLabontaraEkaKarsa':'Kalimantan',
+'Kalimantan':'Kalimantan',
+'Papua':'Papua',
+'Sumatra':'Sumatra',
 
 
 
@@ -96,7 +99,6 @@ data_context_dict =  { 'app_muba':'Sumatra',
                              'North_Sumatra': 'Sumatra',
                              'Aceh': 'Sumatra',
 
-                             'Papua': 'Papua',
 
                        'impervious':'supplementary_class',
                        'oil_palm':'supplementary_class',
