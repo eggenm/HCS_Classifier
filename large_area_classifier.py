@@ -263,7 +263,8 @@ if __name__ == "__main__":
     try:
         with timer.Timer() as t:
             island = db.data_context_dict[name]
-            tif = base_dir + name + '/out/' + year + '/input_' + name + '_' + bands[0] + '.tif'
+            #tif = base_dir + name + '/out/' + year + '/input_' + name + '_' + bands[0] + '.tif'
+            tif = base_dir + name + '/out/' + year + '/' + bands[0] + '.tif'
             try:
                  file_list = sorted(glob.glob(tif))
                  ref_study_area = rx.open_rasterio(file_list[0])
