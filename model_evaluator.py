@@ -18,17 +18,20 @@ import sampler
 training_sample_rate = 0.003
 resolution = 30
 
-year=str(2015)
+
+
+year=str(2017)
 sites = [ #'app_muba':'Sumatra',
 #['app_riau'],
 #['app_oki'],
   #   ['app_jambi'] ,
-# ['Bumitama_PTDamaiAgroSejahtera'],
-    ['Bumitama_PTHungarindoPersada'],
-    ['PTAgroAndalan'],
-    ['PTMitraNusaSarana'],
-    ['gar_pgm'],
- ['Bumitama_PTGemilangMakmurSubur'],
+['PTLabontaraEkaKarsa'],
+  #  ['sawit_perdana'],
+ #    ['Bumitama_PTHungarindoPersada'],
+ #    ['PTAgroAndalan'],
+  #   ['PTMitraNusaSarana'],
+ #    ['gar_pgm'],
+ # ['Bumitama_PTGemilangMakmurSubur'],
  #         'crgl_stal' : 'Sumatra',
 
 #'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
@@ -47,6 +50,7 @@ sites = [ #'app_muba':'Sumatra',
 #sites = [
 
 #    ]
+my_sampler = sampler.Sampler()
 base_dir = dirfuncs.guess_data_dir()
 band_set ={ # 0: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'EVI' ],
 #             1: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'EVI', 'slope'],
@@ -58,9 +62,9 @@ band_set ={ # 0: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 's
 #          #   7:['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI' ],
 #             8: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0',
 #                 'VH_2', 'VV_2', 'EVI', 'slope'],
-            9: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ,'slope'],
-            91: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
-            94: ['nir_max', 'swir1_max',   'VH', 'VV', 'VV_2', 'VH_2','slope'],
+   #         9: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ,'slope'],
+          #  91: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
+            94: ['nir_max', 'swir1_max', 'swir2_max',   'VH_2', 'VV_2', 'VV_0', 'VH_0','slope', 'EVI'],
             95: ['nir_max', 'swir1_max',   'VH', 'VV', 'VV_2', 'VH_2'],
             96: ['nir_max', 'swir1_max',   'VV_2', 'VH_2', 'EVI' ,'slope'],
             97: ['nir_max', 'swir1_max',   'VV_2', 'VH_2', 'EVI' ],
@@ -131,7 +135,7 @@ def train_model(X_train, y_train, score_stat):
                        'max_features': [ #.2,
                                          .33, .65,
                                         .8 ],
-                       'n_estimators': [100, 250, 375, 500, 750]}]
+                       'n_estimators': [500, 625, 750]}]
 
      #   param_grid = [{
       #                   'max_leaf_nodes': [6, 10],
@@ -192,24 +196,34 @@ class model_performance_logger:
 
 def init_x_y_data(sites, band_set):
     try:
+        data=pd.DataFrame()
         with timer.Timer() as t:
             for concessions in sites:
                 for key, bands in band_set.items():
                     new_key = str(key) + str(concessions[0])  # assumes unique concession 0  !!!
                     print('NEW_KEY:  ', new_key)
-                    try:
-                        raw_class_data[concessions[0]]
-                        #if we already have class data for the concession just return the predictors
-                        print("****WE HAVE THE RAW CONCESSION CLASSES ****")
-                        data_scoring = helper.get_input_data(bands, year, concessions, True)
-                        data_scoring['clas'] = raw_class_data[concessions[0]]
-                    except KeyError:
-                        data_scoring = helper.get_input_data(bands, year, concessions, False)
-                        raw_class_data[concessions[0]] = data_scoring['clas'].values
-                    data_scoring = helper.trim_data2(data_scoring)
-                    data_scoring = helper.drop_no_data(data_scoring)
-                    X_score = data_scoring[[col for col in data_scoring.columns if ((col != 'clas') & (col != 'class_remap'))]]
-                    y_score_all = data_scoring['clas'].values
+                    # try:
+                    #     raw_class_data[concessions[0]]
+                    #     #if we already have class data for the concession just return the predictors
+                    #     print("****WE HAVE THE RAW CONCESSION CLASSES ****")
+                    #     data_scoring = helper.get_input_data(bands, year, concessions, True)
+                    #     data['clas'] = raw_class_data[concessions[0]]
+                    # except KeyError:
+                    data_scoring = helper.get_input_data(bands, year, concessions, False)
+
+
+                    for site in concessions:
+                        for key in data_scoring[site].columns:
+                            try:
+                                data[[key]] = data[[key]].append(data_scoring[site][[key]], ignore_index=True)
+                            except KeyError:
+                                data[[key]] = data_scoring[site][[key]]
+
+                    data = helper.trim_data2(data)
+                    data = helper.drop_no_data(data)
+                    X_score = data[[col for col in data.columns if ((col != 'clas') & (col != 'class_remap'))]]
+                    y_score_all = data['clas'].values
+                    #raw_class_data[concessions[0]] = y_score_all
                     actual_data[new_key] = deepcopy(y_score_all)
                     scaled_x_data[new_key] = deepcopy(X_score)
     finally:
@@ -222,9 +236,10 @@ def evaluate_model():
 
     for scoreConcession in sites:
         print(scoreConcession)
-        trainConcessions = deepcopy(sites)
-        trainConcessions.remove(scoreConcession)
-        trainConcessions = [item for sublist in trainConcessions for item in sublist]
+        trainConcessions=scoreConcession
+        #trainConcessions = deepcopy(sites)
+        #trainConcessions.remove(scoreConcession)
+        #trainConcessions = [item for sublist in trainConcessions for item in sublist]
 
         result = pd.DataFrame(columns=['concession', 'bands', 'score_type', 'class_scheme', 'score', 'score_weighted',
                                        'two_class_score', 'two_class_score_weighted', 'training_concessions',
@@ -245,14 +260,14 @@ def evaluate_model():
             X_scaled = get_predictor_data2(key, trainConcessions)
             landcover = get_landcover_data2(key,trainConcessions)
             for y in range(400, 700, 125):
-                sample_sizes_dict = sampler.Sampler.get_sample_rate_by_type(y, sites)
+                sample_sizes_dict = my_sampler.get_sample_rate_by_type(y, trainConcessions)
                 for concession in trainConcessions:
-                    train_sample = sample_sizes_dict[db.data_context_dict[concession][0]]
-                    test_sample = sample_sizes_dict[db.data_context_dict[concession][1]]
-                    X_train_site, X_test_site, y_train_site, y_test_site = train_test_split(X_scaled[concession], landcover[concession], train_size=train_sample, test_size=test_sample,
+                    train_sample = int(sample_sizes_dict[db.data_context_dict[concession]][0])
+                    test_sample = sample_sizes_dict[db.data_context_dict[concession]][1]
+                    X_train_site, X_test_site, y_train_site, y_test_site = train_test_split(X_scaled, landcover, train_size=train_sample, test_size=test_sample,
                             random_state=16)
                     print('****  training_sample_rate  *****', train_sample)
-                    print('****  X_train size *****', len(X_train))
+                    print('****  X_train size *****', len(X_train_site))
                 ##########################################################
                 #####     MODEL WITH ALL CLASSES     #########
                 # model = train_model(X_train, y_train.values.ravel())
@@ -285,7 +300,7 @@ def evaluate_model():
 
                 ###########   USE F1  ###################
 
-                model = train_model(X_train, helper.map_to_3class(y_train.values.ravel()), 'f1_macro')
+                model = train_model(X_train_site, helper.map_to_3class(y_train_site.values.ravel()), 'f1_macro')
                 yhat = model.predict(X_scaled_score)
                 score_3, score_3_weighted, kappa3 = score_model(helper.map_to_3class(y_score_all.values.ravel()), yhat)
                 score_two, score_two_weighted, kappa2 = score_model(helper.map_to_2class(y_score_all.values.ravel()), helper.map_3_to_2class(yhat))
@@ -293,11 +308,12 @@ def evaluate_model():
                                  model.get_params()['max_depth'], model.get_params()['max_leaf_nodes'], model.get_params()['max_features'], model.get_params()['n_estimators'], training_sample_rate, resolution, kappa2, kappa3]
                 print(result.loc[i])
                 i += 1
-            db.save_model_performance(result)
+            #db.save_model_performance(result)
     #print(result)trim_data2
     #resultfile = base_dir + 'result.csv'
     #result.to_csv(resultfile, index=False)
-    print(db.get_all_model_performance())
+
+    #print(db.get_all_model_performance())
 
 def evaluate_bands():
     i = 0
@@ -379,8 +395,8 @@ if __name__ == "__main__":
     scaled_x_data = dict()
     actual_data = dict()
     raw_class_data = dict()
-    #init_x_y_data(sites, band_set)
-    resultfile = base_dir + 'Suma_result.06012020.csv'
+  #  init_x_y_data(sites, band_set)
+    resultfile = base_dir + 'new_concession_result.06012020.csv'
     evaluate_model()
 
     #resultfile = base_dir + 'add1band_result.05292020.csv'

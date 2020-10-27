@@ -58,7 +58,7 @@ class random_forest_trainer:
                 #  'max_leaf_nodes': [14,15,16],
                 'max_features': [self.max_features - 0.1, self.max_features, self.max_features + .1],
                 'n_estimators': [  # 400,
-                    self.estimators - 50, self.estimators, self.estimators + 50]#, self.estimators + 100]
+                    self.estimators - 50, self.estimators, self.estimators + 50, self.estimators + 100]
             }]
             print("%%%%  Metric  :  ", metrics[self.metric])
             grid_search = GridSearchCV(clf, param_grid, cv=5, scoring='f1_macro',#metrics[self.metric],

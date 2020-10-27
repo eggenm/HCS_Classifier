@@ -16,17 +16,20 @@ import sampler
 
 base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
-year = str(2015)
+year = str(2017)
 
 sites = [
-    'app_riau',
-    'app_oki',
-    'Bumitama_PTGemilangMakmurSubur',
-  'Bumitama_PTHungarindoPersada',
-     'PTAgroAndalan',
-    'gar_pgm',
-     'Bumitama_PTDamaiAgroSejahtera',
-     'PTMitraNusaSarana'
+
+'Bumitama_PTDamaiAgroSejahtera',
+'Bumitama_PTHungarindoPersada',
+'PTMitraNusaSarana',
+'makmur_abadi',
+'sawit_perdana',
+'aneka_sawit',
+'PTMentariPratama',
+'PTSukajadiSawitMekar',
+'PTLabontaraEkaKarsa',
+    'forest', 'impervious', 'coconut', 'pulp_and_paper', 'water', 'oil_palm'
     #,
 
     #'app_jambi'
@@ -35,8 +38,8 @@ sites = [
 #
 ]
 bands = [#'blue_max', 'green_max', 'red_max',
-        # 'nir_max',
-        'swir1_max',# 'VH_2', 'VV_2', 'EVI'#,'swir2_max', 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
+         'nir_max',
+        'swir1_max', 'VH_2', 'VV_2', 'EVI','swir2_max',  'slope',  'VH_0', 'VV_0' #'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
  ]
 
 my_sampler = sampler.Sampler()
@@ -172,16 +175,16 @@ def get_trained_model(scoreConcession, trainConcessions, seed, override_bands = 
     #band_string = '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'
     estimators = db.get_best_number_estimators([scoreConcession])
     max_features = db.get_best_max_features([scoreConcession])
-    depth = db.get_best_max_depth([scoreConcession])
+    depth = 8#db.get_best_max_depth([scoreConcession])
     leaf_nodes = db.get_best_max_leaf_nodes([scoreConcession])
-    metric = db.get_best_metric([scoreConcession])
-    year = str(2015)
+    metric = 'F1'#db.get_best_metric([scoreConcession])
+    year = str(2017)
     if(not override_bands):
         bands = db.get_best_bands([scoreConcession])
     else:
         bands = override_bands
     print(bands)
-    sample_rate = int(db.get_best_training_sample_rate([scoreConcession]))
+    sample_rate = 550#int(db.get_best_training_sample_rate([scoreConcession]))
 
     try:
         with timer.Timer() as t:
@@ -256,7 +259,7 @@ def log_accuracy(result, name, id):
 
 
 if __name__ == "__main__":
-    name = 'Jambi'
+    name = 'Kalimantan'
     try:
         with timer.Timer() as t:
             island = db.data_context_dict[name]
@@ -268,8 +271,8 @@ if __name__ == "__main__":
                 ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
             # TODO this relies on hardcoded bands where below pulls from database
             X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, year, name)
-            iterations_per_site = 3
-            total_predictions = iterations_per_site * len(sites)
+            iterations_per_site = 1
+            total_predictions = 9 #iterations_per_site * len(sites)
             #predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
             predictions = np.zeros(X_scaled_class.shape[0])
             #write_map(predictions, ref_study_area, name, "SWIRTEST")
@@ -291,7 +294,7 @@ if __name__ == "__main__":
 
 
                 for j in range(7*i, 7*i+iterations_per_site):
-                    trained_model, scores = get_trained_model(scoreConcession, trainConcessions, j)
+                    trained_model, scores = get_trained_model(scoreConcession, trainConcessions, j, bands)
                     scores['oob_concessions'] = scoreConcession
                     scores['train_concessions'] = trainConcessions
 

@@ -459,6 +459,7 @@ def drop_no_data(data):
         with timer.Timer() as t:
             data[data <= -999] = np.nan
             data[data == 255] = np.nan
+            data[data >= 9999] = np.nan
             return data.dropna()
     finally:
         print('Drop NoData Request took %.03f sec.' % t.interval)

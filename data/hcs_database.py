@@ -21,6 +21,40 @@ plots_dict = {'crgl_stal': '',
               'app': '',
               'wilm_cal': '',
               'gar_pgm': ''}
+leaf_nodes_dict={
+'Bumitama_PTDamaiAgroSejahtera':10,
+'Bumitama_PTHungarindoPersada':6,
+'PTMitraNusaSarana':10,
+'makmur_abadi':10,
+'sawit_perdana':6,
+'aneka_sawit':10,
+'PTMentariPratama':6,
+'PTSukajadiSawitMekar':10,
+'PTLabontaraEkaKarsa':10
+
+}
+features_dict={
+'Bumitama_PTDamaiAgroSejahtera':0.33,
+'Bumitama_PTHungarindoPersada':0.33,
+'PTMitraNusaSarana':0.65,
+'makmur_abadi':0.33,
+'sawit_perdana':0.8,
+'aneka_sawit':0.65,
+'PTMentariPratama':0.65,
+'PTSukajadiSawitMekar':0.8,
+'PTLabontaraEkaKarsa':0.8
+}
+estimators_dict={
+'Bumitama_PTDamaiAgroSejahtera':500,
+'Bumitama_PTHungarindoPersada':500,
+'PTMitraNusaSarana':625,
+'makmur_abadi':500,
+'sawit_perdana':500,
+'aneka_sawit':750,
+'PTMentariPratama':500,
+'PTSukajadiSawitMekar':625,
+'PTLabontaraEkaKarsa':500
+}
 
 data_context_dict =  { 'app_muba':'Sumatra',
 'app_riau': 'Sumatra',
@@ -218,13 +252,16 @@ def get_best_training_sample_rate(concession):
 
 
 def get_best_max_features(concession):
-    return get_max_model_run(concession)['max_features']
+    return features_dict[concession]
+    #return get_max_model_run(concession)['max_features']
 
 def get_best_max_leaf_nodes(concession):
-    return get_max_model_run(concession)['max_leaf_nodes']
+    return leaf_nodes_dict[concession]
+    #return get_max_model_run(concession)['max_leaf_nodes']
 
 def get_best_number_estimators(concession):
-    return get_max_model_run(concession)['n_estimators']
+    return estimators_dict[concession]
+    #return get_max_model_run(concession)['n_estimators']
 
 def get_best_max_depth(concession):
     return get_max_model_run(concession)['max_depth']
