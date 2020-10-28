@@ -26,6 +26,7 @@ import itertools as it
 from rioxarray import merge as rxmerge
 import matplotlib.pyplot as plt
 import satellite_image_operations as sat_ops
+import sys
 
 # =============================================================================
 # Identify files
@@ -171,11 +172,14 @@ def gen_windows2(array):
         with timer.Timer() as t:
             x=range(0, array.shape[1])
             y=range(0, array.shape[2])
-            tuples = list(it.product(x, y))
+
             myfunc = lambda a: a.flatten()
             aList = [myfunc(array[i, :, :]) for i in range(0, array.shape[0])]
             full_index = pd.MultiIndex.from_product([x, y], names=['i', 'j'])
+            print('index size  ', sys.getsizeof(full_index) )
             i = 0
+            x=False
+            y=False
             windows = pd.DataFrame({i: aList[0]}, index=full_index)
             for i in range(1, len(aList)):
                 print( 'gen_windows:  ', i, '  of  ', len(aList))
