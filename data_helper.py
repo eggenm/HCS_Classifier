@@ -324,7 +324,7 @@ def get_feature_inputs(band_groups, bounding_box,  year, concession=None):
                 result[i]=out_img[0]
                 print('out_image type: ', type(out_img))
                 out_img = False
-            return result
+            return gen_windows2(result)
            # return np.asarray(array)
     finally:
         print('get_feature_inputs took %.03f sec.' % t.interval)
@@ -335,12 +335,13 @@ def get_concession_bands(bands, year, bounding_box, concession=None):
     try:
         x=False
         with timer.Timer() as t:
-            img = get_feature_inputs(bands, bounding_box,  year, concession)
-            x = gen_windows2(img)
+            return(get_feature_inputs(bands, bounding_box,  year, concession))
+            #img = get_feature_inputs(bands, bounding_box,  year, concession)
+            #x = gen_windows2(img)
     finally:
-        img=False
+        #img=False
         print('get_concession_bands Request took %.03f sec.' % t.interval)
-    return x
+    #return x
 
 
 
