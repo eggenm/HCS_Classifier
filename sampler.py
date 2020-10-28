@@ -3,7 +3,7 @@ import data.hcs_database as db
 class Sampler:
     def __init__(self):
         self.fixed_sample_rate = 20
-        self.fixed_test_rate = 0
+        self.fixed_test_rate = 1
         self.concession_test_rate = 0.2
         self.sample_rate_by_island = {
                 'Sumatra':0.1,

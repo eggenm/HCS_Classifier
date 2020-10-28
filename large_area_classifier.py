@@ -173,10 +173,10 @@ def get_trained_model(scoreConcession, trainConcessions, seed, override_bands = 
     doGridSearch = False
     scheme = '3CLASS'#db.get_best_scheme([scoreConcession])
     #band_string = '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'
-    estimators = db.get_best_number_estimators([scoreConcession])
-    max_features = db.get_best_max_features([scoreConcession])
+    estimators = db.get_best_number_estimators(scoreConcession)
+    max_features = db.get_best_max_features(scoreConcession)
     depth = 8#db.get_best_max_depth([scoreConcession])
-    leaf_nodes = db.get_best_max_leaf_nodes([scoreConcession])
+    leaf_nodes = db.get_best_max_leaf_nodes(scoreConcession)
     metric = 'F1'#db.get_best_metric([scoreConcession])
     year = str(2017)
     if(not override_bands):

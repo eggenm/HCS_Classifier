@@ -66,6 +66,13 @@ class Imagery_Cache:
         files = glob.glob(tif)
         return files
 
+    def get_fixed_input_image_path(self, filename, band):
+        base = os.path.basename(filename)
+        path = os.path.dirname(filename)
+        name = base.replace('.tif', '*'+band+'*')
+        name = os.path.join(path, 'out', name)
+        return name
+
     def get_input_image_path(self, name, year, context, band):
         if (context == 'supplementary_class'):
             tif = os.path.join(self.base_dir, context, name, 'out', 'input_' + name + '_' + band + '.tif')

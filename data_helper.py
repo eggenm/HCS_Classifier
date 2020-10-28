@@ -176,7 +176,6 @@ def gen_windows2(array):
             myfunc = lambda a: a.flatten()
             aList = [myfunc(array[i, :, :]) for i in range(0, array.shape[0])]
             full_index = pd.MultiIndex.from_product([x, y], names=['i', 'j'])
-            print('index size  ', sys.getsizeof(full_index) )
             i = 0
             x=False
             y=False
@@ -303,43 +302,63 @@ def write_concession_band(data_src, bounding_raster,  outtif):
 
 
 
-def get_feature_inputs(band_groups, bounding_box,  year, concession=None):
+def get_feature_inputs(band_groups, bounding_box,  year, concession=None, filename=None):
     tif=''
     try:
         with timer.Timer() as t:
             print('Band_Groups:  ',band_groups)
+            x = range(0, bounding_box.shape[1])
+            y = range(0, bounding_box.shape[2])
             #array = [0 for x in range(len(band_groups))]
             #print('len(array):  ', len(array))
             image_cache = imagery_data.Imagery_Cache.getInstance()
+            myfunc = lambda a: a.flatten()
+            full_index = pd.MultiIndex.from_product([x, y], names=['i', 'j'])
+            x = False
+            y = False
+            windows = pd.DataFrame()
             result = np.empty((len(band_groups),bounding_box.shape[1], bounding_box.shape[2]), dtype=np.float32)
             for i, band in enumerate(band_groups):
                 context = db.data_context_dict[concession]
                 try:
-                    out_img = image_cache.get_band_by_name_year(band, concession, year, context)
+                    if(context=='supplementary_class'):
+                        tif = image_cache.get_fixed_input_image_path(filename,  band)
+                        file = glob.glob(tif)
+                        out_img = rx.open_rasterio(file[0])
+
+                    else:
+                        out_img = image_cache.get_band_by_name_year(band, concession, year, context)
+
                 except:
                         tif = image_cache.get_input_image_path(concession, year, context, band)
                         print('except: ', band , concession, context)
                         out_img = reproject_match_input_band(band, context, year, bounding_box)
                         if (write_input_data):
                             write_concession_band(out_img, bounding_box,  tif)
-
+                #out_img = myfunc(out_img[0, :, :])
+                out_img = np.asarray(out_img[0]).flatten()
                 print('I:  ',i)
                 #array[i] = np.asarray(out_img[0])  #WHY AM I DOING THIS, CANTA I JUST MAKE MY ARRAY HERE INSTAED OF 2 lines down??
-                result[i]=out_img[0]
-                print('out_image type: ', type(out_img))
+                if windows.empty :
+                    windows = pd.DataFrame({i: out_img}, index=full_index)
+                else:
+                    windows = windows.merge(pd.DataFrame({i: out_img}, index=full_index), left_index=True, right_index=True, how='left')
+
                 out_img = False
-            return gen_windows2(result)
+            windows.index.names = ['i', 'j']
+            full_index = False
+            return windows
            # return np.asarray(array)
     finally:
         print('get_feature_inputs took %.03f sec.' % t.interval)
 
 
 
-def get_concession_bands(bands, year, bounding_box, concession=None):
+def get_concession_bands(bands, year, bounding_box, concession=None, filename = None):
     try:
         x=False
         with timer.Timer() as t:
-            return(get_feature_inputs(bands, bounding_box,  year, concession))
+            return(get_feature_inputs(bands, bounding_box,  year, concession, filename))
             #img = get_feature_inputs(bands, bounding_box,  year, concession)
             #x = gen_windows2(img)
     finally:
@@ -353,13 +372,13 @@ def get_fixed_bands(bands, name, year, context):
     print('GETTING fixed class: ', name)
     try:
         x=pd.DataFrame()
-
+        y = pd.DataFrame()
         with timer.Timer() as t:
             for file in image_cache.get_fixed_class_paths(name, context):
                 class_image = rx.open_rasterio(file)
-                band_data = get_concession_bands(bands, year, class_image, name)
+                band_data = get_concession_bands(bands, year, class_image, name, file)
                 x = pd.concat([x,band_data], ignore_index=True)
-                y = pd.concat([x,get_classes(class_image.data, 'clas')], ignore_index=True)
+                y = pd.concat([y,get_classes(class_image.data, 'clas')], ignore_index=True) #flatten?
             data = combine_input_landcover(x, y)
 
             #TODO, maybe for these each band could be cached as a csv?, y values are fixed , just make sure nodata is handled (discarded)
@@ -438,6 +457,9 @@ def remove_low_occurance_classes( X, class_data):
     df = df.groupby('clas').filter(lambda x: len(x) > threshold)
 
 def map_to_3class(X):
+    print(max(X))
+    print(min(X))
+    print(three_class_landcoverClassMap)
     return pd.Series(X).map(three_class_landcoverClassMap)
 
 def map_to_2class(X):
