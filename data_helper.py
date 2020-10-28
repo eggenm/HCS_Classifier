@@ -307,7 +307,7 @@ def get_feature_inputs(band_groups, bounding_box,  year, concession=None):
             #array = [0 for x in range(len(band_groups))]
             #print('len(array):  ', len(array))
             image_cache = imagery_data.Imagery_Cache.getInstance()
-            result = np.empty((len(band_groups),bounding_box.shape[1], bounding_box.shape[2]))
+            result = np.empty((len(band_groups),bounding_box.shape[1], bounding_box.shape[2]), dtype=np.float32)
             for i, band in enumerate(band_groups):
                 context = db.data_context_dict[concession]
                 try:
