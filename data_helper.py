@@ -304,9 +304,10 @@ def get_feature_inputs(band_groups, bounding_box,  year, concession=None):
     try:
         with timer.Timer() as t:
             print('Band_Groups:  ',band_groups)
-            array = [0 for x in range(len(band_groups))]
-            print('len(array):  ', len(array))
+            #array = [0 for x in range(len(band_groups))]
+            #print('len(array):  ', len(array))
             image_cache = imagery_data.Imagery_Cache.getInstance()
+            result = np.empty((len(band_groups),bounding_box.shape[1], bounding_box.shape[2]))
             for i, band in enumerate(band_groups):
                 context = db.data_context_dict[concession]
                 try:
@@ -319,11 +320,12 @@ def get_feature_inputs(band_groups, bounding_box,  year, concession=None):
                             write_concession_band(out_img, bounding_box,  tif)
 
                 print('I:  ',i)
-                array[i] = np.asarray(out_img[0])
+                #array[i] = np.asarray(out_img[0])  #WHY AM I DOING THIS, CANTA I JUST MAKE MY ARRAY HERE INSTAED OF 2 lines down??
+                result[i]=out_img[0]
                 print('out_image type: ', type(out_img))
                 out_img = False
-            print ('array type: ' , type(array))
-            return np.asarray(array)
+            return result
+           # return np.asarray(array)
     finally:
         print('get_feature_inputs took %.03f sec.' % t.interval)
 
