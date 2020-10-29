@@ -34,7 +34,7 @@ import sys
 base_dir = dirfuncs.guess_data_dir()
 pixel_window_size = 1
 stackData = True
-write_input_data = False
+write_input_data = True
 image_cache = imagery_data.Imagery_Cache.getInstance()
 
 
@@ -410,9 +410,10 @@ def get_input_data(bands, year, sites, get_predictor_data_only=False):
                 else:
                     island = db.data_context_dict[site]
                     all_class = image_cache.get_class_by_concession_name(site)
-                    #box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[concession])
+                    #box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[site])
                     x = get_concession_bands(bands, year, all_class, site)
                     if not get_predictor_data_only:
+
                         y = get_classes(all_class.data, 'clas')
                         data = combine_input_landcover(x, y)
                     elif get_predictor_data_only:
@@ -507,15 +508,15 @@ if __name__ == "__main__":
     my_dict.update(sat_ops.s1_band_dict)
     my_dict.update(sat_ops.dem_band_dict)
     bands = my_dict.values()
-    for index, row in con_df.iterrows():
-        print(row['app_key'], bool(row['ingest']), row['assessment_year'])
-        if(bool(row['ingest'])):
-            x = get_input_data(bands, str(int(row['assessment_year'])), [row['app_key']], False)
+    # for index, row in con_df.iterrows():
+    #     print(row['app_key'], bool(row['ingest']), row['assessment_year'])
+    #     if(bool(row['ingest'])):
+    #         x = get_input_data(bands, str(int(row['assessment_year'])), [row['app_key']], False)
 
 
     print(con_df)
     #write_input_data=True
-   # x = get_input_data(['VH_0', 'swir2_max', 'red_max', 'EVI', 'slope'], str(2017), ['adi_perkasa'], False)
+    x = get_input_data(bands, str(2017), ['West_Kalimantan'], True)
   #  x = get_input_data([ 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
    #                    , False )#,
    # x = get_input_data(['nir_max'], str(2019), ['impervious'], False)
