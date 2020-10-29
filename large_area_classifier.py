@@ -260,15 +260,15 @@ if __name__ == "__main__":
         try:
             with timer.Timer() as t:
                 island = db.data_context_dict[name]
-                tif = base_dir + name + '/out/' + year + '/input_' + name + '_' + bands[0] + '.tif'
+                tif = base_dir + name + '/out/' + str(year) + '/input_' + name + '_' + bands[0] + '.tif'
                 #tif = base_dir + name + '/out/' + year + '/' + bands[0] + '.tif'
                 try:
                      file_list = sorted(glob.glob(tif))
                      ref_study_area = rx.open_rasterio(file_list[0])
                 except:
-                    ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
+                    ref_study_area = helper.get_reference_raster_from_shape(name, island, str(year))
                 # TODO this relies on hardcoded bands where below pulls from database
-                X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, year, name)
+                X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, str(year), name)
                 iterations_per_site = 1
                 total_predictions = 9 #iterations_per_site * len(sites)
                 #predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
@@ -300,7 +300,7 @@ if __name__ == "__main__":
                         log_accuracy(result,name, j)
                         print('**********  BANDS:  ', scores['bands'], '   ************')
                         X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
-                                                                          year, name)
+                                                                          str(year), name)
                         predictions  =  predictions + predict(X_scaled_class, trained_model)#, predictions)
                         if k%9==0:
                             write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j)
@@ -316,7 +316,7 @@ if __name__ == "__main__":
                             log_accuracy(result, name, j+100)
                             print('**********  BANDS - slope:  ', scores['bands'], '   ************')
                             X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
-                                                                              year, name)
+                                                                              str(year), name)
                             predictions = predictions + predict(X_scaled_class, trained_model)  # , predictions)
                             if k % 9 == 0:
                                 write_map((np.around(predictions / (k + 1))).astype(rio.int16), ref_study_area, name, j+100)
