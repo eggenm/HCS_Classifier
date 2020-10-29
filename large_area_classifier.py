@@ -255,7 +255,7 @@ def log_accuracy(result, name, id, year):
 
 
 if __name__ == "__main__":
-    name = 'West_Kalimantan'
+    name = 'Kalimantan'
     for year in [2017,2018,2019]:
         try:
             with timer.Timer() as t:
@@ -299,11 +299,12 @@ if __name__ == "__main__":
                         result.append(scores)
                         log_accuracy(result,name, j)
                         print('**********  BANDS:  ', scores['bands'], '   ************')
-                        X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
-                                                                          str(year), name)
+                        #X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
+                                              #                            str(year), name)
                         predictions  =  predictions + predict(X_scaled_class, trained_model)#, predictions)
                         if k%9==0:
-                            write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j)
+                            print("")
+                           # write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j)
                         k=k+1
                         if('slope' not in scores['bands']):
                             scores['bands'].append('slope')
