@@ -290,9 +290,7 @@ def write_concession_band(data_src, bounding_raster,  outtif):
                       crs = crs, dtype = data_src[0].dtype,
                       count = 1, transform = trans) as dst:
                    # dst.write_band(1, data_src[0])
-            for ji, window in dst.block_windows(1):  # or ref file here
-                 print('ji:  ', ji)
-                 print('window:  ', window)
+            for ji, window in dst.block_windows(1):  # or re
                #  print('window.shape:  ', window.shape)
                  block = data_src[window.col_off:window.col_off+window.width,window.row_off:window.row_off+window.height ]#.read(window=window)
             #     if sum(sum(sum(~np.isnan(block)))) > 0:
@@ -317,7 +315,6 @@ def get_feature_inputs(band_groups, bounding_box,  year, concession=None, filena
             x = False
             y = False
             windows = pd.DataFrame()
-            result = np.empty((len(band_groups),bounding_box.shape[1], bounding_box.shape[2]), dtype=np.float32)
             for i, band in enumerate(band_groups):
                 context = db.data_context_dict[concession]
                 try:

@@ -108,9 +108,7 @@ def predict(X_scaled_class, rfmodel):#, predictions):
             step = 1000000
             for i in range(0, end, step):
                 y = min(i + step, end)
-                print(i, y)
                 block = X_scaled_class.values[i:y, :]
-                print('block.shape: ', block.shape)
                 if (rfmodel.scheme == 'ALL'):
                     predictions[i:y] = predictions[i:y] + helper.map_to_2class(rfmodel.model.predict(block))
                     # test= helper.map_to_2class(randomforest_fitted_clf.predict(block))
@@ -151,8 +149,6 @@ def write_map(predicted, reference, name,i):
                   crs=crs, dtype=dtype,
                   count=count, transform=trans) as clas_dst:
         for ji, window in clas_dst.block_windows(1):  # or ref file here
-            print('ji:  ', ji)
-            print('window:  ', window)
             #  print('window.shape:  ', window.shape)
             block = classified[window.col_off:window.col_off + window.width,
                     window.row_off:window.row_off + window.height]  # .read(window=window)
