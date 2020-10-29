@@ -118,12 +118,12 @@ def predict(X_scaled_class, rfmodel):#, predictions):
         print('Block Predict Request took %.03f sec.' % t.interval)
     return predictions
 
-def get_map_file_name(name, id):
-    outclas_file = base_dir + name + '/sklearn_test/' + name + str(id) + '_classified_by_ensemble_rf.tif'
+def get_map_file_name(name, id, year):
+    outclas_file = base_dir + name + '/sklearn_test/'+year+'/' + name + str(id) + '_classified_by_ensemble_rf.tif'
     return outclas_file
 
-def write_map(predicted, reference, name,i):
-    outclas_file = get_map_file_name(name, i)
+def write_map(predicted, reference, name,i, year):
+    outclas_file = get_map_file_name(name, i, year)
     src = reference
     #with rio.open(reference) as src:
     height = src.rio.height
@@ -241,8 +241,8 @@ def score_model(y_test, yhat):
     accuracy = metrics.accuracy_score(y_test, yhat)
     return {'f1_macro':f1,'f1_weighted': f1_weighted, 'kappa': kappa, 'balanced_accuracy': balanced_accuracy,  'accuracy': accuracy, 'roc_auc_weighted': roc_auc}
 
-def log_accuracy(result, name, id):
-    csv_file = get_map_file_name(name, id) + '.csv'
+def log_accuracy(result, name, id, year):
+    csv_file = get_map_file_name(name, id, year) + '.csv'
     try:
         with open(csv_file, 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=result[0].keys())
@@ -327,7 +327,7 @@ if __name__ == "__main__":
                 predictions = predictions / k
                 predictions = np.around(predictions).astype(rio.int16)
                 mapId='FINAL'
-                log_accuracy(result, name, mapId)
+                log_accuracy(result, name, mapId, year)
                 print('predictions.shape', predictions.shape)
                 #myFrame = pd.DataFrame(predictions)
                 #temp1 = (pd.DataFrame(myFrame.T.mode(axis=1))[0]).astype(int)
@@ -335,6 +335,6 @@ if __name__ == "__main__":
                 #print(predictions)
                 #predictions = temp0.astype(int)
                 #print(predictions)
-                write_map(predictions, ref_study_area, name,mapId)
+                write_map(predictions, ref_study_area, name,mapId, year)
         finally:
             print('LARGE_AREA CLASSIFICATION of : ' , name , '  took %.03f sec.' % t.interval)
