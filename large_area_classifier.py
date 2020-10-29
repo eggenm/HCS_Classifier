@@ -16,7 +16,7 @@ import sampler
 
 base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
-year = str(2017)
+#year = str(2017)
 
 sites = [
 
@@ -256,84 +256,85 @@ def log_accuracy(result, name, id):
 
 if __name__ == "__main__":
     name = 'West_Kalimantan'
-    try:
-        with timer.Timer() as t:
-            island = db.data_context_dict[name]
-            tif = base_dir + name + '/out/' + year + '/input_' + name + '_' + bands[0] + '.tif'
-            #tif = base_dir + name + '/out/' + year + '/' + bands[0] + '.tif'
-            try:
-                 file_list = sorted(glob.glob(tif))
-                 ref_study_area = rx.open_rasterio(file_list[0])
-            except:
-                ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
-            # TODO this relies on hardcoded bands where below pulls from database
-            X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, year, name)
-            iterations_per_site = 1
-            total_predictions = 9 #iterations_per_site * len(sites)
-            #predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
-            predictions = np.zeros(X_scaled_class.shape[0])
-            #write_map(predictions, ref_study_area, name, "SWIRTEST")
+    for year in [2017,2018,2019]:
+        try:
+            with timer.Timer() as t:
+                island = db.data_context_dict[name]
+                tif = base_dir + name + '/out/' + year + '/input_' + name + '_' + bands[0] + '.tif'
+                #tif = base_dir + name + '/out/' + year + '/' + bands[0] + '.tif'
+                try:
+                     file_list = sorted(glob.glob(tif))
+                     ref_study_area = rx.open_rasterio(file_list[0])
+                except:
+                    ref_study_area = helper.get_reference_raster_from_shape(name, island, year)
+                # TODO this relies on hardcoded bands where below pulls from database
+                X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, year, name)
+                iterations_per_site = 1
+                total_predictions = 9 #iterations_per_site * len(sites)
+                #predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
+                predictions = np.zeros(X_scaled_class.shape[0])
+                #write_map(predictions, ref_study_area, name, "SWIRTEST")
 
-            #x = False
-
-
-            k=0
-            result = []
-            for i, scoreConcession in enumerate(sites):
-                if(db.data_context_dict[scoreConcession]=='supplementary_class'):
-                    continue
-                print(scoreConcession)
-                trainConcessions = list(sites)
-                trainConcessions.remove(scoreConcession)
-                #trained_model = get_trained_model(scoreConcession, trainConcessions, i)
-                #predictions = predict(X_scaled_class, trained_model, predictions)
-                #write_map(predictions, ref_study_area, name, i)
+                #x = False
 
 
-                for j in range(7*i, 7*i+iterations_per_site):
-                    trained_model, scores = get_trained_model(scoreConcession, trainConcessions, j, bands)
-                    scores['oob_concessions'] = scoreConcession
-                    scores['train_concessions'] = trainConcessions
+                k=0
+                result = []
+                for i, scoreConcession in enumerate(sites):
+                    if(db.data_context_dict[scoreConcession]=='supplementary_class'):
+                        continue
+                    print(scoreConcession)
+                    trainConcessions = list(sites)
+                    trainConcessions.remove(scoreConcession)
+                    #trained_model = get_trained_model(scoreConcession, trainConcessions, i)
+                    #predictions = predict(X_scaled_class, trained_model, predictions)
+                    #write_map(predictions, ref_study_area, name, i)
 
-                    result.append(scores)
-                    log_accuracy(result,name, j)
-                    print('**********  BANDS:  ', scores['bands'], '   ************')
-                    X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
-                                                                      year, name)
-                    predictions  =  predictions + predict(X_scaled_class, trained_model)#, predictions)
-                    if k%9==0:
-                        write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j)
-                    k=k+1
-                    if('slope' not in scores['bands']):
-                        scores['bands'].append('slope')
-                        bands = scores['bands']
-                        print('**********  BANDS with slope:  ',bands, '   ************')
-                        trained_model, scores = get_trained_model(scoreConcession, trainConcessions, j+100, bands)
+
+                    for j in range(7*i, 7*i+iterations_per_site):
+                        trained_model, scores = get_trained_model(scoreConcession, trainConcessions, j, bands)
                         scores['oob_concessions'] = scoreConcession
                         scores['train_concessions'] = trainConcessions
+
                         result.append(scores)
-                        log_accuracy(result, name, j+100)
-                        print('**********  BANDS - slope:  ', scores['bands'], '   ************')
+                        log_accuracy(result,name, j)
+                        print('**********  BANDS:  ', scores['bands'], '   ************')
                         X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
                                                                           year, name)
-                        predictions = predictions + predict(X_scaled_class, trained_model)  # , predictions)
-                        if k % 9 == 0:
-                            write_map((np.around(predictions / (k + 1))).astype(rio.int16), ref_study_area, name, j+100)
-                        k = k + 1
+                        predictions  =  predictions + predict(X_scaled_class, trained_model)#, predictions)
+                        if k%9==0:
+                            write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j)
+                        k=k+1
+                        if('slope' not in scores['bands']):
+                            scores['bands'].append('slope')
+                            bands = scores['bands']
+                            print('**********  BANDS with slope:  ',bands, '   ************')
+                            trained_model, scores = get_trained_model(scoreConcession, trainConcessions, j+100, bands)
+                            scores['oob_concessions'] = scoreConcession
+                            scores['train_concessions'] = trainConcessions
+                            result.append(scores)
+                            log_accuracy(result, name, j+100)
+                            print('**********  BANDS - slope:  ', scores['bands'], '   ************')
+                            X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
+                                                                              year, name)
+                            predictions = predictions + predict(X_scaled_class, trained_model)  # , predictions)
+                            if k % 9 == 0:
+                                write_map((np.around(predictions / (k + 1))).astype(rio.int16), ref_study_area, name, j+100)
+                            k = k + 1
 
-                #i = i + 1
-            predictions = predictions.astype(np.float32)
-            predictions = predictions / k
-            predictions = np.around(predictions).astype(rio.int16)
-            mapId='FINAL'
-            log_accuracy(result, name, mapId)
-            print('predictions.shape', predictions.shape)
-            #myFrame = pd.DataFrame(predictions)
-            #temp1 = (pd.DataFrame(myFrame.T.mode(axis=1))[0]).astype(int)
-            #print('temp1.shape', temp1.shape)
-            #print(predictions)
-            #predictions = temp0.astype(int)
-            #print(predictions)
-            write_map(predictions, ref_study_area, name,mapId)
-    finally:
-        print('LARGE_AREA CLASSIFICATION of : ' , name , '  took %.03f sec.' % t.interval)
+                    #i = i + 1
+                predictions = predictions.astype(np.float32)
+                predictions = predictions / k
+                predictions = np.around(predictions).astype(rio.int16)
+                mapId='FINAL'
+                log_accuracy(result, name, mapId)
+                print('predictions.shape', predictions.shape)
+                #myFrame = pd.DataFrame(predictions)
+                #temp1 = (pd.DataFrame(myFrame.T.mode(axis=1))[0]).astype(int)
+                #print('temp1.shape', temp1.shape)
+                #print(predictions)
+                #predictions = temp0.astype(int)
+                #print(predictions)
+                write_map(predictions, ref_study_area, name,mapId)
+        finally:
+            print('LARGE_AREA CLASSIFICATION of : ' , name , '  took %.03f sec.' % t.interval)

@@ -34,7 +34,7 @@ def guess_data_dir():
     possibilities = ['D:\\cloud\\Dropbox\\collaborations\\HCSProject\\data\\PoC\\',  # Robert's dropbox
                      'C:\\Users\\ME\\Dropbox\\HCSProject\\data\\PoC\\', # Michael Dropbox
                      '/home/eggen/data/concession/', # NCEAS server
-                     '/home/hcs_classifier/data/concession',
-                     '/scratch/hcs_classifier/data/concession']  #SSH_ERI server
+                    # '/home/hcs_classifier/data/concession/',
+                     '/scratch/hcs_classifier/data/concession/']  #SSH_ERI server
     return check_possibilities(possibilities)
 
