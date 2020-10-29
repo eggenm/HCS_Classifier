@@ -2,7 +2,7 @@ import sqlite3
 import pandas as pd
 import dirfuncs
 import itertools
-conn = sqlite3.connect('data/hcs_database.db')
+#conn = sqlite3.connect('data/hcs_database.db')
 #conn = sqlite3.connect('hcs_database.db')
 
 
