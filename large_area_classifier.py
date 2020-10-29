@@ -255,7 +255,7 @@ def log_accuracy(result, name, id, year):
 
 
 if __name__ == "__main__":
-    name = 'Kalimantan'
+    name = 'West_Kalimantan'
     for year in [2017,2018,2019]:
         try:
             with timer.Timer() as t:
