@@ -273,7 +273,7 @@ if __name__ == "__main__":
                 total_predictions = 9 #iterations_per_site * len(sites)
                 #predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
                 predictions = np.zeros(X_scaled_class.shape[0])
-                #write_map(predictions, ref_study_area, name, "SWIRTEST")
+                #write_map(predictions, ref_study_area, name, "SWIRTEST", year)
 
                 #x = False
 
@@ -288,7 +288,7 @@ if __name__ == "__main__":
                     trainConcessions.remove(scoreConcession)
                     #trained_model = get_trained_model(scoreConcession, trainConcessions, i)
                     #predictions = predict(X_scaled_class, trained_model, predictions)
-                    #write_map(predictions, ref_study_area, name, i)
+                    #write_map(predictions, ref_study_area, name, i, year)
 
 
                     for j in range(7*i, 7*i+iterations_per_site):
@@ -297,14 +297,14 @@ if __name__ == "__main__":
                         scores['train_concessions'] = trainConcessions
 
                         result.append(scores)
-                        log_accuracy(result,name, j)
+                        log_accuracy(result,name, j, year)
                         print('**********  BANDS:  ', scores['bands'], '   ************')
                         #X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
                                               #                            str(year), name)
                         predictions  =  predictions + predict(X_scaled_class, trained_model)#, predictions)
                         if k%9==0:
                             print("")
-                           # write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j)
+                           # write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j, year)
                         k=k+1
                         if('slope' not in scores['bands']):
                             scores['bands'].append('slope')
@@ -314,13 +314,13 @@ if __name__ == "__main__":
                             scores['oob_concessions'] = scoreConcession
                             scores['train_concessions'] = trainConcessions
                             result.append(scores)
-                            log_accuracy(result, name, j+100)
+                            log_accuracy(result, name, j+100, year)
                             print('**********  BANDS - slope:  ', scores['bands'], '   ************')
                             X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
                                                                               str(year), name)
                             predictions = predictions + predict(X_scaled_class, trained_model)  # , predictions)
                             if k % 9 == 0:
-                                write_map((np.around(predictions / (k + 1))).astype(rio.int16), ref_study_area, name, j+100)
+                                write_map((np.around(predictions / (k + 1))).astype(rio.int16), ref_study_area, name, j+100, year)
                             k = k + 1
 
                     #i = i + 1
