@@ -255,7 +255,7 @@ def log_accuracy(result, name, id):
 
 
 if __name__ == "__main__":
-    name = 'Kalimantan'
+    name = 'West_Kalimantan'
     try:
         with timer.Timer() as t:
             island = db.data_context_dict[name]
