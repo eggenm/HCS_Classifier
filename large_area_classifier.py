@@ -16,7 +16,6 @@ import sampler
 
 base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
-#year = str(2017)
 
 sites = [
 
@@ -123,45 +122,50 @@ def get_map_file_name(name, id, year):
     return outclas_file
 
 def write_map(predicted, reference, name,i, year):
-    outclas_file = get_map_file_name(name, i, year)
-    src = reference
-    #with rio.open(reference) as src:
-    height = src.rio.height
-    width = src.rio.width
-    shape = src.shape
-    crs = src.rio.crs
-    trans = src.transform
-    count = 1
-    dtype = rio.int16
-    full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
-    # predicted = predicted.set_index(full_index)
-    predicted = pd.DataFrame(predicted, index=full_index)
-    clas_df = pd.DataFrame(index=full_index)
-    classified = clas_df.merge(predicted, left_index=True, right_index=True, how='left').sort_index()
+    try:
+        with timer.Timer() as t:
+            outclas_file = get_map_file_name(name, i, year)
+            src = reference
+            #with rio.open(reference) as src:
+            height = src.rio.height
+            width = src.rio.width
+            shape = src.shape
+            crs = src.rio.crs
+            trans = src.transform
+            count = 1
+            dtype = rio.int16
+            full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
+            # predicted = predicted.set_index(full_index)
+            predicted = pd.DataFrame(predicted, index=full_index)
+            clas_df = pd.DataFrame(index=full_index)
+            classified = clas_df.merge(predicted, left_index=True, right_index=True, how='left').sort_index()
 
-    classified = classified.values.reshape(shape[1], shape[2])
-    #classified = classified.T.values.reshape(shape[1], shape[2])
-    #classified = classified.T.values.reshape( shape[2], shape[1])
-    #classified = classified.values.reshape(shape[2], shape[1])
-    classified = classified[np.newaxis, :, :].astype(rio.int16)
-    with rio.open(outclas_file, 'w', driver='GTiff',
-                  height=height, width=width,
-                  crs=crs, dtype=dtype,
-                  count=count, transform=trans) as clas_dst:
-        for ji, window in clas_dst.block_windows(1):  # or ref file here
-            #  print('window.shape:  ', window.shape)
-            block = classified[window.col_off:window.col_off + window.width,
-                    window.row_off:window.row_off + window.height]  # .read(window=window)
+            classified = classified.values.reshape(shape[1], shape[2])
+            #classified = classified.T.values.reshape(shape[1], shape[2])
+            #classified = classified.T.values.reshape( shape[2], shape[1])
+            #classified = classified.values.reshape(shape[2], shape[1])
+            classified = classified[np.newaxis, :, :].astype(rio.int16)
+            with rio.open(outclas_file, 'w', driver='GTiff',
+                          height=height, width=width,
+                          crs=crs, dtype=dtype,
+                          count=count, transform=trans) as clas_dst:
+                for ji, window in clas_dst.block_windows(1):  # or ref file here
+                    #  print('window.shape:  ', window.shape)
+                    block = classified[window.col_off:window.col_off + window.width,
+                            window.row_off:window.row_off + window.height]  # .read(window=window)
+                    #     if sum(sum(sum(~np.isnan(block)))) > 0:
+                    clas_dst.write(block, window=window)
+                #clas_dst.write(classified)
+            # for ji, window in src.block_windows(1):  # or ref file here
+            #     print('ji:  ', ji)
+            #     print('window:  ', window)
+            #     block = predicted.read(window=window)
             #     if sum(sum(sum(~np.isnan(block)))) > 0:
-            clas_dst.write(block, window=window)
-        #clas_dst.write(classified)
-    # for ji, window in src.block_windows(1):  # or ref file here
-    #     print('ji:  ', ji)
-    #     print('window:  ', window)
-    #     block = predicted.read(window=window)
-    #     if sum(sum(sum(~np.isnan(block)))) > 0:
-        #clas_dst.write(classified)#, window=window)
-    clas_dst.close()
+                #clas_dst.write(classified)#, window=window)
+            clas_dst.close()
+    finally:
+        print('Write Map %.03f sec.' % t.interval)
+    return predictions
     #src.close()
 
 
@@ -174,7 +178,7 @@ def get_trained_model(scoreConcession, trainConcessions, seed, override_bands = 
     depth = 8#db.get_best_max_depth([scoreConcession])
     leaf_nodes = db.get_best_max_leaf_nodes(scoreConcession)
     metric = 'F1'#db.get_best_metric([scoreConcession])
-    year = str(2017)
+    concession_assessment_year = str(2017) #TODO get this from database
     if(not override_bands):
         bands = db.get_best_bands([scoreConcession])
     else:
@@ -185,12 +189,12 @@ def get_trained_model(scoreConcession, trainConcessions, seed, override_bands = 
     try:
         with timer.Timer() as t:
             rf_trainer = trainer.random_forest_trainer(estimators, depth, max_features, leaf_nodes, bands, scheme, metric)
-            X_train, X_test, y_train, y_test = get_training_data(trainConcessions, bands, year, sample_rate,
+            X_train, X_test, y_train, y_test = get_training_data(trainConcessions, bands, concession_assessment_year, sample_rate,
                                                                  seed)
             if scheme == '3CLASS':
                 y_train = helper.map_to_3class(y_train)
             rf_trainer.train_model(X_train, y_train, seed)
-            X_train, X_test, y_train, y_test = get_training_data([scoreConcession], bands, year, sample_rate,
+            X_train, X_test, y_train, y_test = get_training_data([scoreConcession], bands, concession_assessment_year, sample_rate,
                                                                  seed)
             yhat = predict(X_test, rf_trainer)
             y_test = helper.map_to_2class(y_test)
@@ -255,25 +259,28 @@ def log_accuracy(result, name, id, year):
 
 
 if __name__ == "__main__":
-    name = 'West_Kalimantan'
-    for year in [2017,2018,2019]:
+    name = 'Kalimantan'
+    for class_year in [2019]:#2017,2018,
         try:
             with timer.Timer() as t:
                 island = db.data_context_dict[name]
-                tif = base_dir + name + '/out/' + str(year) + '/input_' + name + '_' + bands[0] + '.tif'
+                tif = base_dir + name + '/out/' + str(class_year) + '/input_' + name + '_' + bands[0] + '.tif'
                 #tif = base_dir + name + '/out/' + year + '/' + bands[0] + '.tif'
-                try:
-                     file_list = sorted(glob.glob(tif))
-                     ref_study_area = rx.open_rasterio(file_list[0])
-                except:
-                    ref_study_area = helper.get_reference_raster_from_shape(name, island, str(year))
+                #try:
+                file_list = sorted(glob.glob(tif))
+                ref_study_area = rx.open_rasterio(file_list[0])
+                print("TYPE:  ", type(ref_study_area))
+
+                #except:
+                   # ref_study_area = helper.get_reference_raster_from_shape(name, island, str(year))
                 # TODO this relies on hardcoded bands where below pulls from database
-                X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, str(year), name)
+                X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, str(class_year), name)
                 iterations_per_site = 1
                 total_predictions = 9 #iterations_per_site * len(sites)
                 #predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
                 predictions = np.zeros(X_scaled_class.shape[0])
-                #write_map(predictions, ref_study_area, name, "SWIRTEST", year)
+                write_map(predictions, ref_study_area, name, 'TEST_0', class_year)
+                #write_map(predictions, ref_study_area, name, "SWIRTEST", class_year)
 
                 #x = False
 
@@ -297,14 +304,15 @@ if __name__ == "__main__":
                         scores['train_concessions'] = trainConcessions
 
                         result.append(scores)
-                        log_accuracy(result,name, j, year)
+                        log_accuracy(result,name, j, class_year)
                         print('**********  BANDS:  ', scores['bands'], '   ************')
                         #X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
                                               #                            str(year), name)
+                        print('*****  Making Predictions...  ******')
                         predictions  =  predictions + predict(X_scaled_class, trained_model)#, predictions)
+                        print('*****  Finsihed Predictions!  ******')
                         if k%9==0:
-                            print("")
-                           # write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j, year)
+                            write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j, class_year)
                         k=k+1
                         if('slope' not in scores['bands']):
                             scores['bands'].append('slope')
@@ -314,13 +322,13 @@ if __name__ == "__main__":
                             scores['oob_concessions'] = scoreConcession
                             scores['train_concessions'] = trainConcessions
                             result.append(scores)
-                            log_accuracy(result, name, j+100, year)
+                            log_accuracy(result, name, j+100, class_year)
                             print('**********  BANDS - slope:  ', scores['bands'], '   ************')
                             X_scaled_class = helper.get_large_area_input_data(ref_study_area, scores['bands'], island,
-                                                                              str(year), name)
+                                                                              str(class_year), name)
                             predictions = predictions + predict(X_scaled_class, trained_model)  # , predictions)
                             if k % 9 == 0:
-                                write_map((np.around(predictions / (k + 1))).astype(rio.int16), ref_study_area, name, j+100, year)
+                                write_map((np.around(predictions / (k + 1))).astype(rio.int16), ref_study_area, name, j+100, class_year)
                             k = k + 1
 
                     #i = i + 1
@@ -328,7 +336,7 @@ if __name__ == "__main__":
                 predictions = predictions / k
                 predictions = np.around(predictions).astype(rio.int16)
                 mapId='FINAL'
-                log_accuracy(result, name, mapId, year)
+                log_accuracy(result, name, mapId, class_year)
                 print('predictions.shape', predictions.shape)
                 #myFrame = pd.DataFrame(predictions)
                 #temp1 = (pd.DataFrame(myFrame.T.mode(axis=1))[0]).astype(int)
@@ -336,6 +344,6 @@ if __name__ == "__main__":
                 #print(predictions)
                 #predictions = temp0.astype(int)
                 #print(predictions)
-                write_map(predictions, ref_study_area, name,mapId, year)
+                write_map(predictions, ref_study_area, name,mapId, class_year)
         finally:
             print('LARGE_AREA CLASSIFICATION of : ' , name , '  took %.03f sec.' % t.interval)
