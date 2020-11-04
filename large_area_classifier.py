@@ -269,12 +269,13 @@ if __name__ == "__main__":
                 #try:
                 file_list = sorted(glob.glob(tif))
                 ref_study_area = rx.open_rasterio(file_list[0])
-                print("TYPE:  ", type(ref_study_area))
+                print("****SHAPE INIT:   ", ref_study_area.shape)
 
                 #except:
                    # ref_study_area = helper.get_reference_raster_from_shape(name, island, str(year))
                 # TODO this relies on hardcoded bands where below pulls from database
                 X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, str(class_year), name)
+                print("****SHAPE X_scaled_class:   ", X_scaled_class.shape)
                 iterations_per_site = 1
                 total_predictions = 9 #iterations_per_site * len(sites)
                 #predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)

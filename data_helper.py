@@ -430,7 +430,13 @@ def get_large_area_input_data(study_area_base_raster, bands, island, year, name=
         try:
             with timer.Timer() as t:
                 x = get_concession_bands(bands, year, study_area_base_raster, name)
+                print( "*****dataHalper x.shape:  " , x.shape)
+                x_in = x.shape[0]
                 x = drop_no_data(x)
+                x_out = x.shape[0]
+                print("*****dataHalper x.shape after drop no data:  ", x.shape)
+                if x_in!=x_out:
+                    raise RuntimeError
                 #X_scaled_class = scale_data(x)
                 return x
                # print('X_scaled_class.shape:  ', X_scaled_class.shape)
@@ -492,10 +498,12 @@ def show_results(y_test, y_hat):
 
 def drop_no_data(data):
     try:
+        fill = 0
+        #fill = np.nan
         with timer.Timer() as t:
-            data[data <= -999] = np.nan
+            data[data <= -999] = fill
             data[data == 255] = np.nan
-            data[data >= 9999] = np.nan
+            data[data >= 9999] = fill
             return data.dropna()
     finally:
         print('Drop NoData Request took %.03f sec.' % t.interval)
@@ -516,8 +524,23 @@ if __name__ == "__main__":
 
     print(con_df)
     #write_input_data=True
+    bands = [  # 'blue_max', 'green_max', 'red_max',
+        'nir_max',
+        'swir1_max', 'VH_2', 'VV_2', 'EVI', 'swir2_max', 'slope', 'VH_0', 'VV_0'
+        # 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
+    ]
+    tif = base_dir + 'Kalimantan' + '/out/' + str(2019) + '/input_Kalimantan_' + bands[0] + '.tif'
+    # tif = base_dir + name + '/out/' + year + '/' + bands[0] + '.tif'
+    # try:
+    file_list = sorted(glob.glob(tif))
+    ref_study_area = rx.open_rasterio(file_list[0])
     for band in bands:
-        x = get_input_data([band], str(2019), ['Kalimantan'], True)
+        print('BAND:  ', band)
+        try:
+            x = get_large_area_input_data(ref_study_area,[band],'Kalimantan', '2019', 'Kalimantan' )
+        except:
+            print(print('BAND:  ', band, ' is incomplete.'))
+        #x = get_input_data([band], str(2019), ['Kalimantan'], True)
         x = False
 
    # x = get_input_data(bands, str(2018), ['Kalimantan'], True)

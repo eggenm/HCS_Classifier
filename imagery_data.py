@@ -80,6 +80,7 @@ class Imagery_Cache:
 
         else:
             tif = os.path.join(self.base_dir, name, 'out', str(year), 'input_' + name + '_' + band + '.tif')
+            print(' get_input_image_path ... ****TIF:  ', tif)
         return tif
 
 
