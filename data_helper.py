@@ -516,7 +516,9 @@ if __name__ == "__main__":
 
     print(con_df)
     #write_input_data=True
-    x = get_input_data(bands, str(2019), ['Kalimantan'], True)
+    for band in bands:
+        x = get_input_data([band], str(2019), ['Kalimantan'], True)
+    
    # x = get_input_data(bands, str(2018), ['Kalimantan'], True)
   #  x = get_input_data([ 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
    #                    , False )#,

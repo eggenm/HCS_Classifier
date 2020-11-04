@@ -55,6 +55,7 @@ class Imagery_Cache:
             self.island_data_table[key]
         except KeyError:
             tif = os.path.join(self.base_dir, name,  name + '_all_class.remapped.tif')
+            print('*******TIF:  ', tif)
             file = glob.glob(tif)
             self.island_data_table[key] = rx.open_rasterio(file[0])
             #return rx.open_rasterio(file[0])
