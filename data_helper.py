@@ -525,11 +525,11 @@ if __name__ == "__main__":
     print(con_df)
     #write_input_data=True
     bands = [  # 'blue_max', 'green_max', 'red_max',
-        'nir_max',
-        'swir1_max', #'VH_2', 'VV_2', 'EVI', 'swir2_max', 'slope', 'VH_0', 'VV_0'
+      #  'nir_max',
+        'filledswir1_max', #'VH_2', 'VV_2', 'EVI', 'swir2_max', 'slope', 'VH_0', 'VV_0'
         # 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
     ]
-    tif = base_dir + 'Kalimantan' + '/out/' + str(2018) + '/input_Kalimantan_' + bands[0] + '.tif'
+    tif = base_dir + 'Kalimantan' + '/out/' + str(2019) + '/input_Kalimantan_' + 'nir_max' + '.tif'
     # tif = base_dir + name + '/out/' + year + '/' + bands[0] + '.tif'
     # try:
     file_list = sorted(glob.glob(tif))
@@ -537,8 +537,9 @@ if __name__ == "__main__":
     for band in bands:
         print('BAND:  ', band)
         try:
-            x = get_large_area_input_data(ref_study_area,[band],'Kalimantan', '2018', 'Kalimantan' )
-        except:
+            x = get_large_area_input_data(ref_study_area,[band],'Kalimantan', '2019', 'Kalimantan' )
+        except RuntimeError as err:
+            print("*** error: {0}".format(err))
             print(print('BAND:  ', band, ' is incomplete.'))
         #x = get_input_data([band], str(2019), ['Kalimantan'], True)
         x = False
