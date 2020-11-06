@@ -502,7 +502,7 @@ def drop_no_data(data):
         #fill = np.nan
         with timer.Timer() as t:
             data[data <= -999] = fill
-            data[data == 255] = np.nan
+            data[data == 255] = fill
             data[data >= 9999] = fill
             return data.dropna()
     finally:
