@@ -501,12 +501,14 @@ def drop_no_data(data):
         fill = 0
         #fill = np.nan
         with timer.Timer() as t:
-            print('data[data == np.nan] :  ', data[data == np.nan])
-            print('data[data <= -999] :  ', data[data <= -999])
+            print('len(data[data == np.nan]) :  ', len(data[data == np.nan]))
+            print('len(data[data <= -999]) :  ', len(data[data <= -999]))
+            print('min(data[data <= -999]) :  ', min(data[data <= -999]))
             data[data <= -999] = fill
             print('data[data == 255] :  ', data[data == 255])
             data[data == 255] = fill
-            print('data[data >= 9999] :  ', data[data >= 9999])
+            print('len(data[data >= 9999]) :  ', len(data[data >= 9999]))
+            print('max(data[data >= 9999]) :  ', max(data[data >= 9999]))
             data[data >= 9999] = fill
 
             return data.dropna()
