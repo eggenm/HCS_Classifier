@@ -501,9 +501,14 @@ def drop_no_data(data):
         fill = 0
         #fill = np.nan
         with timer.Timer() as t:
+            print('data[data == np.nan] :  ', data[data == np.nan])
+            print('data[data <= -999] :  ', data[data <= -999])
             data[data <= -999] = fill
+            print('data[data == 255] :  ', data[data == 255])
             data[data == 255] = fill
+            print('data[data >= 9999] :  ', data[data >= 9999])
             data[data >= 9999] = fill
+
             return data.dropna()
     finally:
         print('Drop NoData Request took %.03f sec.' % t.interval)
@@ -525,7 +530,8 @@ if __name__ == "__main__":
     print(con_df)
     #write_input_data=True
     bands = [  # 'blue_max', 'green_max', 'red_max',
-      #  'nir_max',
+        'nir_max',
+        'swir1_max'
         'filledswir1_max', #'VH_2', 'VV_2', 'EVI', 'swir2_max', 'slope', 'VH_0', 'VV_0'
         # 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
     ]

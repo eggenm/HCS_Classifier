@@ -33,30 +33,50 @@ def reproject_match_input_band(concession_tif, result_tif):
 
 if __name__ == "__main__":
      wbt = WhiteboxTools()
-     name = 'West_Kalimantan'
-     file = 'West_KalimantanFINAL_classified_by_ensemble_rf.tif'
-    # year = 2015
+     name = 'Kalimantan'
+     file = 'KalimantanFINAL_classified_by_ensemble_rf.tif'
+     year = 2018
      base_dir = dir.guess_data_dir()
-     wbt.work_dir = os.path.join(base_dir, name, 'sklearn_test')
-     wbt.majority_filter(file, "WestKalimantan_Final_smooth3x3.tif", filterx=3, filtery=3)
+     wbt.work_dir = os.path.join(base_dir, name, 'sklearn_test', str(year))
+     # wbt.majority_filter(file, "Kalimantan2017_Final_smooth3x3.tif", filterx=3, filtery=3)
+     #
+     year = 2018
+     base_dir = dir.guess_data_dir()
+     wbt.work_dir = os.path.join(base_dir, name, 'sklearn_test', str(year))
+     wbt.majority_filter(file, "Kalimantan2018_Final_smooth3x3.tif", filterx=3, filtery=3)
+
+     # wbt.resample(
+     #     "Kalimantan2018_Final_smooth3x3.tif",
+     #     "Kalimantan2018_Final_100m.tif",
+     #     cell_size=0.000898315284119522,
+     #     method="cc"
+     # )
+     # year = 2017
+     # base_dir = dir.guess_data_dir()
+     # wbt.work_dir = os.path.join(base_dir, name, 'sklearn_test', str(year))
+     # wbt.resample(
+     #        "Kalimantan2017_Final_smooth3x3.tif",
+     #        "Kalimantan2017_Final_100m.tif",
+     #        cell_size=0.000898315284119522,
+     #         method="cc")
 
     #read all class remap
-     array = np.zeros((2))
-     tif_hat = os.path.join(base_dir, name, 'sklearn_test', 'Jambi_Final_smooth3x3_Clip.tif')
-     tif_true = os.path.join(base_dir, 'app_jambi', '*jambi_all_class.remapped.tif')
-     file = glob.glob(tif_true)
-     # self.island_data_table[key] = rx.open_rasterio(file[0])
-     y = rx.open_rasterio(file[0])
-     file = glob.glob(tif_hat)
-     yhat = rx.open_rasterio(file[0])
-     yhat = reproject_match_input_band(y, yhat)
-     array = np.zeros((2, y.shape[1], y.shape[2]))
-     array[0] = np.asarray(y[0])
-     array[1] = np.asarray(yhat[0])
-
-     x = data_helper.gen_windows2(array)
-     x = data_helper.drop_no_data(x)
-     eval.show_results(data_helper.map_to_2class(x[0]), x[1])
+     # array = np.zeros((2))
+     # tif_hat = os.path.join(base_dir, name, 'sklearn_test', 'Jambi_Final_smooth3x3_Clip.tif')
+     # tif_true = os.path.join(base_dir, 'app_jambi', '*jambi_all_class.remapped.tif')
+     # file = glob.glob(tif_true)
+     # # self.island_data_table[key] = rx.open_rasterio(file[0])
+     # y = rx.open_rasterio(file[0])
+     # file = glob.glob(tif_hat)
+     # yhat = rx.open_rasterio(file[0])
+     # yhat = reproject_match_input_band(y, yhat)
+     # array = np.zeros((2, y.shape[1], y.shape[2]))
+     # array[0] = np.asarray(y[0])
+     # array[1] = np.asarray(yhat[0])
+     #
+     # x = data_helper.gen_windows2(array)
+     # x = data_helper.drop_no_data(x)
+  #   eval.show_results(data_helper.map_to_2class(x[0]), x[1])
     #MAP IT TO 2 CLASSES
     #READ RESULT FILE
     #CHECK DIMENSIONS
