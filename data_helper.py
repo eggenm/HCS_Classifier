@@ -530,8 +530,8 @@ if __name__ == "__main__":
     print(con_df)
     #write_input_data=True
     bands = [  # 'blue_max', 'green_max', 'red_max',
-        'nir_max',
-        'swir1_max'
+        #'nir_max',
+        'swir1_max',
         'filledswir1_max', #'VH_2', 'VV_2', 'EVI', 'swir2_max', 'slope', 'VH_0', 'VV_0'
         # 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
     ]
