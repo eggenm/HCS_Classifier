@@ -498,20 +498,14 @@ def show_results(y_test, y_hat):
 
 def drop_no_data(data):
     try:
-        fill = 0
-        #fill = np.nan
+        #fill = 0
+        fill = np.nan
         with timer.Timer() as t:
-            print('len(data[data == np.nan]) :  ', len(data[data == np.nan]))
-            print('len(data[data <= -999]) :  ', len(data[data <= -999]))
-            print('min(data[data <= -999]) :  ', min(data[data <= -999]))
             data[data <= -999] = fill
-            print('data[data == 255] :  ', data[data == 255])
             data[data == 255] = fill
-            print('len(data[data >= 9999]) :  ', len(data[data >= 9999]))
-            print('max(data[data >= 9999]) :  ', max(data[data >= 9999]))
             data[data >= 9999] = fill
 
-            return data.dropna()
+            return data.fillna(value=0)
     finally:
         print('Drop NoData Request took %.03f sec.' % t.interval)
 
