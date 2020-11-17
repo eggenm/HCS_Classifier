@@ -432,7 +432,7 @@ def get_large_area_input_data(study_area_base_raster, bands, island, year, name=
                 x = get_concession_bands(bands, year, study_area_base_raster, name)
                 print( "*****dataHalper x.shape:  " , x.shape)
                 x_in = x.shape[0]
-                x = drop_no_data(x)
+                x = fill_no_data(x)
                 x_out = x.shape[0]
                 print("*****dataHalper x.shape after drop no data:  ", x.shape)
                 if x_in!=x_out:
@@ -507,6 +507,20 @@ def drop_no_data(data):
 
             #return data.fillna(value=0)
             data.dropna(inplace=True)
+            return data
+    finally:
+        print('Drop NoData Request took %.03f sec.' % t.interval)
+
+def fill_no_data(data):
+    try:
+        #fill = 0
+        fill = np.nan
+        with timer.Timer() as t:
+            data[data <= -999] = fill
+            data[data == 255] = fill
+            data[data >= 999] = fill
+
+            data = data.fillna(value=100)
             return data
     finally:
         print('Drop NoData Request took %.03f sec.' % t.interval)
