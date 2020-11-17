@@ -19,8 +19,8 @@ shapefile = ''
 
 sites = [
 
-'Bumitama_PTDamaiAgroSejahtera',
-'Bumitama_PTHungarindoPersada',
+#'Bumitama_PTDamaiAgroSejahtera',
+#'Bumitama_PTHungarindoPersada',
 'PTMitraNusaSarana',
 'makmur_abadi',
 'sawit_perdana',
@@ -28,7 +28,8 @@ sites = [
 'PTMentariPratama',
 'PTSukajadiSawitMekar',
 'PTLabontaraEkaKarsa',
-    'forest', 'impervious', 'coconut', 'pulp_and_paper', 'water', 'oil_palm'
+    'forest', 'impervious', 'coconut', 'pulp_and_paper', 'water', 'oil_palm',
+
     #,
 
     #'app_jambi'
@@ -222,6 +223,9 @@ def get_training_data(sites, bands, year, sample_rate,  seed):
     for site in sites:
         train_df = helper.trim_data2(train_dict[site])
         train_df = helper.drop_no_data(train_df)
+        #train_df.dropna(inplace=True)
+        indices_to_keep = ~train_df.isin([np.nan, np.inf, -np.inf]).any(1)
+        train_df = train_df[indices_to_keep]
         X = train_df[[col for col in train_df.columns if (col != 'clas')]]
         #X_scaled = helper.scale_data(X)
         landcover = train_df['clas'].values
@@ -233,6 +237,8 @@ def get_training_data(sites, bands, year, sample_rate,  seed):
         X_test=pd.concat([X_test, X_test_site], ignore_index=True)
         y_train = np.concatenate([y_train, y_train_site])
         y_test = np.concatenate([y_test, y_test_site])
+        print(site , ' max_ytrain: ', max(y_train_site))
+        print(site, ' min_ytrain: ', min(y_train_site))
 
     return X_train, X_test, y_train, y_test
 
@@ -259,6 +265,7 @@ def log_accuracy(result, name, id, year):
 
 
 if __name__ == "__main__":
+    #name = 'Bumitama_PTDamaiAgroSejahtera'
     name = 'Kalimantan'
     for class_year in [2019]:#2017,2018,
         try:

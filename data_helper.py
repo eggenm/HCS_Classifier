@@ -461,8 +461,8 @@ def remove_low_occurance_classes( X, class_data):
     df = df.groupby('clas').filter(lambda x: len(x) > threshold)
 
 def map_to_3class(X):
-    print(max(X))
-    print(min(X))
+    print('Max_map_3class: ', max(X))
+    print('Min_map_3class: ', min(X))
     print(three_class_landcoverClassMap)
     return pd.Series(X).map(three_class_landcoverClassMap)
 
@@ -503,9 +503,11 @@ def drop_no_data(data):
         with timer.Timer() as t:
             data[data <= -999] = fill
             data[data == 255] = fill
-            data[data >= 9999] = fill
+            data[data >= 999] = fill
 
-            return data.fillna(value=0)
+            #return data.fillna(value=0)
+            data.dropna(inplace=True)
+            return data
     finally:
         print('Drop NoData Request took %.03f sec.' % t.interval)
 
