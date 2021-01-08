@@ -7,8 +7,8 @@ class Sampler:
         self.concession_test_rate = 0.2
         self.sample_rate_by_island = {
                 'Sumatra':0.1,
-                'Kalimantan':0.9,
-                'Papua':0.0
+                'Kalimantan':0.85,
+                'Papua':0.15
             }
         self.sampler_train_test_dict = {
             'Sumatra': (100, self.concession_test_rate),

@@ -25,7 +25,8 @@ sites = [ #'app_muba':'Sumatra',
 #['app_riau'],
 #['app_oki'],
   #   ['app_jambi'] ,
-['PTLabontaraEkaKarsa'],
+#['PTLabontaraEkaKarsa'],
+['adi_perkasa'],
   #  ['sawit_perdana'],
  #    ['Bumitama_PTHungarindoPersada'],
  #    ['PTAgroAndalan'],
@@ -64,7 +65,7 @@ band_set ={ # 0: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 's
 #                 'VH_2', 'VV_2', 'EVI', 'slope'],
    #         9: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ,'slope'],
           #  91: [ 'swir1_max',  'VH', 'VV', 'VV_2', 'VH_2', 'EVI' ],
-            94: ['nir_max', 'swir1_max', 'swir2_max',   'VH_2', 'VV_2', 'VV_0', 'VH_0','slope', 'EVI'],
+            94: ['red_max','nir_max', 'swir1_max', 'swir2_max',   'VH_2', 'VV_2', 'VV_0', 'VH_0','slope', 'EVI'],
             95: ['nir_max', 'swir1_max',   'VH', 'VV', 'VV_2', 'VH_2'],
             96: ['nir_max', 'swir1_max',   'VV_2', 'VH_2', 'EVI' ,'slope'],
             97: ['nir_max', 'swir1_max',   'VV_2', 'VH_2', 'EVI' ],
@@ -396,7 +397,7 @@ if __name__ == "__main__":
     actual_data = dict()
     raw_class_data = dict()
   #  init_x_y_data(sites, band_set)
-    resultfile = base_dir + 'new_concession_result.06012020.csv'
+    resultfile = base_dir + 'new_concession_result.11192020.csv'
     evaluate_model()
 
     #resultfile = base_dir + 'add1band_result.05292020.csv'

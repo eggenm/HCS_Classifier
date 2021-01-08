@@ -21,6 +21,7 @@ sites = [
 
 #'Bumitama_PTDamaiAgroSejahtera',
 #'Bumitama_PTHungarindoPersada',
+'adi_perkasa',
 'PTMitraNusaSarana',
 'makmur_abadi',
 'sawit_perdana',
@@ -37,7 +38,8 @@ sites = [
  #   'forest'
 #
 ]
-bands = [#'blue_max', 'green_max', 'red_max',
+bands = [#'blue_max', 'green_max',
+       'red_max',
          'nir_max',
         'swir1_max', 'VH_2', 'VV_2', 'EVI','swir2_max',  'slope',  'VH_0', 'VV_0' #'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
  ]
@@ -179,7 +181,7 @@ def get_trained_model(scoreConcession, trainConcessions, seed, override_bands = 
     depth = 8#db.get_best_max_depth([scoreConcession])
     leaf_nodes = db.get_best_max_leaf_nodes(scoreConcession)
     metric = 'F1'#db.get_best_metric([scoreConcession])
-    concession_assessment_year = str(2017) #TODO get this from database
+    concession_assessment_year = str(2018) #TODO get this from database
     if(not override_bands):
         bands = db.get_best_bands([scoreConcession])
     else:
@@ -265,9 +267,9 @@ def log_accuracy(result, name, id, year):
 
 
 if __name__ == "__main__":
-    #name = 'Bumitama_PTDamaiAgroSejahtera'
-    name = 'Kalimantan'
-    for class_year in [2019]:#2017,2018,
+    name = 'Bumitama_PTDamaiAgroSejahtera'
+    #name = 'Kalimantan'
+    for class_year in [2018,2019]:#2017,2018,
         try:
             with timer.Timer() as t:
                 island = db.data_context_dict[name]
@@ -283,11 +285,11 @@ if __name__ == "__main__":
                 # TODO this relies on hardcoded bands where below pulls from database
                 X_scaled_class = helper.get_large_area_input_data(ref_study_area, bands, island, str(class_year), name)
                 print("****SHAPE X_scaled_class:   ", X_scaled_class.shape)
-                iterations_per_site = 1
-                total_predictions = 9 #iterations_per_site * len(sites)
+                iterations_per_site = 3
+                total_predictions = iterations_per_site * len(sites)
                 #predictions = np.zeros((total_predictions, X_scaled_class.shape[0]), dtype=np.int8)
                 predictions = np.zeros(X_scaled_class.shape[0])
-                write_map(predictions, ref_study_area, name, 'TEST_0', class_year)
+                #write_map(predictions, ref_study_area, name, 'TEST_0', class_year)
                 #write_map(predictions, ref_study_area, name, "SWIRTEST", class_year)
 
                 #x = False

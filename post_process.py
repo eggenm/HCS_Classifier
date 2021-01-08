@@ -33,30 +33,37 @@ def reproject_match_input_band(concession_tif, result_tif):
 
 if __name__ == "__main__":
      wbt = WhiteboxTools()
+     wbt.set_verbose_mode(True)
      name = 'Kalimantan'
-     file = 'KalimantanFINAL_classified_by_ensemble_rf.tif'
-     year = 2018
+     file1 = "KalimantanFINAL_classified_by_ensemble_rf.tif"
+     year = 2017
      base_dir = dir.guess_data_dir()
-     wbt.work_dir = os.path.join(base_dir, name, 'sklearn_test', str(year))
-     # wbt.majority_filter(file, "Kalimantan2017_Final_smooth3x3.tif", filterx=3, filtery=3)
+     wbt.work_dir = os.path.join(base_dir, name, 'sklearn_test', str(year), 'test_temp', 'wkdir')
+     # wbt.majority_filter(file, "Kalimantan2018_Final_smooth3x3.tif", filterx=3, filtery=3)
      #
-     year = 2018
-     base_dir = dir.guess_data_dir()
-     wbt.work_dir = os.path.join(base_dir, name, 'sklearn_test', str(year))
-     wbt.majority_filter(file, "Kalimantan2018_Final_smooth3x3.tif", filterx=3, filtery=3)
+     base = os.path.join(base_dir, name, 'sklearn_test', str(year), 'test_temp', 'Kalimantan2017_Final_100m.tif')
+     out1= "resample2017.tif"
+     out2 = "round2017.tif"
+     wbt.resample( file1, out1, "cc",  base=base )
+     wbt.round(
+         out1,
+         out2
+     )
+
+     wbt.majority_filter(out2, "RES_RND_SMTH_Kalimantan2017_Final3x3.tif", filterx=3, filtery=3)
 
      # wbt.resample(
-     #     "Kalimantan2018_Final_smooth3x3.tif",
-     #     "Kalimantan2018_Final_100m.tif",
+     #     "Kalimantan2019_Final_smooth3x3.tif",
+     #     "Kalimantan2019_Final_100m.tif",
      #     cell_size=0.000898315284119522,
      #     method="cc"
      # )
-     # year = 2017
+     # year = 2018
      # base_dir = dir.guess_data_dir()
      # wbt.work_dir = os.path.join(base_dir, name, 'sklearn_test', str(year))
      # wbt.resample(
-     #        "Kalimantan2017_Final_smooth3x3.tif",
-     #        "Kalimantan2017_Final_100m.tif",
+     #        "Kalimantan2018_Final_smooth3x3.tif",
+     #        "Kalimantan2018_Final_100m.tif",
      #        cell_size=0.000898315284119522,
      #         method="cc")
 
