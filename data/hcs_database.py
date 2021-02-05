@@ -5,6 +5,11 @@ import itertools
 #conn = sqlite3.connect('data/hcs_database.db')
 #conn = sqlite3.connect('hcs_database.db')
 
+##TODO this should be moved to hcs_database.py
+base_dir = dirfuncs.guess_data_dir()
+concessions_csv = base_dir + 'concession_inventory.csv'
+concession_df = pd.read_csv(concessions_csv)
+assessment_year_dict = dict(zip(concession_df.app_key, concession_df.use_year))
 
 maps_dict = {'app_jambi': 'ft:1bgkWL4VgYSgfAupZmVGcnXJJqMmvyBtl3_VgfyVV',
              'app_kalbar': 'ft:16yV7XDfeb1fGhH-N68CIetxd0FW8OvsTHdB7I4ka',
@@ -30,7 +35,8 @@ leaf_nodes_dict={
 'aneka_sawit':10,
 'PTMentariPratama':6,
 'PTSukajadiSawitMekar':10,
-'PTLabontaraEkaKarsa':10
+'PTLabontaraEkaKarsa':10,
+'adi_perkasa': 8
 
 }
 features_dict={
@@ -42,7 +48,8 @@ features_dict={
 'aneka_sawit':0.65,
 'PTMentariPratama':0.65,
 'PTSukajadiSawitMekar':0.8,
-'PTLabontaraEkaKarsa':0.8
+'PTLabontaraEkaKarsa':0.8,
+'adi_perkasa': 0.65
 }
 estimators_dict={
 'Bumitama_PTDamaiAgroSejahtera':500,
@@ -53,7 +60,8 @@ estimators_dict={
 'aneka_sawit':750,
 'PTMentariPratama':500,
 'PTSukajadiSawitMekar':625,
-'PTLabontaraEkaKarsa':500
+'PTLabontaraEkaKarsa':500,
+'adi_perkasa': 625
 }
 
 data_context_dict =  { 'app_muba':'Sumatra',
@@ -67,18 +75,31 @@ data_context_dict =  { 'app_muba':'Sumatra',
          'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
          'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
      'Bumitama_PTHungarindoPersada':'Kalimantan',
-     'PTAgroAndalan':'Kalimantan',
       'PTMitraNusaSarana':'Kalimantan',
     'adi_perkasa':'Papua',
+    'agro_lestari':'Papua',
     'makmur_abadi':'Kalimantan',
     'PTLestariAbadiPerkasa':'Kalimantan',
 'sawit_perdana':'Kalimantan',
 'PTGlobalindoAlamPerkasa':'Kalimantan',
-'PTLestariAbadiPerkasa':'Kalimantan',
 'aneka_sawit':'Kalimantan',
 'PTMentariPratama':'Kalimantan',
 'PTSukajadiSawitMekar':'Kalimantan',
 'PTLabontaraEkaKarsa':'Kalimantan',
+'multipersada_gatramegah':'Kalimantan',
+'musim_mas':'Sumatra',
+'unggul_lestari':'Kalimantan',
+'mukti_prakarsa':'Kalimantan',
+'agro_mandiri':'Kalimantan',
+'PTAgroAndalan':'Kalimantan',
+
+
+
+     'tekukur_indah':'Kalimantan',
+     'varia_mitra_andalan':'Papua',
+     'agro_lestari':'Papua',
+
+     'tunas_sawwaerma':'Papua',
 'Kalimantan':'Kalimantan',
 'Papua':'Papua',
 'Sumatra':'Sumatra',
@@ -273,7 +294,8 @@ def get_best_bands(concession):
     bands = x.replace('[', '').replace(']','').replace('\'','')
     return bands.split(', ');
 
-
+def get_concession_assessment_year(concession):
+    return assessment_year_dict[concession]
 
 def get_best_training_sample_rate_byBand(concession, bands):
     return get_max_model_run(concession, bands)['training_sample_rate']
