@@ -2,8 +2,8 @@ import data.hcs_database as db
 
 class Sampler:
     def __init__(self):
-        self.fixed_sample_rate = 20
-        self.fixed_test_rate = 1
+        self.fixed_sample_rate = 25
+        self.fixed_test_rate = 5
         self.concession_test_rate = 0.2
         self.sample_rate_by_island = {
                 'Sumatra':0.1,
@@ -13,7 +13,7 @@ class Sampler:
         self.sampler_train_test_dict = {
             'Sumatra': (100, self.concession_test_rate),
             'Kalimantan': (100, self.concession_test_rate),
-            'Papua': (0,0),
+            'Papua': (100, self.concession_test_rate),
             'supplementary_class': (self.fixed_sample_rate, self.fixed_test_rate)
         }
 

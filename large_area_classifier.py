@@ -17,18 +17,29 @@ import sampler
 base_dir = dirfuncs.guess_data_dir()
 shapefile = ''
 
-sites = [
+sites = [ 'Bumitama_PTDamaiAgroSejahtera',  # a
+         'Bumitama_PTHungarindoPersada',
+         'adi_perkasa',
+         'PTMitraNusaSarana',
+        'makmur_abadi',
+        'PTLestariAbadiPerkasa',
+        'PTGlobalindoAlamPerkasa',
+        'sawit_perdana',
+        'aneka_sawit',  # b
+        'PTMentariPratama',
+        'PTSukajadiSawitMekar',
+        'PTLabontaraEkaKarsa',
 
-#'Bumitama_PTDamaiAgroSejahtera',
-#'Bumitama_PTHungarindoPersada',
-'adi_perkasa',
-'PTMitraNusaSarana',
-'makmur_abadi',
-'sawit_perdana',
-'aneka_sawit',
-'PTMentariPratama',
-'PTSukajadiSawitMekar',
-'PTLabontaraEkaKarsa',
+         'app_jambi',  # d
+        # 'app_kalbar',
+        # 'app_kaltim',
+
+        'app_oki',  # c
+        'app_riau',
+        'multipersada_gatramegah', 'musim_mas',  # 'unggul_lestari',
+
+        # e
+        'mukti_prakarsa', 'gar_pgm','PTAgroAndalan', 'Bumitama_PTGemilangMakmurSubur',
     'forest', 'impervious', 'coconut', 'pulp_and_paper', 'water', 'oil_palm',
 
     #,
@@ -39,9 +50,10 @@ sites = [
 #
 ]
 bands = [#'blue_max', 'green_max',
-       'red_max',
-         'nir_max',
-        'swir1_max', 'VH_2', 'VV_2', 'EVI','swir2_max',  'slope',  'VH_0', 'VV_0' #'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
+     #  'red_max',
+       #  'nir_max',
+     #   'swir1_max', 'VH_2', 'VV_2', 'EVI','swir2_max',  'slope',  'VH_0', 'VV_0'
+    'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2',  'slope'
  ]
 
 my_sampler = sampler.Sampler()
@@ -176,10 +188,19 @@ def get_trained_model(scoreConcession, trainConcessions, seed, override_bands = 
     doGridSearch = False
     scheme = '3CLASS'#db.get_best_scheme([scoreConcession])
     #band_string = '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'
-    estimators = db.get_best_number_estimators(scoreConcession)
-    max_features = db.get_best_max_features(scoreConcession)
+    try:
+        estimators = db.get_best_number_estimators(scoreConcession)
+    except:
+        estimators = 550
+    try:
+        max_features = db.get_best_max_features(scoreConcession)
+    except:
+        max_features = .7
     depth = 8#db.get_best_max_depth([scoreConcession])
-    leaf_nodes = db.get_best_max_leaf_nodes(scoreConcession)
+    try:
+       leaf_nodes = db.get_best_max_leaf_nodes(scoreConcession)
+    except:
+       leaf_nodes=8
     metric = 'F1'#db.get_best_metric([scoreConcession])
     concession_assessment_year = str(2018) #TODO get this from database
     if(not override_bands):
@@ -222,6 +243,7 @@ def get_training_data(sites, bands, year, sample_rate,  seed):
     y_train = np.empty(0)
     y_test = np.empty(0)
     sample_sizes_dict = my_sampler.get_sample_rate_by_type(sample_rate, sites)
+    print("###########SAMPLE_SIZE_DICTIONARY#########:  ", sample_sizes_dict)
     for site in sites:
         train_df = helper.trim_data2(train_dict[site])
         train_df = helper.drop_no_data(train_df)
@@ -233,6 +255,8 @@ def get_training_data(sites, bands, year, sample_rate,  seed):
         landcover = train_df['clas'].values
         train_sample = int(sample_sizes_dict[db.data_context_dict[site]][0])
         test_sample =sample_sizes_dict[db.data_context_dict[site]][1]
+        print("***** Site:  ", site)
+        print("***** train sample size:  ", train_sample)
         X_train_site, X_test_site, y_train_site, y_test_site = train_test_split(X, landcover, train_size=train_sample, test_size=test_sample,
                                                             random_state=seed)
         X_train=pd.concat([X_train, X_train_site], ignore_index=True)
@@ -267,9 +291,35 @@ def log_accuracy(result, name, id, year):
 
 
 if __name__ == "__main__":
-    name = 'Bumitama_PTDamaiAgroSejahtera'
+    #name = 'Bumitama_PTDamaiAgroSejahtera'
+    names=[
+        'Bumitama_PTDamaiAgroSejahtera',  # a
+        'Bumitama_PTHungarindoPersada',
+        'adi_perkasa',
+        'PTMitraNusaSarana',
+        'makmur_abadi',
+        'PTLestariAbadiPerkasa',
+        'PTGlobalindoAlamPerkasa',
+        'sawit_perdana',
+        'aneka_sawit',  # b
+        'PTMentariPratama',
+        'PTSukajadiSawitMekar',
+        'PTLabontaraEkaKarsa',
+
+        'app_jambi',  # d
+        # 'app_kalbar',
+        # 'app_kaltim',
+
+        'app_oki',  # c
+        'app_riau',
+        'multipersada_gatramegah', 'musim_mas',  # 'unggul_lestari',
+
+        # e
+        'mukti_prakarsa', 'gar_pgm', 'PTAgroAndalan', 'Bumitama_PTGemilangMakmurSubur'
+    ]
     #name = 'Kalimantan'
-    for class_year in [2018,2019]:#2017,2018,
+    for name in names:#2017,2018,
+        class_year =  str(int(db.get_concession_assessment_year(name)))
         try:
             with timer.Timer() as t:
                 island = db.data_context_dict[name]
@@ -303,6 +353,10 @@ if __name__ == "__main__":
                     print(scoreConcession)
                     trainConcessions = list(sites)
                     trainConcessions.remove(scoreConcession)
+                    try:
+                        trainConcessions.remove(name)
+                    except:
+                        print("swallow error - expected")
                     #trained_model = get_trained_model(scoreConcession, trainConcessions, i)
                     #predictions = predict(X_scaled_class, trained_model, predictions)
                     #write_map(predictions, ref_study_area, name, i, year)
@@ -321,8 +375,8 @@ if __name__ == "__main__":
                         print('*****  Making Predictions...  ******')
                         predictions  =  predictions + predict(X_scaled_class, trained_model)#, predictions)
                         print('*****  Finsihed Predictions!  ******')
-                        if k%9==0:
-                            write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j, class_year)
+                        #if k%9==0:
+                        #    write_map((np.around(predictions/(k+1))).astype(rio.int16), ref_study_area, name, j, class_year)
                         k=k+1
                         if('slope' not in scores['bands']):
                             scores['bands'].append('slope')

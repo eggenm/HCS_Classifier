@@ -38,6 +38,8 @@ write_input_data = True
 image_cache = imagery_data.Imagery_Cache.getInstance()
 
 
+
+
 #classes = {1: "HCSA",
      #      0: "NA"}
 sites = ['gar_pgm',
@@ -365,7 +367,7 @@ def get_concession_bands(bands, year, bounding_box, concession=None, filename = 
 
 
 
-def get_fixed_bands(bands, name, year, context):
+def get_fixed_bands(bands, name, context, year='NONE' ):
     print('GETTING fixed class: ', name)
     try:
         x=pd.DataFrame()
@@ -401,7 +403,7 @@ def get_input_data(bands, year, sites, get_predictor_data_only=False):
                 data = pd.DataFrame()
                 if (type == 'supplementary_class'):
                     print('Getting fixed class data')
-                    data = get_fixed_bands(bands, site, year, type)
+                    data = get_fixed_bands(bands, site, type)
                     # TODO get_fixed_bands
                     # get fixed bands will query a folder for all shape or rasters
                     # look for an input_sitename based on the classfilename
@@ -411,13 +413,15 @@ def get_input_data(bands, year, sites, get_predictor_data_only=False):
                     island = db.data_context_dict[site]
                     all_class = image_cache.get_class_by_concession_name(site)
                     #box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[site])
-                    x = get_concession_bands(bands, year, all_class, site)
-                    if not get_predictor_data_only:
 
+                    if not get_predictor_data_only:
+                        #THIS IS TRAING DATA
+                        year = str(int(db.get_concession_assessment_year(site)))
+                        x = get_concession_bands(bands, year, all_class, site)
                         y = get_classes(all_class.data, 'clas')
                         data = combine_input_landcover(x, y)
                     elif get_predictor_data_only:
-                        data = x
+                        data = get_concession_bands(bands, year, all_class, site)
                 data_by_site[site] = data
             all_class=False
             x=False
@@ -525,6 +529,8 @@ def fill_no_data(data):
     finally:
         print('Drop NoData Request took %.03f sec.' % t.interval)
 
+
+
 #print(landcoverClassMap)
 if __name__ == "__main__":
     concessions_csv = base_dir + 'concession_inventory.csv'
@@ -541,28 +547,81 @@ if __name__ == "__main__":
 
     print(con_df)
     #write_input_data=True
-    bands = [  # 'blue_max', 'green_max', 'red_max',
+  #  bands = [  # 'blue_max', 'green_max', 'red_max',
         #'nir_max',
-        'swir1_max',
-        'filledswir1_max', #'VH_2', 'VV_2', 'EVI', 'swir2_max', 'slope', 'VH_0', 'VV_0'
+ #       'swir1_max',
+  #      'filledswir1_max', #'VH_2', 'VV_2', 'EVI', 'swir2_max', 'slope', 'VH_0', 'VV_0'
         # 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
+  #  ]
+    bands = [  # 'blue_max', 'green_max',
+        'red_max',
+        'nir_max',
+        'swir1_max',
+        'VH_2', 'VV_2', 'EVI', 'swir2_max',
+         'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2',  'slope'
     ]
-    tif = base_dir + 'Kalimantan' + '/out/' + str(2019) + '/input_Kalimantan_' + 'nir_max' + '.tif'
-    # tif = base_dir + name + '/out/' + year + '/' + bands[0] + '.tif'
-    # try:
-    file_list = sorted(glob.glob(tif))
-    ref_study_area = rx.open_rasterio(file_list[0])
-    for band in bands:
-        print('BAND:  ', band)
-        try:
-            x = get_large_area_input_data(ref_study_area,[band],'Kalimantan', '2019', 'Kalimantan' )
-        except RuntimeError as err:
-            print("*** error: {0}".format(err))
-            print(print('BAND:  ', band, ' is incomplete.'))
-        #x = get_input_data([band], str(2019), ['Kalimantan'], True)
-        x = False
+#     x = get_input_data(bands, str(2018), [
+#         'Bumitama_PTDamaiAgroSejahtera',
+# 'Bumitama_PTHungarindoPersada',
+# 'adi_perkasa',
+# 'PTMitraNusaSarana',
+# 'makmur_abadi',
+# 'PTLestariAbadiPerkasa',
+# 'PTGlobalindoAlamPerkasa',
+# 'sawit_perdana',
+# 'aneka_sawit',
+# 'PTMentariPratama',
+# 'PTSukajadiSawitMekar',
+# 'PTLabontaraEkaKarsa',
+#
+#                                           ], False)
 
-   # x = get_input_data(bands, str(2018), ['Kalimantan'], True)
+    y = get_input_data(bands, str(2017), [
+       #   'app_jambi',
+       #    'app_kalbar',
+       #    'app_kaltim',
+       #  'multipersada_gatramegah', 'musim_mas',
+       # # 'unggul_lestari',
+       #  'mukti_prakarsa','gar_pgm',     'agro_mandiri',  'PTAgroAndalan',
+       #  'Bumitama_PTDamaiAgroSejahtera',
+       #  'Bumitama_PTHungarindoPersada',
+       # 'adi_perkasa',
+       #  'PTMitraNusaSarana',
+       #  'makmur_abadi',
+       #  'PTLestariAbadiPerkasa',
+       #  'PTGlobalindoAlamPerkasa',
+       #  'sawit_perdana',
+       #  'aneka_sawit',
+       #  'PTMentariPratama',
+       #  'PTSukajadiSawitMekar',
+       #  'PTLabontaraEkaKarsa',
+        'Bumitama_PTGemilangMakmurSubur'
+
+    #     'tekukur_indah',
+    # 'varia_mitra_andalan',
+  #   'agro_lestari',
+    #
+   #  'tunas_sawwaerma',
+
+   ], False)
+
+
+    # tif = base_dir + 'Kalimantan' + '/out/' + str(2019) + '/input_Kalimantan_' + 'nir_max' + '.tif'
+    # # tif = base_dir + name + '/out/' + year + '/' + bands[0] + '.tif'
+    # # try:
+    # file_list = sorted(glob.glob(tif))
+    # ref_study_area = rx.open_rasterio(file_list[0])
+    # for band in bands:
+    #     print('BAND:  ', band)
+    #     try:
+    #         x = get_large_area_input_data(ref_study_area,[band],'Kalimantan', '2019', 'Kalimantan' )
+    #     except RuntimeError as err:
+    #         print("*** error: {0}".format(err))
+    #         print(print('BAND:  ', band, ' is incomplete.'))
+    #     #x = get_input_data([band], str(2019), ['Kalimantan'], True)
+    #     x = False
+
+
   #  x = get_input_data([ 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
    #                    , False )#,
    # x = get_input_data(['nir_max'], str(2019), ['impervious'], False)
