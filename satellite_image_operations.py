@@ -139,8 +139,8 @@ def prep_ls8(img):
     add an ndvi band, and rename all bands.
     """
     # Mask out flagged clouds
-    #img = maskCloudsLandsat8(img)
-    img = maskL8Clouds_2(img)
+    img = maskCloudsLandsat8(img)
+    #img = maskL8Clouds_2(img)
     #img = img.unitScale(0,10000)
 
     # Rename bands
