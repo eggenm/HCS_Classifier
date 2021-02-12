@@ -50,9 +50,9 @@ for site in sites:
     #geometry = strata_img.geometry()
     #feature = ee.Feature(geometry)
     #feature_dict[site] = feature
-fc = ee.FeatureCollection(list(feature_dict.values()))
-all_study_area = fc.geometry().bounds()
-all_json_coords = all_study_area.getInfo()['coordinates']
+#fc = ee.FeatureCollection(list(feature_dict.values()))
+#all_study_area = fc.geometry().bounds()
+#all_json_coords = all_study_area.getInfo()['coordinates']
 
 # =============================================================================
 # Get Sent2 Ndvi
