@@ -6,7 +6,7 @@ import ee
 from satellite_image_operations import s2_band_dict_median, s2_band_dict
 
 ee.Initialize()
-from data import hcs_database as hcs_db
+#from data import hcs_database as hcs_db
 import satellite_image_operations as sat_ops
 import pandas as pd
 import requests
