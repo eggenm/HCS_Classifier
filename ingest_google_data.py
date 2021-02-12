@@ -46,10 +46,10 @@ sites = ['gar_pgm',
 
 feature_dict = {}
 for site in sites:
-    strata_img = ee.Image(hcs_db.rasters[site])
-    geometry = strata_img.geometry()
-    feature = ee.Feature(geometry)
-    feature_dict[site] = feature
+    strata_img = []#ee.Image(hcs_db.rasters[site])
+    #geometry = strata_img.geometry()
+    #feature = ee.Feature(geometry)
+    #feature_dict[site] = feature
 fc = ee.FeatureCollection(list(feature_dict.values()))
 all_study_area = fc.geometry().bounds()
 all_json_coords = all_study_area.getInfo()['coordinates']
