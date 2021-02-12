@@ -82,7 +82,7 @@ def download_data(polys,i, year):
     images = {
        #   '_greenest': sentinel,
        #   '_radar': radar,  # 'class': strata_img,
-        '_greenestw_l8': l8,
+        '_greenest_l8': l8,
        # '_dem':dem
      #   '_soil': soil
        # '_watermask': water_mask
@@ -175,14 +175,14 @@ if __name__ == "__main__":
 
      ##KALIMANTAN
          site = 'Kalimantan'
-         polygons = get_grid_polygons(107, 119, -5,5)
+         polygons = get_grid_polygons(107, 119, -5,7)
          for year in years:
             download_data(polygons, 33, year)
             cleanup_files(year)
 #
 #
 # ##SUMATRA
-         site = 'Sumatra'
+        # site = 'Sumatra'
          #
          # polygons = get_grid_polygons(95, 109, -6,6)
          # for year in years:
