@@ -127,7 +127,7 @@ def getYearlyNdvi_L8():
         name = "ls8_ndvi_" + str(year)
         print("NAME:   ", name)
         date_start = ee.Date.fromYMD(year, 1, 1)
-        date_end = ee.Date.fromYMD(year, 12, 31)
+        date_end = ee.Date.fromYMD(year, 6, 30) #as this due to fires?
         l8 = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
         l8 = l8.filterDate(date_start, date_end)
         # Pre-filter to get less cloudy granules.
@@ -137,11 +137,11 @@ def getYearlyNdvi_L8():
         if (l8.size().lt( ee.Number(1)).getInfo() ):
             continue
         l8 = l8.map(sat_ops.maskCloudsLandsat8)
-        l8 = l8.map(sat_ops.addNDVI_l8)
-        ndviMax = l8.select('NDVI').max()
+        l8 = l8.map(sat_ops.add_EVI2_l8)
+        ndviMax = l8.select('EVI').max()
         ndviMax = ndviMax.rename(name+"_max")
-        ndviVar = l8.select('NDVI').reduce(ee.Reducer.stdDev())
-        ndviVar = ndviVar.rename(name + "_var")
+       # ndviVar = l8.select('NDVI').reduce(ee.Reducer.stdDev())
+       # ndviVar = ndviVar.rename(name + "_var")
         yearly_ndvisL8 = yearly_ndvisL8.addBands(ndviMax)#.addBands(ndviVar)
     return yearly_ndvisL8
 
@@ -174,9 +174,9 @@ def getSoil(all_study_area):
 
 def assemble_l8(study_area, year):
     date_start = ee.Date.fromYMD(year-1, 1, 1) # need more than 1 year of landsat to make usable composite
-    date_end = ee.Date.fromYMD(year, 6, 30)
-    #ic = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
-    ic = ee.ImageCollection("LANDSAT/LC08/C01/T1_TOA")
+    date_end = ee.Date.fromYMD(year, 12, 31)
+    ic = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
+    #ic = ee.ImageCollection("LANDSAT/LC08/C01/T1_TOA")
     ic = ic.filterDate(date_start, date_end)
     ic = ic.filterBounds(study_area)
     ic=ic.filter(ee.Filter.lt('CLOUD_COVER', 60))
