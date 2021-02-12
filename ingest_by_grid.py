@@ -12,7 +12,7 @@ import dirfuncs
 import os
 import glob
 import time
-from data import hcs_database as hcs_db
+#from data import hcs_database as hcs_db
 import satellite_image_operations as sat_ops
 import pandas as pd
 
