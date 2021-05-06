@@ -175,13 +175,21 @@ def getSoil(all_study_area):
 def assemble_l8(study_area, year):
     date_start = ee.Date.fromYMD(year-1, 1, 1) # need more than 1 year of landsat to make usable composite
     date_end = ee.Date.fromYMD(year, 12, 31)
-    ic = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
-    #ic = ee.ImageCollection("LANDSAT/LC08/C01/T1_TOA")
+    #ic = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
+    ic = ee.ImageCollection("LANDSAT/LC08/C01/T1_TOA")
     ic = ic.filterDate(date_start, date_end)
     ic = ic.filterBounds(study_area)
-    ic=ic.filter(ee.Filter.lt('CLOUD_COVER', 60))
-    ic_masked = ic.map(sat_ops.prep_ls8)
-    clean_l8_img = ee.Image(ic_masked.qualityMosaic('EVI'))
+    ic=ic.filter(ee.Filter.lt('CLOUD_COVER', 75))
+
+    #composite = ee.Algorithms.Landsat.simpleComposite(ic)
+    ic = ic.map(sat_ops.add_cloud_score_mask)
+    ic = ic.map(sat_ops.add_EVI2_l8)
+    ic = ic.map(sat_ops.add_tassle_cap_l8)
+    #ic_masked = ic.map(sat_ops.prep_ls8)
+    clean_l8_img = ee.Image(ic.median())
+    old_names = list(sat_ops.l8_band_dict.keys())
+    new_names = list(sat_ops.l8_band_dict.values())
+    clean_l8_img = clean_l8_img.select(old_names, new_names)
     return(clean_l8_img)
 
 # =============================================================================

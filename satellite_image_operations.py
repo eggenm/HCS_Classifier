@@ -1,5 +1,5 @@
 import ee
-ee.Initialize()
+#ee.Initialize()
 import numpy as np
 
 l8_band_dict =  {#'B1': 'ublue',
@@ -12,7 +12,13 @@ l8_band_dict =  {#'B1': 'ublue',
       #        'B10': 'tir1',
       #        'B11': 'tir2',
        #       'sr_aerosol': 'sr_aerosol'
-             'EVI2': 'EVI'
+             'EVI2': 'EVI',
+            'brightness':   'brightness',
+            'greenness':  'greenness',
+            'wetness':'wetness',
+            # 'fourth': 'fourth',
+            # 'fifth': 'fifth',
+            # 'sixth': 'sixth'
               }
 
 s2_band_dict = {
@@ -220,6 +226,76 @@ def add_EVI2_l8(image):
     evi2 = image.expression('2.4 * (NIR - RED) / (NIR + RED + 1)', bands).rename('EVI2');
 
     return image.addBands(evi2);
+
+def add_tassle_cap_l8(image):
+    b = image.select("B2", "B3", "B4", "B5", "B6", "B7");
+   #Coefficients are only for Landsat 8 TOA
+    brightness_coefficents = ee.Image([0.3029, 0.2786, 0.4733, 0.5599, 0.508, 0.1872])
+    greenness_coefficents = ee.Image([-0.2941, -0.243, -0.5424, 0.7276, 0.0713, -0.1608]);
+    wetness_coefficents = ee.Image([0.1511, 0.1973, 0.3283, 0.3407, -0.7117, -0.4559]);
+    fourth_coefficents = ee.Image([-0.8239, 0.0849, 0.4396, -0.058, 0.2013, -0.2773]);
+    fifth_coefficents = ee.Image([-0.3294, 0.0557, 0.1056, 0.1855, -0.4349, 0.8085]);
+    sixth_coefficents = ee.Image([0.1079, -0.9023, 0.4119, 0.0575, -0.0259, 0.0252]);
+
+    brightness = image.expression(
+        '(B * BRIGHTNESS)',
+        {
+            'B': b,
+            'BRIGHTNESS': brightness_coefficents
+        }
+    );
+    greenness = image.expression(
+        '(B * GREENNESS)',
+        {
+            'B': b,
+            'GREENNESS': greenness_coefficents
+        }
+    );
+    wetness = image.expression(
+        '(B * WETNESS)',
+        {
+            'B': b,
+            'WETNESS': wetness_coefficents
+        }
+    );
+    # fourth = image.expression(
+    #     '(B * FOURTH)',
+    #     {
+    #         'B': b,
+    #         'FOURTH': fourth_coefficents
+    #     }
+    # );
+    # fifth = image.expression(
+    #     '(B * FIFTH)',
+    #     {
+    #         'B': b,
+    #         'FIFTH': fifth_coefficents
+    #     }
+    # );
+    #
+    # sixth = image.expression(
+    #     '(B * SIXTH)',
+    #     {
+    #         'B': b,
+    #         'SIXTH': sixth_coefficents
+    #     }
+    # );
+    brightness = brightness.reduce(ee.call("Reducer.sum"));
+    greenness = greenness.reduce(ee.call("Reducer.sum"));
+    wetness = wetness.reduce(ee.call("Reducer.sum"));
+    # fourth = fourth.reduce(ee.call("Reducer.sum"));
+    # fifth = fifth.reduce(ee.call("Reducer.sum"));
+    # sixth = sixth.reduce(ee.call("Reducer.sum"));
+    tasseled_cap = ee.Image(brightness).addBands(greenness).addBands(wetness).rename('brightness', 'greenness', 'wetness')
+    return image.addBands(tasseled_cap);
+
+def add_cloud_score_mask(image):
+  cloud_param = 25
+  scored = ee.Algorithms.Landsat.simpleCloudScore(image);
+  mask = scored.select(['cloud']).lte(cloud_param);
+  masked = image.updateMask(mask);
+  return masked.set('SENSOR_ID', 'OLI_TIRS');
+
 
 def add_ndvi(img, keys, values, platform):
     print(platform)

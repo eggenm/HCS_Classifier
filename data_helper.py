@@ -553,7 +553,7 @@ if __name__ == "__main__":
   #      'filledswir1_max', #'VH_2', 'VV_2', 'EVI', 'swir2_max', 'slope', 'VH_0', 'VV_0'
         # 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
   #  ]
-    bands = [  # 'blue_max', 'green_max',
+    bands = [   'blue_max', #'green_max',
         'red_max',
         'nir_max',
         'swir1_max',
@@ -575,35 +575,35 @@ if __name__ == "__main__":
 # 'PTLabontaraEkaKarsa',
 #
 #                                           ], False)
+    for year in [2015, 2017,2019]:
+        y = get_input_data(bands, str(year), [
+           #   'app_jambi',
+           #    'app_kalbar',
+           #    'app_kaltim',
+           #  'multipersada_gatramegah', 'musim_mas',
+           #
+           #  'mukti_prakarsa','gar_pgm',     'agro_mandiri',  'PTAgroAndalan',
+           #  'Bumitama_PTDamaiAgroSejahtera',
+           #  'Bumitama_PTHungarindoPersada',
+           # 'adi_perkasa',
+           #  'PTMitraNusaSarana',
+           #  'makmur_abadi',
+           #  'PTLestariAbadiPerkasa',
+           #  'PTGlobalindoAlamPerkasa',
+           #  'sawit_perdana',
+           #  'aneka_sawit',
+           #  'PTMentariPratama',
+           #  'PTSukajadiSawitMekar',
+           #  'PTLabontaraEkaKarsa',
+            'Bumitama_PTGemilangMakmurSubur',
+             'unggul_lestari',
+      #       'tekukur_indah',
+    #     'varia_mitra_andalan',
+   #      'agro_lestari',
+        #
+     #    'tunas_sawwaerma',
 
-    y = get_input_data(bands, str(2017), [
-       #   'app_jambi',
-       #    'app_kalbar',
-       #    'app_kaltim',
-       #  'multipersada_gatramegah', 'musim_mas',
-       # # 'unggul_lestari',
-       #  'mukti_prakarsa','gar_pgm',     'agro_mandiri',  'PTAgroAndalan',
-       #  'Bumitama_PTDamaiAgroSejahtera',
-       #  'Bumitama_PTHungarindoPersada',
-       # 'adi_perkasa',
-       #  'PTMitraNusaSarana',
-       #  'makmur_abadi',
-       #  'PTLestariAbadiPerkasa',
-       #  'PTGlobalindoAlamPerkasa',
-       #  'sawit_perdana',
-       #  'aneka_sawit',
-       #  'PTMentariPratama',
-       #  'PTSukajadiSawitMekar',
-       #  'PTLabontaraEkaKarsa',
-        'Bumitama_PTGemilangMakmurSubur'
-
-    #     'tekukur_indah',
-    # 'varia_mitra_andalan',
-  #   'agro_lestari',
-    #
-   #  'tunas_sawwaerma',
-
-   ], False)
+       ], True)
 
 
     # tif = base_dir + 'Kalimantan' + '/out/' + str(2019) + '/input_Kalimantan_' + 'nir_max' + '.tif'

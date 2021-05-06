@@ -30,15 +30,15 @@ lon_edge=2
 #lat_edge = 2.5 #PAPUA
 lat_edge = 2
 #site = 'Kalimantan'
-years = [2015,
+years = [#2015,
         # 2016,
-    # 2017,
+     2017,
     #2018,
   # 2019
          ]
 start = 1
 end = 50
-#years= [2017,2015,2019]
+years= [2017,2015,2019]
 site = 'None'
 out_path = dirfuncs.guess_data_dir()
 #Take a set of years
@@ -72,8 +72,8 @@ def get_grid_polygons(lon_start, lon_end, lat_start,lat_end):
 def download_data(polys,i, year):
     fc = ee.FeatureCollection(polys)
     all_study_area = fc.geometry().bounds()
-    radar = ingest.assemble_radar_data(all_study_area, year)
-    sentinel = ingest.assemble_sentinel_data(all_study_area, year)
+    #radar = ingest.assemble_radar_data(all_study_area, year)
+    #sentinel = ingest.assemble_sentinel_data(all_study_area, year)
     l8 = ingest.assemble_l8(all_study_area, year)
     #dem = ingest.getDEM(all_study_area)
   #  soil = ingest.getSoil(all_study_area)
@@ -81,8 +81,8 @@ def download_data(polys,i, year):
 
     images = {
        #   '_greenest': sentinel,
-          '_radar': radar,  # 'class': strata_img,
-        #'_greenest_l8': l8,
+        #  '_radar': radar,  # 'class': strata_img,
+        '_median_l8': l8,
        # '_dem':dem
      #   '_soil': soil
        # '_watermask': water_mask
