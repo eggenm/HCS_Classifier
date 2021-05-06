@@ -163,23 +163,23 @@ def cleanup_files(year):
 if __name__ == "__main__":
 
     #Papua
-    site = 'Papua'
-    #polygons = get_grid_polygons(129, 153.5, 0, 11.5)
-    polygons = get_grid_polygons(129, 142, -10, 0)
-   # site = 'PNG'
-  #  polygons = get_grid_polygons(142, 153.4, -11.6, -1)
-    for year in years:
-       download_data(polygons, 77, year)
-       cleanup_files(year)
+    # site = 'Papua'
+    #                 #polygons = get_grid_polygons(129, 153.5, 0, 11.5)
+    # polygons = get_grid_polygons(129, 142, -10, 0)
+    #                 # site = 'PNG'
+    #                #  polygons = get_grid_polygons(142, 153.4, -11.6, -1)
+    # for year in years:
+    #    download_data(polygons, 77, year)
+    #    cleanup_files(year)
 
 
      ##KALIMANTAN
-         # site = 'Kalimantan'
-         # polygons = get_grid_polygons(107, 119, -5,7)
-         # for year in years:
-         #    download_data(polygons, 33, year)
-         #    cleanup_files(year)
-#
+         site = 'Kalimantan'
+         polygons = get_grid_polygons(107, 119, -5,7)
+         for year in years:
+            download_data(polygons, 33, year)
+            cleanup_files(year)
+
 #
 # ##SUMATRA
         # site = 'Sumatra'
