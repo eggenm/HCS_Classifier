@@ -103,6 +103,7 @@ def download_data(polys,i, year):
                         prefix =   site + '/' + str(year) + '/' + site + key + '_'+str(i)+'_' + str(cell) + '_' + band
                         print('prefix:  ', prefix)
                         myimage = ee.ImageCollection(value).filterBounds(geometry.geometry()).first().select(band).clip(geometry)
+                        print('*****after myimage********')
                         #print(image)
                         #url = image.getDownloadURL(
                          #   {'name': prefix, 'crs': 'EPSG:4326', 'scale': 30})
@@ -112,11 +113,14 @@ def download_data(polys,i, year):
                         while(failed<12):
                             try:
                                 with timer.Timer() as t:
+                                    print('*****in with********')
                                    # task  = ee.batch.Export.image.toDrive(image=myimage, folder='Indonesia', fileNamePrefix =prefix,  crs='EPSG:4326', scale=30)
                                     task = ee.batch.Export.image.toCloudStorage(image=myimage, fileNamePrefix =prefix , bucket='hcsa_forest_mapping_training_bucket',  crs='EPSG:4326', scale=30 )
                                     #task = ee.batch.Export.image.toAsset(image=myimage,  assetId=prefix,
                                       #                                  crs='EPSG:4326', scale=30)
+                                    print('*****after task********')
                                     task.start()
+                                    print('*****after task.start********')
                                     state = task.status()['state']
                                     while state in ['READY', 'RUNNING']:
                                         print(state + '...')
@@ -140,7 +144,7 @@ def download_data(polys,i, year):
                             except Exception as ex:
                                 failed +=1
                                 print(type(ex))
-                                print(ex.args) 
+                                print(ex.args)
                                 print(ex)
                                 print('*****Error on download-extract from google. Times failed: ', failed)
                                 time.sleep(10)#wait for 5 seconds if we are having trouble getting file from GEE
