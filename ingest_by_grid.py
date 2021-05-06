@@ -112,7 +112,7 @@ def download_data(polys,i, year):
                         failed = 0
                         while(failed<12):
                             try:
-                                with my_timer.Timer() as myt:
+                               # with my_timer.Timer() as myt:
                                     print('*****in with********')
                                    # task  = ee.batch.Export.image.toDrive(image=myimage, folder='Indonesia', fileNamePrefix =prefix,  crs='EPSG:4326', scale=30)
                                     task = ee.batch.Export.image.toCloudStorage(image=myimage, fileNamePrefix =prefix , bucket='hcsa_forest_mapping_training_bucket',  crs='EPSG:4326', scale=30 )
@@ -150,8 +150,8 @@ def download_data(polys,i, year):
                                 time.sleep(10)#wait for 5 seconds if we are having trouble getting file from GEE
                                 if failed>=5:
                                     raise TimeoutError
-                            finally:
-                                print('Request-Extract took %.03f sec.' % myt.interval)
+                            #finally:
+                            #    print('Request-Extract took %.03f sec.', 'unknown')# % myt.interval)
 
 
 def cleanup_files(year):
