@@ -6,7 +6,7 @@ from satellite_image_operations import s2_band_dict_median, s2_band_dict
 ee.Initialize()
 import ingest_google_data as ingest
 import zipfile
-import timer
+import timer as my_timer
 import requests
 import dirfuncs
 import os
@@ -112,7 +112,7 @@ def download_data(polys,i, year):
                         failed = 0
                         while(failed<12):
                             try:
-                                with timer.Timer() as t:
+                                with my_timer.Timer() as myt:
                                     print('*****in with********')
                                    # task  = ee.batch.Export.image.toDrive(image=myimage, folder='Indonesia', fileNamePrefix =prefix,  crs='EPSG:4326', scale=30)
                                     task = ee.batch.Export.image.toCloudStorage(image=myimage, fileNamePrefix =prefix , bucket='hcsa_forest_mapping_training_bucket',  crs='EPSG:4326', scale=30 )
@@ -151,7 +151,7 @@ def download_data(polys,i, year):
                                 if failed>=5:
                                     raise TimeoutError
                             finally:
-                                print('Request-Extract took %.03f sec.' % t.interval)
+                                print('Request-Extract took %.03f sec.' % myt.interval)
 
 
 def cleanup_files(year):
