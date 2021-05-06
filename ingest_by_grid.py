@@ -137,8 +137,11 @@ def download_data(polys,i, year):
                                     # z = zipfile.ZipFile(filename)
                                     # z.extractall(path=out_path + '/' + site + '/in/' + str(year))
                                     failed = 99
-                            except:
+                            except Exception as ex:
                                 failed +=1
+                                print(type(ex))
+                                print(ex.args) 
+                                print(ex)
                                 print('*****Error on download-extract from google. Times failed: ', failed)
                                 time.sleep(10)#wait for 5 seconds if we are having trouble getting file from GEE
                                 if failed>=5:
