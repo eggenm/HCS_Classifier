@@ -30,15 +30,10 @@ lon_edge=2
 #lat_edge = 2.5 #PAPUA
 lat_edge = 2
 #site = 'Kalimantan'
-years = [#2015,
-        # 2016,
-     2017,
-    #2018,
-  # 2019
-         ]
 start = 1
 end = 50
-years= [2017,2015,2019]
+years= [#2017,2015,
+     2019]
 site = 'None'
 out_path = dirfuncs.guess_data_dir()
 #Take a set of years
@@ -170,30 +165,30 @@ def cleanup_files(year):
 if __name__ == "__main__":
 
     #Papua
-    # site = 'Papua'
+     site = 'Papua'
     #                 #polygons = get_grid_polygons(129, 153.5, 0, 11.5)
-    # polygons = get_grid_polygons(129, 142, -10, 0)
+     polygons = get_grid_polygons(129, 142, -10, 0)
     #                 # site = 'PNG'
     #                #  polygons = get_grid_polygons(142, 153.4, -11.6, -1)
-    # for year in years:
-    #    download_data(polygons, 77, year)
-    #    cleanup_files(year)
+     for year in years:
+        download_data(polygons, 77, year)
+        cleanup_files(year)
 
 
      ##KALIMANTAN
-         site = 'Kalimantan'
-         polygons = get_grid_polygons(107, 119, -5,7)
-         for year in years:
-            download_data(polygons, 33, year)
-            cleanup_files(year)
+         # site = 'Kalimantan'
+         # polygons = get_grid_polygons(107, 119, -5,7)
+         # for year in years:
+         #    download_data(polygons, 33, year)
+         #    cleanup_files(year)
 
 #
 # ##SUMATRA
-        # site = 'Sumatra'
-         #
-         # polygons = get_grid_polygons(95, 109, -6,6)
-         # for year in years:
-         #   download_data(polygons, 44, year)
+#          site = 'Sumatra'
+#
+#          polygons = get_grid_polygons(95, 109, -6,6)
+#          for year in years:
+#            download_data(polygons, 44, year)
          #polygons = get_grid_polygons(107, 109, -6, 6)
          #for year in years:
           # download_data(polygons, 55, year)
