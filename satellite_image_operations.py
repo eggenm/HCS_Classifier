@@ -3,12 +3,12 @@ import ee
 import numpy as np
 
 l8_band_dict =  {#'B1': 'ublue',
-        #       'B2': 'blue_max',
-       #       'B3': 'green_max',
-         #      'B4': 'red_max',
-       #        'B5': 'nir_max',
-       #        'B6': 'swir1_max',
-       #       'B7': 'swir2_max',
+               'B2': 'blue_max',
+          #    'B3': 'green_max',
+               'B4': 'red_max',
+               'B5': 'nir_max',
+               'B6': 'swir1_max',
+              'B7': 'swir2_max',
       #        'B10': 'tir1',
       #        'B11': 'tir2',
        #       'sr_aerosol': 'sr_aerosol'

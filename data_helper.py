@@ -74,10 +74,11 @@ key_df = pd.read_csv(key_csv)
 from_vals = list(key_df['project_code'].astype(float).values)
 to_vals = list(key_df['code_3class'].astype(float).values)
 to_2class = list(key_df['code_simpl'].astype(float).values)
+to_mixedClass = list(key_df['code_mixed_class'].astype(float).values)
 three_class_landcoverClassMap = dict( zip(from_vals,to_vals ))
 two_class_landcoverClassMap = dict( zip(from_vals,to_2class ))
 three_to_two_class_landcoverClassMap = dict( zip(to_vals,to_2class ))
-
+mixed_class_landcoverClassMap = dict( zip(from_vals,to_mixedClass ))
 
 classes = {
 1:	'HDF',
@@ -321,6 +322,7 @@ def get_feature_inputs(band_groups, bounding_box,  year, concession=None, filena
                 context = db.data_context_dict[concession]
                 try:
                     if(context=='supplementary_class'):
+                        print("CONTEXT SUPPLEMENTAL CLASS  file: ", filename, "  BAND:  ", band)
                         tif = image_cache.get_fixed_input_image_path(filename,  band)
                         file = glob.glob(tif)
                         out_img = rx.open_rasterio(file[0])
@@ -476,12 +478,15 @@ def map_to_2class(X):
 def map_3_to_2class(X):
     return pd.Series(X).map(three_to_two_class_landcoverClassMap)
 
+def map_to_mixed_classes(X):
+    return pd.Series(X).map(mixed_class_landcoverClassMap)
+
 def trim_data(input):
     return input.groupby('clas').filter(lambda x: len(x) > 10000)
 
 def trim_data2(input):
     #return input[input.clas.isin([21.0, 18.0, 7.0, 6.0, 4.0, 5.0, 20.0])]
-    return input[np.logical_not(input.clas.isin([8.0]))]
+    return input[np.logical_not(input.clas.isin([8.0, 13.0, 14.0, 18.0]))] #enclosure, mixed coconut, mixed rubber, smallholder mixed
 
 def log_result():
     print('')
@@ -531,8 +536,50 @@ def fill_no_data(data):
 
 
 
+def do_comparison(concession_name):
+    print("comparing:  ", concession_name)
+    dirname = 'C:\\Users\\ME\\Dropbox\\HCSA_GIS\\' + concession_name +'\\'
+    assessment_file = dirname + concession_name+ '_all_class.remapped.tif'
+    class_file = dirname + concession_name+ 'FINAL_classified_by_ensemble_rf.tif'
+    file = glob.glob(assessment_file)
+    assessment = rx.open_rasterio(file[0])
+    file = glob.glob(class_file)
+    predict_data = rx.open_rasterio(file[0])
+    y = get_classes(assessment.data, 'clas')
+    y = y.iloc[:, 0]
+    y_hat =  get_classes(predict_data.data, 'clas')
+    y_hat = y_hat.iloc[:, 0]
+    y_mixed = map_to_mixed_classes(y)
+    y_2class = map_to_2class(y)
+    df = y_mixed.to_frame(name='mixed').join(y_2class.to_frame(name='2class')).join(y_hat.to_frame(name='y_hat'))
+    print("BEFORE drop no data:  ", df.size)
+    df = drop_no_data(df)
+    print("AFTER drop no data:  ", df.size)
+    # train_df.dropna(inplace=True)
+    indices_to_keep = ~df.isin([np.nan, np.inf, -np.inf]).any(1)
+    df = df[indices_to_keep]
+    print("AFTER intrmediate drop:  ", df.size)
+    show_results(df.loc[ : , 'mixed' ], df.loc[ : , 'y_hat' ])
+    show_results(df.loc[ : , '2class' ], df.loc[ : , 'y_hat' ])
+    indices_to_keep = ~df.isin([8, 13, 14, 18, 8.0, 13.0, 14.0, 18.0]).any(1)
+    df = df[indices_to_keep]
+    print("AFTER LAST drop:  ", df.size)
+    show_results(df.loc[:, 'mixed'], df.loc[:, 'y_hat'])
+    print('END_COMPARISON')
+    #reclassify any assessment categories
+    #put them together
+    #remove nodata
+    #create confusion matrix with other categories
+    #create binary confusion matrix
+    #save / output confusion matrices
+
+def make_confusion_matrix(y, y_hat):
+    print("")
+
+
 #print(landcoverClassMap)
 if __name__ == "__main__":
+    do_comparison('mukti_prakarsa')
     concessions_csv = base_dir + 'concession_inventory.csv'
     con_df = pd.read_csv(concessions_csv)
     my_dict = sat_ops.s2_band_dict.copy()
@@ -556,9 +603,10 @@ if __name__ == "__main__":
     bands = [   'blue_max', #'green_max',
         'red_max',
         'nir_max',
-        'swir1_max',
-        'VH_2', 'VV_2', 'EVI', 'swir2_max',
-         'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2',  'slope'
+        'swir1_max','EVI', 'swir2_max',
+          'brightness'     , 'greenness' , 'wetness'
+     #   'VH_2', 'VV_2',
+    #     'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2',  'slope'
     ]
 #     x = get_input_data(bands, str(2018), [
 #         'Bumitama_PTDamaiAgroSejahtera',
@@ -575,28 +623,39 @@ if __name__ == "__main__":
 # 'PTLabontaraEkaKarsa',
 #
 #                                           ], False)
-    for year in [2015, 2017,2019]:
+    for year in [2019]:#, 2017,2019]:
         y = get_input_data(bands, str(year), [
-           #   'app_jambi',
-           #    'app_kalbar',
-           #    'app_kaltim',
-           #  'multipersada_gatramegah', 'musim_mas',
-           #
-           #  'mukti_prakarsa','gar_pgm',     'agro_mandiri',  'PTAgroAndalan',
-           #  'Bumitama_PTDamaiAgroSejahtera',
-           #  'Bumitama_PTHungarindoPersada',
-           # 'adi_perkasa',
-           #  'PTMitraNusaSarana',
-           #  'makmur_abadi',
-           #  'PTLestariAbadiPerkasa',
-           #  'PTGlobalindoAlamPerkasa',
-           #  'sawit_perdana',
-           #  'aneka_sawit',
-           #  'PTMentariPratama',
-           #  'PTSukajadiSawitMekar',
-           #  'PTLabontaraEkaKarsa',
-            'Bumitama_PTGemilangMakmurSubur',
-             'unggul_lestari',
+            #  'app_jambi',
+            #   'app_kalbar',
+            #   'app_kaltim',
+            # 'multipersada_gatramegah', 'musim_mas',
+
+
+
+            'mukti_prakarsa','gar_pgm',     'agro_mandiri',  'PTAgroAndalan',
+
+            'Bumitama_PTDamaiAgroSejahtera',
+            'Bumitama_PTHungarindoPersada',
+           'adi_perkasa',
+             'aneka_sawit',
+
+
+            'PTMitraNusaSarana',
+            'makmur_abadi',
+            'PTLestariAbadiPerkasa',
+            'PTGlobalindoAlamPerkasa',
+              'sawit_perdana',
+
+
+            'PTMentariPratama',
+            'PTSukajadiSawitMekar',
+            'PTLabontaraEkaKarsa',
+           'Bumitama_PTGemilangMakmurSubur',
+            'unggul_lestari',
+
+
+
+
       #       'tekukur_indah',
     #     'varia_mitra_andalan',
    #      'agro_lestari',

@@ -27,12 +27,12 @@ image_cache = imagery_data.Imagery_Cache.getInstance()
 input='C:\\Users\\ME\\Dropbox\\HCSproject\\data\\app_files\\stratified_shapefiles\\Jambi_WKS_Stratification.shp'
 
 supplemental_class_codes = {
-   # 'impervious':23,
-   #  'forest':7,
-    # 'oil_palm':11,
-   #  'water': 16,
-    'pulp_and_paper': 21,
-     'coconut': 13,
+   'impervious':23,
+    'forest':7,
+    'oil_palm':11,
+    'water': 16,
+  ##  'pulp_and_paper': 21,
+   #  'coconut': 13,
 
 }
 
@@ -67,9 +67,10 @@ def ingest_kml_fixed_classes():
 
         #TODO get the year from the json or doc.kml
 
-        my_dict = sat_ops.s1_band_dict.copy()
-        my_dict.update(sat_ops.s2_band_dict)
-        my_dict.update(sat_ops.dem_band_dict)
+        #my_dict = sat_ops.s1_band_dict.copy()
+        my_dict = sat_ops.l8_band_dict.copy()
+        #my_dict.update(sat_ops.s2_band_dict)
+        #my_dict.update(sat_ops.dem_band_dict)
         bands = my_dict.values()
         print(bands)
         #bands = ['nir_max']
@@ -87,7 +88,8 @@ def ingest_kml_fixed_classes():
             year_list = list(year_list)
             year_list.sort(reverse=True)
             my_year = year_list[0]
-            if my_year < 2017: continue  # TODO this only applies because we are just using sentinel 2 data after 2017
+            if my_year == 2018: my_year=2019
+            if my_year == 2016: my_year=2017 # TODO these only appliy because we are just using landsat 8 data aggregated in 2 year chuncks
             name = geom[2]
             for band in bands:
                 if get_reference:
