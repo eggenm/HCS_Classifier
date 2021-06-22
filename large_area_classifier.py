@@ -7,7 +7,7 @@ from sklearn import metrics
 import data_helper as helper
 import dirfuncs
 import timer
-import train_classsifier as trainer
+import train_classifier as trainer
 import scipy.stats as stat
 import csv
 import glob
@@ -52,8 +52,9 @@ sites = [ 'Bumitama_PTDamaiAgroSejahtera',  # a
 bands = ['blue_max', #'green_max',
        'red_max',
          'nir_max',
-       'swir1_max', 'VH_0', 'VV_0', 'EVI','swir2_max',  'slope',
-         'brightness', 'wetness'
+       'swir1_max', 'VH_0', 'VV_0', 'VV', 'VV_2', 'EVI','swir2_max',  'slope',
+         #'brightness',
+         'wetness', 'greenness'
          # 'VH_0', 'VV_0'
     #'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2',  'slope'
  ]
@@ -84,35 +85,6 @@ class classify_block:
         self.block_df = pd.DataFrame(block)
         self.x_df = self.block_df.dropna()
 
-    def classify(self):
-        """
-        Returns
-        -------
-        classified: array
-            Array of predicted classes
-        """
-        y_hat = self.fitted_clf.predict(self.x_df)
-        y_hat = pd.Series(y_hat, index=self.x_df.index)
-        y_hat.name = 'y_hat'
-        temp_df = self.block_df.merge(y_hat, left_index=True, right_index=True, how='left')
-        classified = temp_df['y_hat'].to_numpy().reshape(self.shape[1], self.shape[2])
-        classified = classified[np.newaxis, :, :].astype(rio.int16)
-        return classified
-
-    def calc_probabilities(self):
-        """
-        Returns
-        -------
-        probabilities: array
-            Array of predicted probabilities for each class
-        """
-        clas_cols = ['prob_' + str(clas) for clas in self.fitted_clf.classes_]
-        pred_df = self.fitted_clf.predict_proba(self.x_df)
-        pred_df = pd.DataFrame(pred_df, index=self.x_df.index, columns=clas_cols)
-        temp_df = self.block_df.merge(pred_df, left_index=True, right_index=True, how='left')
-        probabilities = temp_df[clas_cols].to_numpy().T.reshape(len(clas_cols), self.shape[1], self.shape[2])
-        probabilities = probabilities.astype(rio.float32)
-        return probabilities
 
 
 def predict(X_scaled_class, rfmodel):#, predictions):
@@ -143,7 +115,6 @@ def write_map(predicted, reference, name,i, year):
         with timer.Timer() as t:
             outclas_file = get_map_file_name(name, i, year)
             src = reference
-            #with rio.open(reference) as src:
             height = src.rio.height
             width = src.rio.width
             shape = src.shape
@@ -152,15 +123,11 @@ def write_map(predicted, reference, name,i, year):
             count = 1
             dtype = rio.int16
             full_index = pd.MultiIndex.from_product([range(shape[1]), range(shape[2])], names=['i', 'j'])
-            # predicted = predicted.set_index(full_index)
             predicted = pd.DataFrame(predicted, index=full_index)
             clas_df = pd.DataFrame(index=full_index)
             classified = clas_df.merge(predicted, left_index=True, right_index=True, how='left').sort_index()
 
             classified = classified.values.reshape(shape[1], shape[2])
-            #classified = classified.T.values.reshape(shape[1], shape[2])
-            #classified = classified.T.values.reshape( shape[2], shape[1])
-            #classified = classified.values.reshape(shape[2], shape[1])
             classified = classified[np.newaxis, :, :].astype(rio.int16)
             with rio.open(outclas_file, 'w', driver='GTiff',
                           height=height, width=width,
@@ -172,13 +139,7 @@ def write_map(predicted, reference, name,i, year):
                             window.row_off:window.row_off + window.height]  # .read(window=window)
                     #     if sum(sum(sum(~np.isnan(block)))) > 0:
                     clas_dst.write(block, window=window)
-                #clas_dst.write(classified)
-            # for ji, window in src.block_windows(1):  # or ref file here
-            #     print('ji:  ', ji)
-            #     print('window:  ', window)
-            #     block = predicted.read(window=window)
-            #     if sum(sum(sum(~np.isnan(block)))) > 0:
-                #clas_dst.write(classified)#, window=window)
+
             clas_dst.close()
     finally:
         print('Write Map %.03f sec.' % t.interval)
@@ -187,9 +148,7 @@ def write_map(predicted, reference, name,i, year):
 
 
 def get_trained_model(scoreConcession, trainConcessions, seed, override_bands = None):
-    doGridSearch = False
     scheme = '3CLASS'#db.get_best_scheme([scoreConcession])
-    #band_string = '[\'blue_max\', \'green_max\', \'red_max\', \'nir_max\', \'swir1_max\', \'swir2_max\', \'VH\', \'VV\', \'VH_0\', \'VV_0\', \'VH_2\', \'VV_2\', \'EVI\', \'slope\']'
     try:
         estimators = db.get_best_number_estimators(scoreConcession)
     except:
@@ -204,7 +163,7 @@ def get_trained_model(scoreConcession, trainConcessions, seed, override_bands = 
     except:
        leaf_nodes=8
     metric = 'F1'#db.get_best_metric([scoreConcession])
-    concession_assessment_year = str(2018) #TODO get this from database
+    concession_assessment_year = str(0) #changed to zero to be sure it is not being used.
     if(not override_bands):
         bands = db.get_best_bands([scoreConcession])
     else:
@@ -254,7 +213,6 @@ def get_training_data(sites, bands, year, sample_rate,  seed):
         print("AFTER trim data:  ", train_df.size)
         train_df = helper.drop_no_data(train_df)
         print("AFTER drop no data:  ", train_df.size)
-        #train_df.dropna(inplace=True)
         indices_to_keep = ~train_df.isin([np.nan, np.inf, -np.inf]).any(1)
         train_df = train_df[indices_to_keep]
         print("AFTER dropping INF and -INF:  ", train_df.size)
@@ -262,6 +220,8 @@ def get_training_data(sites, bands, year, sample_rate,  seed):
         #X_scaled = helper.scale_data(X)
         landcover = train_df['clas'].values
         train_sample = int(sample_sizes_dict[db.data_context_dict[site]][0])
+        if site =='oil_palm' or site == 'pulp_and_paper':
+            train_sample = int(train_sample*6)
         test_sample =sample_sizes_dict[db.data_context_dict[site]][1]
         print("***** Site:  ", site)
         print("***** train sample size:  ", train_sample)
@@ -314,9 +274,7 @@ if __name__ == "__main__":
         'PTSukajadiSawitMekar',
         'PTLabontaraEkaKarsa',
 
-        'app_jambi',  # d
-        # 'app_kalbar',
-        # 'app_kaltim',
+        'app_jambi',
 
         'app_oki',  # c
         'app_riau',
@@ -325,7 +283,7 @@ if __name__ == "__main__":
         # e
         'mukti_prakarsa', 'gar_pgm', 'PTAgroAndalan', 'Bumitama_PTGemilangMakmurSubur'
     ]
-    name = 'NE_Kalimantan'
+    name = 'gunung_palung'
     class_year=2017
     #for name in names:#2017,2018,
     #class_year =  str(int(db.get_concession_assessment_year(name)))
@@ -419,7 +377,7 @@ if __name__ == "__main__":
             predictions = predictions.astype(np.float32)
             predictions = predictions / k
             predictions = np.around(predictions).astype(rio.int16)
-            mapId='OOB_FINAL'
+            mapId='FINAL'
             #log_accuracy(result, name, mapId, class_year)
             print('predictions.shape', predictions.shape)
             #myFrame = pd.DataFrame(predictions)

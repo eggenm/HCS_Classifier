@@ -1,6 +1,4 @@
 import ee
-#ee.Initialize()
-import numpy as np
 
 l8_band_dict =  {#'B1': 'ublue',
                'B2': 'blue_max',
@@ -21,45 +19,6 @@ l8_band_dict =  {#'B1': 'ublue',
             # 'sixth': 'sixth'
               }
 
-s2_band_dict = {
-    #'B1': 'S2_ublue',
-            #'B2': 'blue_max',
-         #  'B3': 'green_max',
-          'B4': 'red_max',
-     #        'B5': 'rededge1_max',
-     #      'B6': 'rededge2_max',
-     #       'B7': 'rededge3_max',
-  #
-               'B8': 'nir_max',
-        #         'B8A': 'S2_nir2_max',
-     #         'B9': 'S2_vape_max',
-  #
-           'B11': 'swir1_max',
-         'B12': 'swir2_max',
-   #           'nd': 'ndvi_s2_max',
-    'EVI':'EVI'
-}
-
-s2_band_dict_median = {
-    # 'B1': 'S2_ublue',
-     #          'B2': 'S2_blue_median',
-        #        'B3': 'S2_green_median',
-          #    'B4': 'S2_red_median',
-             'B5': 'rededge1_median',
-           'B6': 'rededge2_median',
-            'B7': 'rededge3_median',
-    # # ,
-
-        #         'B8': 'S2_nir_median',
-      #          'B8A': 'S2_nir2_median',
-              'B9': 'S2_vape_median',
-          #
-              'B10': 'S2_swir1_median',
-            'B11': 'S2_swir2_median',
-           'B12': 'S2_swir3_median',
-  #           'nd': 'ndvi_s2_median',
-   'EVI2':'EVI2_s2_median'
-}
 
 s1_band_dict = {'VH': 'VH',
               'VV': 'VV',
@@ -77,9 +36,6 @@ dem_band_dict = {
     #'aspect':'aspect'
 
 }
-soil_band_dict = {
-    'grtgroup':'grtgroup'
-}
 def maskCloudsLandsat8(image):
     # Bits 3 and 5 are cloud shadow and cloud, respectively.
     cloudShadowBitMask = (1 << 3)
@@ -89,15 +45,6 @@ def maskCloudsLandsat8(image):
     # Both flags should be set to zero, indicating clear conditions.
     mask = qa.bitwiseAnd(cloudShadowBitMask).eq(0).And(qa.bitwiseAnd(cloudsBitMask).eq(0))
     return image.updateMask(mask)
-
-
-def maskClouds_L_TOA(im):
-    cs = ee.Algorithms.Landsat.simpleCloudScore(im)
-    cloud = cs.select('cloud').gte(20.0)
-    cloud = cloud.updateMask(cloud)
-    shadow = im.select('B6').lt(0.25);
-    shadow = shadow.updateMask(shadow);
-    return im.updateMask(mask)
 
 
 def maskL8Clouds_2(image):
@@ -123,15 +70,6 @@ def mask_using_CDI(image):
    cdi = ee.Algorithms.Sentinel2.CDI(image);
    mask = cdi.gt(-0.3);
    return image.updateMask(mask);
-
-
-def maskCloudsL5(image):
-  score = ee.Algorithms.Landsat.simpleCloudScore(image).select('cloud');
-  return image.updateMask(score.lte(30));
-
-
-def addNDVI_l5(image):
-  return image.addBands(image.normalizedDifference(['B4', 'B3']).rename('NDVI'));
 
 def addNDVI_l8(image):
   return image.addBands(image.normalizedDifference(['B5', 'B4']).rename('NDVI'));
@@ -179,21 +117,6 @@ def prep_sar(image_collection):
     #composite = composite.set('year', year)
     return composite
 
-
-def prep_s2(img):
-    # Mask out flagged clouds
-    #img = maskS2clouds(img)
-    img = mask_using_CDI(img)
-    img = img.unitScale(0,10000)
-    # Rename bands
-    img = img.addBands(img.normalizedDifference(['B8', 'B4']))
-    #old_names = list(s2_band_dict.keys())
-   # new_names = list(s2_band_dict.values())
-    # Add ndvi
-    #img = add_EVI_s2(img)
-    img = add_EVI2_s2(img)
-   # img = img.select(old_names, new_names)
-    return img
 
 def addNDVI_s2(image):
   ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');

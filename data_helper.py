@@ -1,32 +1,29 @@
 # =============================================================================
+# Data_helper.py
+# This file does the work of gathering input rasters
+# It removes nodata and flattens a stack of raster satellite data
+# into a dataframe where each row is a pixel with its n-dimenensional
+# observed satellite data.
+# =============================================================================
+
+
+# =============================================================================
 # Imports
 # =============================================================================
-import pyproj
 import dirfuncs
-import os
-import re
 import glob
 import pandas as pd
 import numpy as np
-import rasterio as rio
 import rasterio.crs
-from sklearn.preprocessing import StandardScaler, LabelEncoder
 import sklearn.metrics
 from sklearn.metrics import f1_score
 import ShapefileHelper as shapefilehelp
 import data.hcs_database  as db
-import itertools
 from rasterio.mask import mask
-from rasterio import Affine as A
-from rasterio.warp import reproject, Resampling
 import rioxarray as rx
 import timer
 import imagery_data
-import itertools as it
-from rioxarray import merge as rxmerge
-import matplotlib.pyplot as plt
 import satellite_image_operations as sat_ops
-import sys
 
 # =============================================================================
 # Identify files
@@ -36,38 +33,6 @@ pixel_window_size = 1
 stackData = True
 write_input_data = True
 image_cache = imagery_data.Imagery_Cache.getInstance()
-
-
-
-
-#classes = {1: "HCSA",
-     #      0: "NA"}
-sites = ['gar_pgm',
-    'app_riau',
-  'app_kalbar',
-         'app_kaltim',
-      'app_jambi',
- 'app_oki',
-        'crgl_stal'
-    ]
-
-bands_base=['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max']
-
-bands_historical=['ndvi_2013', 'ndvi_2014', 'ndvi_2015', 'ndvi_2011', 'ndvi_2010', 'ndvi_2009', 'ndvi_2008', 'ndvi_2007', 'ndvi_2006', 'ndvi_2005', 'ndvi_2004', 'ndvi_2003']
-
-bands_median=['S2_blue_median', 'S2_green_median', 'S2_red_median', 'S2_nir_median', 'S2_nir2_median', 'S2_swir1_median', 'S2_swir2_median', 'S2_swir3_median', 'S2_vape_median']
-
-bands_radar=['VH', 'VV']
-
-bands_dem=['elevation', 'slope']
-
-bands_extended=['rededge1', 'rededge2', 'rededge3']
-
-bands_evi2_separate=['S2_red_max', 'S2_nir_max']
-
-band_evi2 = ['EVI']
-
-bands_evi2 = ['S2_red_max', 'S2_nir_max', 'EVI2_s2_max']
 
 key_csv = base_dir + 'strata_key.csv'
 key_df = pd.read_csv(key_csv)
@@ -108,67 +73,6 @@ classes = {
 # =============================================================================
 # FUNCTIONS:  Read and prep raster data
 # =============================================================================
-def return_window(img, i, j, n):
-    """
-    Parameters
-    ----------
-    array: np array
-        Array of image to pull from
-
-    i: int
-        row location of center
-
-    j: int
-        column location of center
-
-    n: int
-        width of moving window
-
-    Returns
-    -------
-    window: np array
-        nxn array of values centered around pixel i,j
-    """
-    shift = (n - 1) / 2
-    window = img[:, int(i - shift):int(i + shift + 1), int(j - shift):int(j + shift + 1)]
-    return window
-
-
-def gen_windows(array, n):
-    """
-    Parameters
-    ----------
-    array: np array
-        Image from which to draw windows
-
-    n: int
-        width of moving window
-
-    Returns
-    -------
-    windows: pandas dataframe
-        df with ixj rows, with one column for every pixel values in nxn window
-        of pixel i,j
-    """
-    try:
-        with timer.Timer() as t:
-            shape = array.shape
-            print('SHAPE:  ',shape)
-            start = int((n - 1) / 2)
-            end_i = shape[1] - start
-            end_j = shape[2] - start
-            win_dict = {}
-            for i in range(start, end_i):
-                for j in range(start, end_j):
-                    win_dict[(i, j)] = return_window(array, i, j, n)
-            windows = pd.Series(win_dict)
-            windows.index.names = ['i', 'j']
-            index = windows.index
-            windows = pd.DataFrame(windows.apply(lambda x: x.flatten()).values.tolist(), index=index)
-    finally:
-        print('gen_windows original request took %.03f sec.' % t.interval)
-    return windows
-
 
 def gen_windows2(array):
     try:
@@ -196,7 +100,9 @@ def gen_windows2(array):
     return windows
 
 
-
+########
+#get_classes : takes an assessment image and flattens it into a
+# dataframe with dimensions/index similar to the input satellite data
 def get_classes(classImage, name):
     clas_dict = {}
     shape = classImage.shape
@@ -212,28 +118,20 @@ def get_classes(classImage, name):
     return classes
 
 
+################################
+# combine_input_landcover: merges satellite data with observed landcover
+###############################
 def combine_input_landcover(input, landcover_all):
     try:
         with timer.Timer() as t:
             data_df = landcover_all.merge(input, left_index=True, right_index=True, how='left')
-            #data_df = landcover2.merge(data_df, left_index=True, right_index=True, how='left')
             data_df[data_df <= -999] = np.nan  #MEE 6-1-2020:  This used to be conditional on whether I was using the data in a training set or not. If I was doing it to make a class map then I did not do this
-            #data_df = data_df.dropna()
-            #print('*****data_df shape:  ', data_df.shape)
+
             return data_df
     finally:
         print('combine_input_landcover Request took %.03f sec.' % t.interval)
 
 
-def scale_data(x):
-    try:
-        with timer.Timer() as t:
-            print('DEPRECATED - SCALING DONE ON INGEST')
-            #scaler = StandardScaler()
-            #x_scaled = scaler.fit_transform(x.astype(np.float64))
-            #return x_scaled
-    finally:
-        print('ScaleData Request took %.03f sec.' % t.interval)
 
 
 def get_input_band(band, name, year):
@@ -244,8 +142,6 @@ def get_input_band(band, name, year):
             print('IMAGE CACHE SINGLETON: ',image_cache)
             if(db.data_context_dict!='supplementary_class'):
                 image = image_cache.get_band_by_context_year(band, name, year)
-            #else
-               # image = image_cache.get_fixed_band
     finally:
         print('Get' , band , ' Request took %.03f sec.' % t.interval)
     return image
@@ -259,25 +155,15 @@ def trim_input_band_by_shape(input_raster, boundary):
 def reproject_match_input_band(band, island, year, bounding_raster):
     image2 = bounding_raster # rx.open_rasterio(bounding_raster)
     print('image2.shape:  ', image2.shape)
-    # plt.figure()
-    # image2.plot()
-    # plt.show()
     image3 = get_input_band(band, island, year)
     print('image3.shape:  ', image3.shape)
     if(image3.dtype=='float64'):
         image3.data  = np.float32(image3)
-    # plt.figure()
-    # image3.plot()
-    # plt.show()
     image3 = image3.rio.reproject_match(image2)
     print('image2.shape:  ', image2.shape)
     print('image3.shape:  ', image3.shape)
-   # plt.figure()
-   # destination.plot(robust=True)
-  #  plt.show()
 
     image2=False
-    #image3=False
     return image3
 
 def write_concession_band(data_src, bounding_raster,  outtif):
@@ -294,9 +180,7 @@ def write_concession_band(data_src, bounding_raster,  outtif):
                       count = 1, transform = trans) as dst:
                    # dst.write_band(1, data_src[0])
             for ji, window in dst.block_windows(1):  # or re
-               #  print('window.shape:  ', window.shape)
                  block = data_src[window.col_off:window.col_off+window.width,window.row_off:window.row_off+window.height ]#.read(window=window)
-            #     if sum(sum(sum(~np.isnan(block)))) > 0:
                  dst.write(block , window=window)
         dst.close()
 
@@ -310,8 +194,6 @@ def get_feature_inputs(band_groups, bounding_box,  year, concession=None, filena
             print('Band_Groups:  ',band_groups)
             x = range(0, bounding_box.shape[1])
             y = range(0, bounding_box.shape[2])
-            #array = [0 for x in range(len(band_groups))]
-            #print('len(array):  ', len(array))
             image_cache = imagery_data.Imagery_Cache.getInstance()
             myfunc = lambda a: a.flatten()
             full_index = pd.MultiIndex.from_product([x, y], names=['i', 'j'])
@@ -336,10 +218,7 @@ def get_feature_inputs(band_groups, bounding_box,  year, concession=None, filena
                         out_img = reproject_match_input_band(band, context, year, bounding_box)
                         if (write_input_data):
                             write_concession_band(out_img, bounding_box,  tif)
-                #out_img = myfunc(out_img[0, :, :])
                 out_img = np.asarray(out_img[0]).flatten()
-                print('I:  ',i)
-                #array[i] = np.asarray(out_img[0])  #WHY AM I DOING THIS, CANTA I JUST MAKE MY ARRAY HERE INSTAED OF 2 lines down??
                 if windows.empty :
                     windows = pd.DataFrame({i: out_img}, index=full_index)
                 else:
@@ -349,7 +228,6 @@ def get_feature_inputs(band_groups, bounding_box,  year, concession=None, filena
             windows.index.names = ['i', 'j']
             full_index = False
             return windows
-           # return np.asarray(array)
     finally:
         print('get_feature_inputs took %.03f sec.' % t.interval)
 
@@ -360,10 +238,8 @@ def get_concession_bands(bands, year, bounding_box, concession=None, filename = 
         x=False
         with timer.Timer() as t:
             return(get_feature_inputs(bands, bounding_box,  year, concession, filename))
-            #img = get_feature_inputs(bands, bounding_box,  year, concession)
-            #x = gen_windows2(img)
+
     finally:
-        #img=False
         print('get_concession_bands Request took %.03f sec.' % t.interval)
     #return x
 
@@ -382,7 +258,6 @@ def get_fixed_bands(bands, name, context, year='NONE' ):
                 y = pd.concat([y,get_classes(class_image.data, 'clas')], ignore_index=True) #flatten?
             data = combine_input_landcover(x, y)
 
-            #TODO, maybe for these each band could be cached as a csv?, y values are fixed , just make sure nodata is handled (discarded)
     finally:
         x=False
         y=False
@@ -406,18 +281,14 @@ def get_input_data(bands, year, sites, get_predictor_data_only=False):
                 if (type == 'supplementary_class'):
                     print('Getting fixed class data')
                     data = get_fixed_bands(bands, site, type)
-                    # TODO get_fixed_bands
-                    # get fixed bands will query a folder for all shape or rasters
-                    # look for an input_sitename based on the classfilename
-                    # make a y vector of class_id and nodatas
-                    #
+
                 else:
                     island = db.data_context_dict[site]
                     all_class = image_cache.get_class_by_concession_name(site)
                     #box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[site])
 
                     if not get_predictor_data_only:
-                        #THIS IS TRAING DATA
+                        #THIS IS TRAINING DATA
                         year = str(int(db.get_concession_assessment_year(site)))
                         x = get_concession_bands(bands, year, all_class, site)
                         y = get_classes(all_class.data, 'clas')
@@ -443,9 +314,7 @@ def get_large_area_input_data(study_area_base_raster, bands, island, year, name=
                 print("*****dataHalper x.shape after drop no data:  ", x.shape)
                 if x_in!=x_out:
                     raise RuntimeError
-                #X_scaled_class = scale_data(x)
                 return x
-               # print('X_scaled_class.shape:  ', X_scaled_class.shape)
         finally:
             x = False
             print('Get Input Data Request took %.03f sec.' % t.interval)
@@ -467,8 +336,6 @@ def remove_low_occurance_classes( X, class_data):
     df = df.groupby('clas').filter(lambda x: len(x) > threshold)
 
 def map_to_3class(X):
-    print('Max_map_3class: ', max(X))
-    print('Min_map_3class: ', min(X))
     print(three_class_landcoverClassMap)
     return pd.Series(X).map(three_class_landcoverClassMap)
 
@@ -488,8 +355,6 @@ def trim_data2(input):
     #return input[input.clas.isin([21.0, 18.0, 7.0, 6.0, 4.0, 5.0, 20.0])]
     return input[np.logical_not(input.clas.isin([8.0, 13.0, 14.0, 18.0]))] #enclosure, mixed coconut, mixed rubber, smallholder mixed
 
-def log_result():
-    print('')
 
 def score_model(y_test, yhat):
     show_results(y_test, yhat)
@@ -514,7 +379,6 @@ def drop_no_data(data):
             data[data == 255] = fill
             data[data >= 999] = fill
 
-            #return data.fillna(value=0)
             data.dropna(inplace=True)
             return data
     finally:
@@ -566,169 +430,43 @@ def do_comparison(concession_name):
     print("AFTER LAST drop:  ", df.size)
     show_results(df.loc[:, 'mixed'], df.loc[:, 'y_hat'])
     print('END_COMPARISON')
-    #reclassify any assessment categories
-    #put them together
-    #remove nodata
-    #create confusion matrix with other categories
-    #create binary confusion matrix
-    #save / output confusion matrices
-
-def make_confusion_matrix(y, y_hat):
-    print("")
 
 
-#print(landcoverClassMap)
 if __name__ == "__main__":
-    do_comparison('mukti_prakarsa')
+    ################################################
+    #This runnable section is a convenient way to prep input data
+    # for different concessions, where you have a rasterized asssessment
+    # or any area for which you have a shapefile.
+    # #############################################
+
+    #When you want to prep all concessions used as training
+    # The method get_input_data will try to find the input data in the filesystem
+    # and will write (as geotiff) it to the file system if not found
     concessions_csv = base_dir + 'concession_inventory.csv'
     con_df = pd.read_csv(concessions_csv)
     my_dict = sat_ops.s2_band_dict.copy()
     my_dict.update(sat_ops.s1_band_dict)
     my_dict.update(sat_ops.dem_band_dict)
     bands = my_dict.values()
-    # for index, row in con_df.iterrows():
-    #     print(row['app_key'], bool(row['ingest']), row['assessment_year'])
-    #     if(bool(row['ingest'])):
-    #         x = get_input_data(bands, str(int(row['assessment_year'])), [row['app_key']], False)
+    for index, row in con_df.iterrows():
+        print(row['app_key'], bool(row['ingest']), row['assessment_year'])
+        if(bool(row['ingest'])):
+            x = get_input_data(bands, str(int(row['assessment_year'])), [row['app_key']], False)
+    ##########################################################################
 
-
-    print(con_df)
-    #write_input_data=True
-  #  bands = [  # 'blue_max', 'green_max', 'red_max',
-        #'nir_max',
- #       'swir1_max',
-  #      'filledswir1_max', #'VH_2', 'VV_2', 'EVI', 'swir2_max', 'slope', 'VH_0', 'VV_0'
-        # 'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'slope'
-  #  ]
-    bands = [   'blue_max', #'green_max',
+    #########################################################################
+    #This is an example where you might only have a shapefile to start
+    bands = [   'blue_max',
         'red_max',
         'nir_max',
         'swir1_max','EVI', 'swir2_max',
-          'brightness'     , 'greenness' , 'wetness'
-     #   'VH_2', 'VV_2',
-    #     'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2',  'slope'
+          'brightness'     , 'greenness' , 'wetness',
+        'VH_2', 'VV_2',
+         'VH', 'VV', 'VH_0', 'VV_0', 'VH_2', 'VV_2',  'slope'
     ]
-#     x = get_input_data(bands, str(2018), [
-#         'Bumitama_PTDamaiAgroSejahtera',
-# 'Bumitama_PTHungarindoPersada',
-# 'adi_perkasa',
-# 'PTMitraNusaSarana',
-# 'makmur_abadi',
-# 'PTLestariAbadiPerkasa',
-# 'PTGlobalindoAlamPerkasa',
-# 'sawit_perdana',
-# 'aneka_sawit',
-# 'PTMentariPratama',
-# 'PTSukajadiSawitMekar',
-# 'PTLabontaraEkaKarsa',
-#
-#                                           ], False)
-    for year in [2019]:#, 2017,2019]:
-        y = get_input_data(bands, str(year), [
-            #  'app_jambi',
-            #   'app_kalbar',
-            #   'app_kaltim',
-            # 'multipersada_gatramegah', 'musim_mas',
-
-
-
-            'mukti_prakarsa','gar_pgm',     'agro_mandiri',  'PTAgroAndalan',
-
-            'Bumitama_PTDamaiAgroSejahtera',
-            'Bumitama_PTHungarindoPersada',
-           'adi_perkasa',
-             'aneka_sawit',
-
-
-            'PTMitraNusaSarana',
-            'makmur_abadi',
-            'PTLestariAbadiPerkasa',
-            'PTGlobalindoAlamPerkasa',
-              'sawit_perdana',
-
-
-            'PTMentariPratama',
-            'PTSukajadiSawitMekar',
-            'PTLabontaraEkaKarsa',
-           'Bumitama_PTGemilangMakmurSubur',
-            'unggul_lestari',
-
-
-
-
-      #       'tekukur_indah',
-    #     'varia_mitra_andalan',
-   #      'agro_lestari',
-        #
-     #    'tunas_sawwaerma',
-
-       ], True)
-
-
-    # tif = base_dir + 'Kalimantan' + '/out/' + str(2019) + '/input_Kalimantan_' + 'nir_max' + '.tif'
-    # # tif = base_dir + name + '/out/' + year + '/' + bands[0] + '.tif'
-    # # try:
-    # file_list = sorted(glob.glob(tif))
-    # ref_study_area = rx.open_rasterio(file_list[0])
-    # for band in bands:
-    #     print('BAND:  ', band)
-    #     try:
-    #         x = get_large_area_input_data(ref_study_area,[band],'Kalimantan', '2019', 'Kalimantan' )
-    #     except RuntimeError as err:
-    #         print("*** error: {0}".format(err))
-    #         print(print('BAND:  ', band, ' is incomplete.'))
-    #     #x = get_input_data([band], str(2019), ['Kalimantan'], True)
-    #     x = False
-
-
-  #  x = get_input_data([ 'elevation'],  str(2015), ['gar_pgm', 'Bumitama_PTGemilangMakmurSubur','PTAgroAndalan','PTMitraNusaSarana', 'Bumitama_PTDamaiAgroSejahtera']
-   #                    , False )#,
-   # x = get_input_data(['nir_max'], str(2019), ['impervious'], False)
-  #  [ 'nir_max', 'swir1_max', 'swir2_max', 'EVI']
-
-#    x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),
- ##                      ['app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'app_kalbar', 'app_kaltim',
-    #                    'crgl_stal', 'app_muba'], False)  # ,
-
-  #  ref_study_area = get_reference_raster_from_shape('West_Kalimantan', 'Kalimantan', 2015)
-    # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
-  #  x = get_large_area_input_data(ref_study_area, ['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],
-    #                              'Kalimantan', str(2015), 'West_Kalimantan')
-
-
-
-    #ref_study_area = get_reference_raster_from_shape('South_Sumatra', 'Sumatra', 2015)
-    # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
-  #  x = get_large_area_input_data(ref_study_area, ['VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'] ,
-       #                          'Sumatra', str(2015), 'South_Sumatra')
-#
-    #['nir_max', 'swir1_max', 'swir2_max', 'EVI', 'VH_0', 'VV_0']
- ##   ref_study_area = get_reference_raster_from_shape('Riau', 'Sumatra', 2015)
-    # x = get_large_area_input_data(ref_study_area, [ 'slope', 'nir_max', 'swir1_max', 'VH_0', 'VV_0', 'VH_2', 'VV_2', 'EVI', 'green_max',
-  #  x = get_large_area_input_data(ref_study_area,['VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'],
-  #                               'Sumatra', str(2015), 'Riau')
-
-   # x = get_input_data(['VH_0', 'VV_0', 'VH_2', 'VV_2', 'VH', 'VV', 'slope', 'elevation'], str(2015),
-    #                   ['app_riau', 'app_jambi', 'app_oki', 'Bumitama_PTHungarindoPersada', 'app_kalbar','app_kaltim', 'crgl_stal', 'app_muba'] , False )#,
-
-    #x = get_input_data(['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'EVI'], str(2015),['app_kalbar'] , False )
-       # , 'swir2_max', 'VH', 'VV','EVI',], 'Kalimantan',  str(2015),  'West_Kalimantan' )
-    #x = get_large_area_input_data(ref_study_area,['blue_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV','EVI', 'slope'], 'Kalimantan', str(2015),'West_Kalimantan')
-
-# x = get_input_data([ 'blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'VH', 'VV', 'EVI', 'aspect', 'elevation', 'slope'],'Sumatra', str(2015), ['crgl_stal'],False )
-    #ref = get_reference_raster_from_shape('app_muba', 'Sumatra')
-   # band = get_input_band('swir1_max', 'Sumatra', 2015)
-  #  band2 = get_input_band('blue_max', 'Sumatra', 2015)
-  #  band3 = get_input_band('swir1_max', 'Sumatra', 2015)
-    # for site in sites:
-    #     stack_image_input_data(site, bands_base, 'bands_base')
-    #     stack_image_input_data(site, bands_radar, 'bands_radar')
-    #     stack_image_input_data(site, bands_median, 'bands_median')
-    #     #     # stack_image_input_data(site, bands_dem, 'bands_dem')
-    #     stack_image_input_data(site, bands_evi2, 'bands_evi2')
-    #     stack_image_input_data(site, band_evi2, 'evi2_only')
-    #     stack_image_input_data(site, bands_evi2_separate, 'bands_evi2_separate')
-    #     stack_image_input_data(site, bands_extended, 'bands_extended')
-
-# trainConcessions = ['app_riau', 'app_jambi']
-# get_concession_data(['bands_radar'], trainConcessions)
+    ref_study_area = get_reference_raster_from_shape('gunung_palung', 'Kalimantan', 2017)
+    x = get_large_area_input_data(ref_study_area, bands,
+                                  'Kalimantan', str(2017), 'gunung_palung')
+    #########################################################
+    #This will show accuracy for a concession classification vs its HCS assessmnt
+    do_comparison('mukti_prakarsa')

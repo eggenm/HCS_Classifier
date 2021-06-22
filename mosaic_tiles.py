@@ -16,8 +16,6 @@ print('BANDS:  ',my_dict.values())
 island='Kalimantan'
 years=[2015,2019]#,2017]
 for year in years:
-    dirpath = r'/home/eggen/data/concession/' + island + '/in/' +str(year)
-    out_fp = r'/home/eggen/data/concession/' + island + '/out/'+str(year)+ '/'
     dirpath = r'/scratch/hcs_classifier/data/concession/' + island + '/in/' + str(year)
     out_fp = r'/scratch/hcs_classifier/data/concession/' + island + '/out/' + str(year) + '/'
     for band in my_dict.values():
@@ -34,7 +32,6 @@ for year in years:
             src = rasterio.open(f)
             src_files_to_mosaic.append(src)
 
-      #  print(src_files_to_mosaic)
         mosaic, out_trans = merge(src_files_to_mosaic)
         out_meta = src.meta.copy()
         # Update the metadata

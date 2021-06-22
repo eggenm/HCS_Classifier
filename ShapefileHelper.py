@@ -11,9 +11,7 @@ import geopandas as gpd
 from osgeo import ogr, gdal, osr
 import os
 import rasterio as rio
-from rasterio.mask import mask
 from shapely.geometry import box
-import glob
 import json as js
 from shapely.geometry import shape, GeometryCollection
 from fiona.crs import from_epsg
@@ -23,8 +21,6 @@ import dirfuncs
 import satellite_image_operations as sat_ops
 
 image_cache = imagery_data.Imagery_Cache.getInstance()
-
-input='C:\\Users\\ME\\Dropbox\\HCSproject\\data\\app_files\\stratified_shapefiles\\Jambi_WKS_Stratification.shp'
 
 supplemental_class_codes = {
    'impervious':23,
@@ -73,7 +69,6 @@ def ingest_kml_fixed_classes():
         #my_dict.update(sat_ops.dem_band_dict)
         bands = my_dict.values()
         print(bands)
-        #bands = ['nir_max']
 
 
 
@@ -150,10 +145,6 @@ def ingest_kml_fixed_classes():
 
 
 
-
-
-
-
 def get_bounding_box_polygon(path_to_shape, out_crs='EPSG:4326'):
     print('PATH:  ', path_to_shape)
     ds = ogr.Open(path_to_shape)
@@ -190,36 +181,9 @@ def get_bounding_box_polygon(path_to_shape, out_crs='EPSG:4326'):
     return(coords)
 
 
-def read_raster():
-    fp = r'C:\\Users\\ME\\Dropbox\\HCSproject\\data\\PoC\\Sumatra\\out\\2015\\blue_max.tif'
-    data = rio.open(fp)
-    print('Raster CRS:  ', data.crs.data)
-  ##  out_img, out_transform = mask(raster=data, shapes=coords, crop=True)
-  #  epsg_code = out_crs
-  #   srs = osr.SpatialReference()  ###
-  #   srs.SetFromUserInput(epsg_code)  ###
-  #   proj4_str = srs.ExportToProj4()
-  #   print(proj4_str)
-  #   out_meta = data.meta.copy()
-  #   out_meta.update({"driver": "GTiff",
-  #                    "height": out_img.shape[1],
-  #                    "width": out_img.shape[2],
-  #                    "transform": out_transform,
-  #                    "crs": proj4_str}
-  #                   )
-  #   with rasterio.open(out_tif, "w", **out_meta) as dest:
-  #       dest.write(out_img)
 if __name__ == "__main__":
     nada = np.nan
     print(os.getenv('PROJ_LIB'))
     #get_bounding_box_polygon(input)
     x = ingest_kml_fixed_classes()
     print(x)
-    #read_raster()
-    # bobox=box(235186.7964500059, 9825476.572053133 ,379883.6319000004 ,9916487.528701443)
-    # geo = gpd.GeoDataFrame({'geometry': bobox}, index=[0], crs=from_epsg('32748'))
-    # print(geo)
-    # crs_init = 'EPSG:4326'
-    # geo = geo.to_crs(crs=crs_init)
-    # coords = getFeatures(geo)
-    # print('Coords:  ', coords)
