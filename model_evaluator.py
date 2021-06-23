@@ -124,8 +124,6 @@ add_1_band_set = {
 pixel_window_size=1
 doGridSearch=True
 
-#def buildModel():
-
 def show_results(y_test, y_hat):
     report = sklearn.metrics.classification_report(y_test, y_hat, output_dict=True)
     print(report)
@@ -159,9 +157,6 @@ def train_model(X_train, y_train, score_stat):
                                         .85 ],
                        'n_estimators': [500, 625, 750]}]
 
-     #   param_grid = [{
-      #                   'max_leaf_nodes': [6, 10],
-       #                 'n_estimators': [100, 250, 375, 500 ]}]
         grid_search = GridSearchCV(clf, param_grid, cv = 5, scoring = score_stat,
                                    return_train_score = True, refit = True)
 
@@ -252,11 +247,11 @@ def init_x_y_data(sites, band_set):
 def evaluate_model():
 
     for scoreConcession in sites:
-        print(scoreConcession)
-        trainConcessions=scoreConcession
-        #trainConcessions = deepcopy(sites)
-        #trainConcessions.remove(scoreConcession)
-        #trainConcessions = [item for sublist in trainConcessions for item in sublist]
+        #print(scoreConcession)
+        #trainConcessions=scoreConcession
+        trainConcessions = deepcopy(sites)
+        trainConcessions.remove(scoreConcession)
+        trainConcessions = [item for sublist in trainConcessions for item in sublist]
 
         result = pd.DataFrame(columns=['concession', 'bands', 'score_type', 'class_scheme', 'score', 'score_weighted',
                                        'two_class_score', 'two_class_score_weighted', 'training_concessions',
