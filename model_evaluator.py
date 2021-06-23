@@ -17,35 +17,8 @@ import sampler
 #############   SETUP  PARAMS    ######################
 training_sample_rate = 0.003
 resolution = 30
-
-
-
 year=str(2018)
-sites = [ #'app_muba':'Sumatra',
-#['app_riau'],
-#['app_oki'],
-  #   ['app_jambi'] ,
-#['PTLabontaraEkaKarsa'],
-  #  ['sawit_perdana'],
- #    ['Bumitama_PTHungarindoPersada'],
- #    ['PTAgroAndalan'],
-  #   ['PTMitraNusaSarana'],
- #    ['gar_pgm'],
- # ['Bumitama_PTGemilangMakmurSubur'],
- #         'crgl_stal' : 'Sumatra',
-
-#'app_kalbar':'Kalimantan','app_kaltim':'Kalimantan',
-   #       'Bumitama_PTDamaiAgroSejahtera':'Kalimantan',
-   #
-   #  'PTAgroAndalan':'Kalimantan',
-   #    'PTMitraNusaSarana':'Kalimantan',
-   # 'gar_pgm':'Kalimantan',
-#'Bumitama_PTGemilangMakmurSubur':'Kalimantan' ,
-    # 'Bumitama_PTHungarindoPersada':'Kalimantan',
-#['Bumitama_PTDamaiAgroSejahtera','PTAgroAndalan'],
-#['PTMitraNusaSarana', 'gar_pgm'],
-#['Bumitama_PTGemilangMakmurSubur', 'Bumitama_PTHungarindoPersada']
-
+sites = [
 'Bumitama_PTDamaiAgroSejahtera', #a
 'Bumitama_PTHungarindoPersada',
 'adi_perkasa',
@@ -71,9 +44,6 @@ sites = [ #'app_muba':'Sumatra',
     'mukti_prakarsa','gar_pgm',     'agro_mandiri',  'PTAgroAndalan','Bumitama_PTGemilangMakmurSubur'
 
           ]
-#sites = [
-
-#    ]
 my_sampler = sampler.Sampler()
 base_dir = dirfuncs.guess_data_dir()
 band_set ={ # 0: ['blue_max', 'green_max', 'red_max', 'nir_max', 'swir1_max', 'swir2_max', 'EVI' ],
@@ -216,15 +186,7 @@ def score_model(y_test, yhat):
 
 class model_performance_logger:
     def __init__(self, model, concession, bands, training_concessions):
-        """
-        Parameters
-        ----------
-        block: np array
-            array drawn from raster using rasterio block read
 
-        fitted_clf: sklearn classifier
-            classifier that should be applid to block
-        """
         self.model = model
         self.concession = concession
         self.bands = bands

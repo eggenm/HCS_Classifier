@@ -37,7 +37,9 @@ It consists of a few major modules
 ##Model parameterization
 ###Model_Evaluator.py has 2 main methods: evaluate_model() and evaluate_bands() 
 ###Run grid searches iteratively saving parameterizations to a SQL-based database
-1.evaluate_model() can be run to save best parameterizations from a grid search for sets of concessions
+1.evaluate_model() can be run to save the best parameterizations from a grid search for sets of concessions to a sql-lite-database
+2. Find param_grid in train_model() and adjust for any parameters you would like to try.
+3. Adjust concessions which should or should not be included in the trials by changing the sites variable at the top.
 
 
 ###Run Models with different sets of bands to evaluate input data
