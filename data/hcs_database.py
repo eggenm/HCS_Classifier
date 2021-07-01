@@ -3,7 +3,7 @@ import pandas as pd
 import dirfuncs
 import itertools
 #conn = sqlite3.connect('data/hcs_database.db')
-#conn = sqlite3.connect('hcs_database.db')
+conn = sqlite3.connect('hcs_database.db')
 
 ##TODO this should be moved to hcs_database.py
 base_dir = dirfuncs.guess_data_dir()
@@ -154,21 +154,21 @@ shapefiles = {'app_kalbar': shapefile_base + 'Kalbar_DTK_Stratification.shp',
 
 #This method should only be used once or when you want to wipe out any existing data
 def init_database():
-    c = conn.cursor()
+   c = conn.cursor()
 
 
    ## Create table
    # c.execute('DROP TABLE model_performance_log')
-   # c.execute('''CREATE TABLE model_performance_log
-   #              (concession text, bands text, score_type text , class_scheme text, score real, score_weighted real,
-    #                               two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
-   #                                max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
+   c.execute('''CREATE TABLE model_performance_log
+                (concession text, bands text, score_type text , class_scheme text, score real, score_weighted real,
+                                  two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
+                                  max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
 
    # addColumn = "ALTER TABLE model_performance_log ADD COLUMN resolution int"
-    addColumn = "ALTER TABLE model_performance_log ADD COLUMN kappa_3 real"
-    c.execute(addColumn)
+   addColumn = "ALTER TABLE model_performance_log ADD COLUMN kappa_3 real"
+   c.execute(addColumn)
     # Save (commit) the changes
-    conn.commit()
+   conn.commit()
 
     # We can also close the connection if we are done with it.
     # Just be sure any changes have been committed or they will be lost.
@@ -182,7 +182,7 @@ def save_model_performance(rows):
 
 def delete_model_performance():
     c = conn.cursor()
-    c.execute('DELETE FROM model_performance_log where length(training_concessions) = 116 ')
+    c.execute('DELETE FROM model_performance_log ' )#where length(training_concessions) = 116 ')
     conn.commit()
 
 def get_all_model_performance():
@@ -263,6 +263,7 @@ def get_best_scheme(concession):
 
 if __name__ == "__main__":
     print('in main')
+    #init_database()
     print(get_all_model_performance())
    #  conn = sqlite3.connect('hcs_database.db')
    #  base_dir = dirfuncs.guess_data_dir()
@@ -272,41 +273,9 @@ if __name__ == "__main__":
    # # print(get_all_model_performance())
    #  get_all_model_performance().to_csv(resultfile, index=False)
    # print(get_best_bands(['Bumitama_PTHungarindoPersada']))
-    print(get_best_bands(['app_riau']))
-    print(get_best_bands(['app_oki']))
-    print(get_best_bands(['app_jambi']))
-    print(get_max_model_run(['app_riau']))
-    # print(get_max_model_run(['gar_pgm'])['two_class_score_weighted'])
-    # print(get_max_model_run(['Bumitama_PTDamaiAgroSejahtera'])['two_class_score_weighted'])
-    # print(get_max_model_run(['PTMitraNusaSarana'])['two_class_score_weighted'])
-    print(get_best_bands(['gar_pgm']))
-    print(get_best_bands(['PTAgroAndalan']))
-    print(get_best_bands(['PTMitraNusaSarana']))
-    print(get_best_bands(['Bumitama_PTHungarindoPersada']))
-    print(get_best_bands(['Bumitama_PTGemilangMakmurSubur']))
-
-    print(get_best_number_estimators(['app_riau']))
-    print(get_best_number_estimators(['app_oki']))
-    print(get_best_number_estimators(['app_jambi']))
-    print(get_max_model_run(['gar_pgm'])['two_class_score_weighted'])
-    # print(get_max_model_run(['Bumitama_PTDamaiAgroSejahtera'])['two_class_score_weighted'])
-    # print(get_max_model_run(['PTMitraNusaSarana'])['two_class_score_weighted'])
-    print(get_best_number_estimators(['gar_pgm']))
-    print(get_best_number_estimators(['PTAgroAndalan']))
-    print(get_best_number_estimators(['PTMitraNusaSarana']))
-    print(get_best_number_estimators(['Bumitama_PTHungarindoPersada']))
-    print(get_best_number_estimators(['Bumitama_PTGemilangMakmurSubur']))
-
-    print(get_max_model_run(['app_riau'])['kappa_3'])
-    print(get_max_model_run(['app_oki'])['kappa_3'])
-    print(get_max_model_run(['app_jambi'])['kappa_3'])
-    print(get_max_model_run(['gar_pgm'])['kappa_3'])
-    print(get_max_model_run(['PTAgroAndalan'])['kappa_3'])
-    print(get_max_model_run(['PTMitraNusaSarana'])['kappa_3'])
-    print(get_max_model_run(['Bumitama_PTHungarindoPersada'])['kappa_3'])
-    print(get_max_model_run(['Bumitama_PTGemilangMakmurSubur'])['kappa_3'])
+  
    # init_database()
-    #delete_model_performance()
-   # print(get_all_model_performance())
+    delete_model_performance()
+    print(get_all_model_performance())
     conn.close()
     #print(all_bands)
