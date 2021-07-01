@@ -1,4 +1,4 @@
-import data.hcs_database as db
+import hcs_database as db
 
 class Sampler:
     def __init__(self):

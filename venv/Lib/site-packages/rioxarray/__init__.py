@@ -1,0 +1,15 @@
+# -*- coding: utf-8 -*-
+
+"""Top-level package for rioxarray."""
+
+__author__ = """rioxarray Contributors"""
+__email__ = "alansnow21@gmail.com"
+
+import rioxarray.rioxarray  # noqa
+
+try:
+    # This requires xarray >= 0.12.3
+    from rioxarray._io import open_rasterio  # noqa
+except ImportError:
+    from xarray import open_rasterio  # noqa
+from rioxarray._version import __version__  # noqa

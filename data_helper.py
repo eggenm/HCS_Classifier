@@ -18,7 +18,7 @@ import rasterio.crs
 import sklearn.metrics
 from sklearn.metrics import f1_score
 import ShapefileHelper as shapefilehelp
-import data.hcs_database  as db
+import hcs_database  as db
 from rasterio.mask import mask
 import rioxarray as rx
 import timer
@@ -286,7 +286,6 @@ def get_input_data(bands, year, sites, get_predictor_data_only=False):
                     island = db.data_context_dict[site]
                     all_class = image_cache.get_class_by_concession_name(site)
                     #box = shapefilehelp.get_bounding_box_polygon(db.shapefiles[site])
-
                     if not get_predictor_data_only:
                         #THIS IS TRAINING DATA
                         year = str(int(db.get_concession_assessment_year(site)))

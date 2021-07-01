@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import rasterio as rio
-import data.hcs_database as db
+import hcs_database as db
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import metrics
 import data_helper as helper
@@ -163,7 +163,6 @@ def get_trained_model(scoreConcession, trainConcessions, seed, override_bands = 
     except:
        leaf_nodes=8
     metric = 'F1'#db.get_best_metric([scoreConcession])
-    concession_assessment_year = str(0) #changed to zero to be sure it is not being used.
     if(not override_bands):
         bands = db.get_best_bands([scoreConcession])
     else:

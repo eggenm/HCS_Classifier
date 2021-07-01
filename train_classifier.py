@@ -1,5 +1,4 @@
 import data_helper as helper
-import data.hcs_database as db
 import dirfuncs
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier as rfc
