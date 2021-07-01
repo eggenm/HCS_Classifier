@@ -158,13 +158,21 @@ def init_database():
 
    ## Create table
    # c.execute('DROP TABLE model_performance_log')
-   c.execute('''CREATE TABLE model_performance_log
-                (concession text, bands text, score_type text , class_scheme text, score real, score_weighted real,
-                                  two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
-                                  max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
+   # c.execute('''CREATE TABLE model_performance_log
+   #              (concession text, bands text, score_type text , class_scheme text, score real, score_weighted real,
+   #                                two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
+   #                                max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
 
    # addColumn = "ALTER TABLE model_performance_log ADD COLUMN resolution int"
-   addColumn = "ALTER TABLE model_performance_log ADD COLUMN kappa_3 real"
+   addColumn = "ALTER TABLE model_performance_log ADD COLUMN score_weighted real"
+   c.execute(addColumn)
+   addColumn = "ALTER TABLE model_performance_log ADD COLUMN two_class_score real"
+   c.execute(addColumn)
+   addColumn = "ALTER TABLE model_performance_log ADD COLUMN two_class_score_weighted real"
+   c.execute(addColumn)
+   addColumn = "ALTER TABLE model_performance_log ADD COLUMN training_concessions text"
+   c.execute(addColumn)
+   addColumn = "ALTER TABLE model_performance_log ADD COLUMN max_depth int"
    c.execute(addColumn)
     # Save (commit) the changes
    conn.commit()
@@ -273,7 +281,7 @@ if __name__ == "__main__":
    #  get_all_model_performance().to_csv(resultfile, index=False)
    # print(get_best_bands(['Bumitama_PTHungarindoPersada']))
 
-   # init_database()
+    init_database()
    # delete_model_performance()
     print(get_all_model_performance())
     conn.close()
