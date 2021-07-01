@@ -163,17 +163,17 @@ def init_database():
    #                                two_class_score real, two_class_score_weighted real, training_concessions text, max_depth int,
    #                                max_leaf_nodes int, max_features real, n_estimators int, training_sample_rate real)''')
 
-   # addColumn = "ALTER TABLE model_performance_log ADD COLUMN resolution int"
-   addColumn = "ALTER TABLE model_performance_log ADD COLUMN score_weighted real"
+   addColumn = "ALTER TABLE model_performance_log ADD COLUMN resolution int"
+   #addColumn = "ALTER TABLE model_performance_log ADD COLUMN score_weighted real"
    c.execute(addColumn)
-   addColumn = "ALTER TABLE model_performance_log ADD COLUMN two_class_score real"
+   addColumn = "ALTER TABLE model_performance_log ADD COLUMN kappa real"
    c.execute(addColumn)
-   addColumn = "ALTER TABLE model_performance_log ADD COLUMN two_class_score_weighted real"
-   c.execute(addColumn)
-   addColumn = "ALTER TABLE model_performance_log ADD COLUMN training_concessions text"
-   c.execute(addColumn)
-   addColumn = "ALTER TABLE model_performance_log ADD COLUMN max_depth int"
-   c.execute(addColumn)
+   # addColumn = "ALTER TABLE model_performance_log ADD COLUMN two_class_score_weighted real"
+   # c.execute(addColumn)
+   # addColumn = "ALTER TABLE model_performance_log ADD COLUMN training_concessions text"
+   # c.execute(addColumn)
+   # addColumn = "ALTER TABLE model_performance_log ADD COLUMN max_depth int"
+   # c.execute(addColumn)
     # Save (commit) the changes
    conn.commit()
 
