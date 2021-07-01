@@ -31,7 +31,8 @@ def guess_data_dir():
     """
     Looks for the folder where dropbox data lives.
     """
-    possibilities = ['D:\\cloud\\Dropbox\\collaborations\\HCSProject\\data\\PoC\\',  # Robert's dropbox
+    possibilities = ['D:\\cloud\\Dropbox\\collaborations\\HCSProject\\data\\PoC\\', # Robert's dropbox
+                     'C:\\PythonProjects\\data\\concession\\', #Michaels new computer
                      'C:\\Users\\ME\\Dropbox\\HCSproject (1)\\data\\PoC\\', # Michael Dropbox
                      '/home/eggen/data/concession/', # NCEAS server
                     # '/home/hcs_classifier/data/concession/',
